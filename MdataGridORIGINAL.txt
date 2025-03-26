@@ -1,0 +1,397 @@
+import { useEffect, useState, useMemo, useCallback } from 'react';
+
+import { useWebSocketContext } from '../../websocket/WebSocketContext.jsx'
+
+import { DataGrid, GridToolbar  } from '@mui/x-data-grid';
+
+import CloseIcon from '@mui/icons-material/Close';
+
+import DeleteIcon from '@mui/icons-material/Delete';
+
+import EditIcon from '@mui/icons-material/Edit';
+
+import {Button, Stack, Typography, Box} from '@mui/material'
+
+import { GridActionsCellItem  } from '@mui/x-data-grid'
+
+import './MDataGrid.css'
+
+import '../../App.css'
+
+import dayjs from 'dayjs';
+
+import 'dayjs/locale/ru'
+
+dayjs.locale('ru');
+
+const storedRole = localStorage.getItem('userRole');
+
+
+
+export default function DynamicTable({ columns, collectionName, socketData, actionEdit, actionDelete, actionAdd, filters }) {
+
+    const {sendJsonMessage, lastJsonMessage} = useWebSocketContext()
+
+    const [rows, setRows] = useState([]);
+
+    const [selectionModel, setSelectionModel] = useState([]);
+
+    const [originalRows, setOriginalRows] = useState([]);
+
+   
+
+    // Обновление строк таблицы при изменении socketData
+
+    const updateRows = useCallback(() => {
+
+        if (socketData[collectionName]) {
+
+            const rows = (socketData[collectionName].map((row) => ({
+
+                id: row._id, //замена айди на нужный
+
+                ...row,    
+
+            })));
+
+            setRows(rows)
+
+            setOriginalRows(rows);
+
+        }
+
+       
+
+    }, [socketData, collectionName]);
+
+    useEffect(() => {
+
+        updateRows();
+
+    }, [updateRows]);
+
+
+
+    useEffect(() => {
+
+        if (filters && Object.keys(filters).length > 0) {
+
+            const filteredRows = originalRows.filter((row) =>
+
+                Object.entries(filters).every(([column, value]) => {
+
+                    if (!value) return true;
+
+
+
+                    if (typeof row[column] === 'string') {
+
+                        return dayjs(row[column]).isBefore(dayjs().subtract(2, 'day')) && row[`obosnovanie`].toLowerCase().includes(value.toLowerCase());
+
+                    }
+
+                    return row[column] === value;
+
+                })
+
+            );
+
+            setRows(filteredRows);
+
+        } else {
+
+            setRows(originalRows); // Если фильтров нет, возвращаем исходные данные
+
+        }
+
+    }, [filters, originalRows]);
+
+    const handleResetFilters = () => {
+
+        setRows(originalRows); // Возвращаем исходные данные
+
+    }
+
+
+
+    //получение массива блок id
+
+    const blockID =rows.filter((row) => row.is_locked === true).map((row) => row.id);
+
+
+
+    //отмена выбора строки с блоком
+
+    const handleSelectionChange = (newSelection) => {        
+
+        const filteredSelection = newSelection.filter((id) => !blockID.includes(id));        
+
+        setSelectionModel(filteredSelection);        
+
+    };
+
+
+
+    //покраска строки если блок
+
+    const getRowClassName = (params) => {
+
+        if (params.row.is_locked === true) {            
+
+          return 'selected-row'; // Класс для выделенной строки
+
+        }
+
+        if (params.row.obosnovanie === `ДЗ по GW` || params.row.data_prikaza === ``) {            
+
+            return 'dzgw'; // Класс для выделенной строки
+
+        }
+
+        return ``
+
+    };
+
+
+
+    function setBlockedRow(id,type) {
+
+        const message = {
+
+            type: 'updateInCollection',
+
+            data: {
+
+                collection: collectionName,
+
+                filter: {_id: id},
+
+                value: {is_locked:type}
+
+            }
+
+        }
+
+        sendJsonMessage(message);
+
+    }
+
+
+
+    //доп столбец с кнопками управления
+
+    const actionsColumn = { field: `actions`, headerName: 'Действия', type: `actions` ,
+
+        cellClassName: `actions`,
+
+        getActions:({id})=>{
+
+            if (blockID.includes(id)) {
+
+                return [
+
+                    //проверки роли и установка действий по роли
+
+                    <>
+
+                        {storedRole === `admin` ?
+
+                            <GridActionsCellItem
+
+                                key={id}
+
+                                icon={<CloseIcon />}
+
+                                label="Uncheck"
+
+                                title='Отменить редактирование'
+
+                                sx={{color: 'primary.main',}}
+
+                                onClick={async ()=>{
+
+                                    setBlockedRow(id,false)
+
+                                }}
+
+                            />
+
+                        : <Typography key={id}>BLOCKED</Typography>}
+
+                    </>
+
+                ];
+
+            }
+
+            return [
+
+                <GridActionsCellItem
+
+                    key={id}
+
+                    icon={<EditIcon />}
+
+                    label="Edit"
+
+                    title='Изменить в БД'
+
+                    sx={{color: 'primary.main',}}
+
+                    //обработка клика на иконку редактирования и открытие диалогового окна с во3вращением ре3ультата
+
+                    onClick={async ()=>{
+
+                        if (rows.filter((row) => row.id === id)[0].name === `Удаленный отдел` || rows.filter((row) => row.id === id)[0].name === `Удаленная должность`){
+
+                            alert(`Нелься`)
+
+                            return null
+
+                        }
+
+                        setBlockedRow(id,true)                        
+
+                        await actionEdit(id,(rows.filter((row) => row.id === id)[0]),collectionName).then(
+
+                            (res)=>{
+
+                                if (!res){
+
+                                    return
+
+                                }
+
+                                if(res){                                    
+
+                                    setBlockedRow(id,false)
+
+                                }
+
+                            }
+
+                        )
+
+                    }}
+
+                />,
+
+                <GridActionsCellItem
+
+                    key={id}
+
+                    icon={<DeleteIcon />}
+
+                    label="Delete"
+
+                    title='Удалить из БД'
+
+                    sx={{color: 'primary.main',}}
+
+                    onClick={async ()=>{
+
+                        setBlockedRow(id,true)
+
+                        await actionDelete(id,collectionName,(rows.filter((row) => row.id === id)[0]))
+
+                    }}
+
+                />,
+
+            ];                
+
+        }
+
+     }
+
+
+
+    //добавление к передаваемым столбцам столбец с кнопками
+
+    const columnsExtands = useMemo(()=>[...columns, actionsColumn], [columns, blockID])
+
+
+
+    return (
+
+        <div style={{width: '100%', flex:`1`}} className='animated-element'>
+
+
+
+            <Box sx={{display:`flex`, justifyContent:`space-between`}}>
+
+                <Button
+
+                    onClick={handleResetFilters}
+
+                >СБРОСИТЬ ФИЛЬТР</Button>
+
+                <Button
+
+                    title='Добавить в БД'
+
+                    sx={{m:`5px 0`}}
+
+                    variant='contained'
+
+                    onClick={actionAdd}
+
+                    >add
+
+                </Button>
+
+            </Box>
+
+           
+
+            <DataGrid
+
+                autosizeOptions={{
+
+                    includeOutliers: true,
+
+                    includeHeaders: false,
+
+                }}
+
+                sx={{minHeight: `200px`,flex:`1`}}
+
+                initialState={{
+
+                    pagination: { paginationModel: { pageSize: 10 } },
+
+                  }}
+
+                pageSizeOptions={[5, 10, 25, 50, 100, { value: -1, label: 'Все' }]}
+
+                rows={rows}
+
+                columns={columnsExtands}
+
+                rowSelectionModel={selectionModel}  // список выделенных строк
+
+                onRowSelectionModelChange={handleSelectionChange} //колбек при выборе строки
+
+                getRowClassName={getRowClassName} //и3меняем класс если найши блоченый
+
+                columnVisibilityModel={{_id:false}}
+
+                slots={{ toolbar: GridToolbar }}
+
+                slotProps={{
+
+                    toolbar: {
+
+                      showQuickFilter: true,
+
+                    },
+
+                  }}
+
+            />
+
+        </div>
+
+    );
+
+}

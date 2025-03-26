@@ -1,0 +1,104 @@
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  opacity: 0;
+  transform: translateY(-20px);
+  animation: fadeIn 0.5s forwards;
+  
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* --cursor-default: url('http://localhost:3000/static/cursors/normsl u.cur'), auto;
+  --cursor-pointer: url('http://localhost:3000/static/cursors/link 700.cur'), pointer; */
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+body.custom-cursors {
+  cursor: var(--cursor-default) !important;
+}
+
+body.custom-cursors a,
+body.custom-cursors button,
+body.custom-cursors [role="button"],
+body.custom-cursors .cursor-pointer {
+  cursor: var(--cursor-pointer) !important;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+
+/* body {
+  cursor: url('/Icons//normsl\ u.cur'), auto; 
+}
+body * {
+  cursor: inherit; 
+}
+
+body *[style*="cursor: pointer"],
+body *[class*="cursor-pointer"],
+body .pointer, 
+button:hover,
+a:hover  
+{
+  cursor: url('/Icons/link\ 700.cur'), pointer; 
+} */

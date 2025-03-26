@@ -1,0 +1,11 @@
+.selected-row {
+    background-color: #8a6b295d !important;  /* Зеленый цвет для выделенной строки */
+    color: white;  /* Белый текст */
+}
+.clearFilter:hover {
+    cursor: pointer;
+    background: #4e4d495d;
+}
+.oddRow {
+    background-color: #534d4d63;
+}

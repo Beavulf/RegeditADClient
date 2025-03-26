@@ -1,0 +1,215 @@
+//МЕТОДЫ ДЛЯ ОБРАЩЕНИЯ К БД
+const { MongoClient, ObjectId } = require('mongodb');
+const schemas = require('./mongoose.js');
+const mongoose = require('mongoose');
+const winston = require('winston');
+const DailyRotateFile = require('winston-daily-rotate-file');
+
+// логгер
+const transport = new DailyRotateFile({
+    filename: 'logs/application-%DATE%.log',
+    datePattern: 'YYYY-MM-DD',
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '14d',
+  });
+  
+  const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.json()
+    ),
+    transports: [
+      transport,
+    ],
+  });
+
+//получения списка ис коллекций
+async function getCollectionMongoose(data, db) {
+    try {
+        // Получаем схему для указанной коллекции
+        const schema = schemas[data.collection].schema;
+
+        // Определяем пути, которые являются ссылками (ref)
+        // const populateOptions = Object.entries(schema.paths)
+        //     .filter(([_, path]) => path.options && path.options.ref) // Проверяем, есть ли у поля `ref`
+        //     .map(([key, path]) => ({
+        //         path: key,
+        //         select: key === '_sotr' ? 'fio' : 'name', // Для _sotr используем 'fio', для остальных 'name'
+        //     }));
+        if (!schema._populateOptions) {
+            schema._populateOptions = Object.entries(schema.paths)
+                .filter(([_, path]) => path.options && path.options.ref)
+                .map(([key, path]) => ({
+                    path: key,
+                    select: key === '_sotr' ? 'fio' : 'name',
+                }));
+        }
+        // Выполняем запрос с использованием найденных полей для populate
+        const collData = await schemas[data.collection]
+            .find(data.filter)
+            .populate(populateOptions)
+            .exec();          
+        return collData;
+    } catch (err) {
+        logger.error(`Ошибка при получении коллекции БД: \n ${err}`);
+        return null;
+    }
+}
+
+async function insertInToCollection(data) {
+    try {
+      const model = schemas[data.collection]; // Получаем модель по названию коллекции
+      const body = Array.isArray(data.body) ? data.body : [data.body]; 
+      const result = await model.insertMany(body);  // Вставляем данные через Mongoose
+      return `Insert complete: добавлено ${result.length} документ(ов).`;
+    } catch (err) {
+      logger.error(`Ошибка при добавлении записей в БД: \n ${err}`);
+      return null;
+    }
+  }
+// Обновление строки в коллекции с возвратом расширенных данных
+async function updateInCollection(data, db) {
+    try {
+        // Получаем схему для указанной коллекции
+        const schema = schemas[data.collection].schema;
+
+        // Определяем пути, которые являются ссылками (ref)
+        const populateOptions = Object.entries(schema.paths)
+            .filter(([_, path]) => path.options && path.options.ref)
+            .map(([key, path]) => ({
+                path: key,
+                select: key === '_sotr' ? 'fio' : 'name',
+            }));
+
+        if (Array.isArray(data.value)) {
+            
+            const bulkOperations = data.value.map((item) => ({
+                updateOne: {
+                    filter: { _id: new ObjectId(item._pdoka) }, // Уникальный идентификатор для поиска документа
+                    update: { $set: { ...item, is_locked: false } }, // Применяем изменения
+                },
+            }));
+    
+            // Выполняем `bulkWrite`
+            const result = await schemas[data.collection].bulkWrite(bulkOperations);
+    
+            // Возвращаем обновленные документы
+            const updatedDocuments = await schemas[data.collection]
+                .find({ _id: { $in: data.value.map((item) => new ObjectId(item._pdoka)) } })
+                .exec();
+    
+            return updatedDocuments;
+
+        } else {
+            // Одиночное обновление
+            await schemas[data.collection].updateOne(
+                { _id: new ObjectId(data.filter._id) }, // Фильтр по _id
+                { $set: data.value }
+            );
+
+            // Получение обновленного документа с популяцией
+            const updatedDocument = await schemas[data.collection]
+                .findById(data.filter._id)
+                .populate(populateOptions)
+                .exec();
+
+            return updatedDocument;
+        }
+    } catch (err) {
+        logger.error(`Ошибка при изменении записи в БД: \n ${err}`);
+        return null;
+    }
+}
+
+
+
+
+//удаление строки из коллекции
+async function deleteFromCollection (data, db) {
+    try {
+        if ([`Otdel`, `Doljnost`].includes(data.collection)) {
+
+            const fiendOtdelID = await schemas[`Otdel`].findOne({name: 'Удаленный отдел'})
+            const fiendDoljnostID = await schemas[`Doljnost`].findOne({name: `Удаленная должность`})
+            
+            if (new ObjectId(data.filter._id).equals(fiendOtdelID._id) || new ObjectId(data.filter._id).equals(fiendDoljnostID._id)) {
+                logger.warn('Попытка удаления дефолтных значений.');       
+                return 'Попытка удаления дефолтных значений невозможна.';      
+            }
+
+            const deletedDocument = await schemas[data.collection].findByIdAndDelete(new ObjectId(data.filter._id));
+
+            if (!deletedDocument) {
+                logger.warn('Документ не найден для удаления');
+                return 'Документ не найден';
+            }
+            // Обновить сотрудников, назначив им дефолтный отдел            
+            const deletedIds = [
+                { deletedId: deletedDocument._id, defaultId: fiendOtdelID._id, targetRef: 'Otdel' },
+                { deletedId: deletedDocument._id, defaultId: fiendDoljnostID._id, targetRef: 'Doljnost' },
+            ];
+            await updateReferencesAfterDelete(deletedIds);
+              
+        } else {
+            const deletedDocument = await schemas[data.collection].findByIdAndDelete(new ObjectId(data.filter._id));
+            if (!deletedDocument) {
+                logger.warn('Документ не найден для удаления');
+                return 'Документ не найден';
+            }
+        }
+        return 'Удаление и обновление завершены';  
+    }
+    catch(err) {
+        logger.error(`Ошибка при удалении записи из БД: \n ${err}`);
+        return `Ошибка при удалении записи из БД`;
+    }
+}
+// Функция для обновления сотрудников, назначая новый отдел
+async function updateReferencesAfterDelete(deletedIds, targetRefs) {
+    try {
+        // Перебор всех моделей, зарегистрированных в `schemas`
+        for (const [modelName, model] of Object.entries(schemas)) {
+            const schema = model.schema;
+
+            // Обработка каждой пары: { удалённый ID, коллекция-цель }
+            for (const { deletedId, defaultId, targetRef } of deletedIds) {
+                // Поиск полей, которые ссылаются на указанную коллекцию
+                const foreignKeyFields = Object.entries(schema.paths)
+                    .filter(([fieldName, field]) => field.options && field.options.ref === targetRef)
+                    .map(([fieldName]) => fieldName);
+
+                // Если есть такие поля, обновить документы
+                if (foreignKeyFields.length > 0) {
+                    const updateQuery = foreignKeyFields.reduce((query, field) => {
+                        query[field] = deletedId; // Поля с удалённым ID
+                        return query;
+                    }, {});
+
+                    const updateSet = foreignKeyFields.reduce((set, field) => {
+                        set[field] = defaultId; // Замена на дефолтный ID
+                        return set;
+                    }, {});
+
+                    const result = await model.updateMany(updateQuery, { $set: updateSet });
+
+                    logger.info(
+                        `Обновлено документов в коллекции "${modelName}" для поля "${targetRef}": ${
+                            result.nModified || result.modifiedCount
+                        }`
+                    );
+                }
+            }
+        }
+    } catch (err) {
+        logger.error(`Ошибка при обновлении ссылок: ${err}`);
+    }
+}
+
+module.exports = {
+    insertInToCollection,
+    updateInCollection,
+    deleteFromCollection,
+    getCollectionMongoose
+}
