@@ -10,6 +10,8 @@ import {
     AccordionSummary, 
     AccordionDetails, 
     Accordion,
+    CircularProgress,
+    Fade
 } from '@mui/material'
 import { useState, useMemo, useEffect, memo, useCallback } from 'react';
 import MDataGrid from '../DataGrid/MDataGrid.jsx';
@@ -23,34 +25,55 @@ import DialogFullAdd from './DialogFullAdd.jsx';
 import DialogReport from './DialogReport.jsx';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DownloadIcon from '@mui/icons-material/Download';
-import * as xlsx from 'xlsx'
+// import * as xlsx from 'xlsx'
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
 
-const SbrosAD = memo(function SbrosAD() {
+const Subject = memo(function Subject() {
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const dialogs = useDialogs();
     const Subject = useSubject()
     const Company = useCompany();
     const Contract = useContract();
-    const {sendJsonMessage} = useWebSocketContext()
+    // const {sendJsonMessage} = useWebSocketContext()
+
+    const conf = useMemo(() => ({ density: 'compact'}), []);
+    const confContr = useMemo(() => ({density: 'compact', }), []);
 
     const [openDialog, setOpenDialog] = useState(false)
 
     const [searchSubj, setSearchSubj] = useState(``) //поле ввода фио textfield
     const [selectSubject, setSelectSubject] = useState({}) //обьект выбранное субьекта
+    const [isSearching, setIsSearching] = useState(false) // состояние для отслеживания процесса поиска
+    const [debouncedSearchSubj, setDebouncedSearchSubj] = useState('') // значение после задержки
     
-    const conf = useMemo(() => ({ density: 'compact'}), []);
-    const confContr = useMemo(() => ({density: 'compact', }), []);
+    // Эффект для debounce поискового запроса
+    useEffect(() => {
+        // Показываем индикатор загрузки, если длина поискового запроса >= 3
+        if (searchSubj.length >= 2) {
+            setIsSearching(true);
+        }
+        
+        const timer = setTimeout(() => {
+            setDebouncedSearchSubj(searchSubj);
+            setIsSearching(false); // Скрываем индикатор после завершения debounce
+        }, 500);
+        
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [searchSubj]);
+
+    
 
     const filteredSubjects = useMemo(() => {
-        if (!searchSubj || searchSubj.length<3) return [];
+        if (!debouncedSearchSubj || debouncedSearchSubj.length < 3) return [];
         return Subject.filter((subj) =>
-          subj?.name.toLowerCase().includes(searchSubj.toLowerCase())
+          subj?.name.toLowerCase().includes(debouncedSearchSubj.toLowerCase())
         );
-    }, [Subject, searchSubj]);
+    }, [Subject, debouncedSearchSubj]);
 
     // скрытие окна субьектов при открытии диалогового окна редактирования контрактов
     async function openEditRowDialog(id,oldData,collectionName) {
@@ -71,7 +94,8 @@ const SbrosAD = memo(function SbrosAD() {
 
     // очистка фильтра
     function handleClearFilter(){
-        setSearchSubj(``)
+        setSearchSubj('');
+        setSelectSubject({})
     }
 
     // получение списка контрактов выбранного субьекта
@@ -80,61 +104,61 @@ const SbrosAD = memo(function SbrosAD() {
     }, []);
 
     //загрузка файла excel для импорта массива данных
-    const [fileContent, setFileContent] = useState([]);
-    const handleFileUpload = (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
+    // const [fileContent, setFileContent] = useState([]);
+    // const handleFileUpload = (event) => {
+    //   const file = event.target.files[0];
+    //   if (!file) return;
   
-      const reader = new FileReader();
+    //   const reader = new FileReader();
   
-      reader.onload = (e) => {
-        const data = new Uint8Array(e.target.result);
-        const workbook = xlsx.read(data, { type: "array", });
-        const sheetName = workbook.SheetNames[1];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = xlsx.utils.sheet_to_json(worksheet);
+    //   reader.onload = (e) => {
+    //     const data = new Uint8Array(e.target.result);
+    //     const workbook = xlsx.read(data, { type: "array", });
+    //     const sheetName = workbook.SheetNames[1];
+    //     const worksheet = workbook.Sheets[sheetName];
+    //     const jsonData = xlsx.utils.sheet_to_json(worksheet);
   
-        console.log("Массив из Excel:", jsonData);
-        setFileContent(jsonData);
-      };
+    //     console.log("Массив из Excel:", jsonData);
+    //     setFileContent(jsonData);
+    //   };
   
-      reader.readAsArrayBuffer(file);
-    };
+    //   reader.readAsArrayBuffer(file);
+    // };
 
     // нормальзация полученной даты из excel
-    function excelDateToJSDate(excelDate) {
-        const baseDate = new Date(1899, 11, 30); // 30 декабря 1899 года
-        return new Date(baseDate.getTime() + (excelDate * 24 * 60 * 60 * 1000));
-    }
+    // function excelDateToJSDate(excelDate) {
+    //     const baseDate = new Date(1899, 11, 30); // 30 декабря 1899 года
+    //     return new Date(baseDate.getTime() + (excelDate * 24 * 60 * 60 * 1000));
+    // }
 
     // запись полученых контрактов в нормальзованный вид для БД и запись в БД
-    async function getContracts() {
-        fileContent.forEach(async (contract,index)=>{
-            const message = {
-                type: 'insertInToCollection',
-                data: {
-                  collection: 'Contract',
-                  body: {
-                    _subj: Subject.find(el=>el.name === contract.subj.trim())?._id || console.log(`SUBJ-------${index}`),
-                    _com: Company.find(el=>el.unp.toString() === contract.unp.toString())?._id,
-                    data_cert: excelDateToJSDate(contract.data_cert),
-                    data_contr: typeof (contract.data_contr) != 'string' ? excelDateToJSDate(contract.data_contr) : new Date(`10.10.2999`),
-                    data_dover: typeof (contract.data_dover) != 'string' ? excelDateToJSDate(contract.data_dover) : new Date(`10.10.2999`),
-                    certif: contract.cert || index,
-                    prikaz: contract.prikaz || index,
-                    data_zakl: excelDateToJSDate(contract.data_zakl),
-                    descrip: '',
-                    _who: '679791da9eed96a34b351bb0',
-                    data_dob: new Date(),
-                    is_locked: false,
-                    time_edit: new Date(),
-                    certif_edit: null
-                },
-                },
-            };
-            await sendJsonMessage(message)
-        })
-    }
+    // async function getContracts() {
+    //     fileContent.forEach(async (contract,index)=>{
+    //         const message = {
+    //             type: 'insertInToCollection',
+    //             data: {
+    //               collection: 'Contract',
+    //               body: {
+    //                 _subj: Subject.find(el=>el.name === contract.subj.trim())?._id || console.log(`SUBJ-------${index}`),
+    //                 _com: Company.find(el=>el.unp.toString() === contract.unp.toString())?._id,
+    //                 data_cert: excelDateToJSDate(contract.data_cert),
+    //                 data_contr: typeof (contract.data_contr) != 'string' ? excelDateToJSDate(contract.data_contr) : new Date(`10.10.2999`),
+    //                 data_dover: typeof (contract.data_dover) != 'string' ? excelDateToJSDate(contract.data_dover) : new Date(`10.10.2999`),
+    //                 certif: contract.cert || index,
+    //                 prikaz: contract.prikaz || index,
+    //                 data_zakl: excelDateToJSDate(contract.data_zakl),
+    //                 descrip: '',
+    //                 _who: '679791da9eed96a34b351bb0',
+    //                 data_dob: new Date(),
+    //                 is_locked: false,
+    //                 time_edit: new Date(),
+    //                 certif_edit: null
+    //             },
+    //             },
+    //         };
+    //         await sendJsonMessage(message)
+    //     })
+    // }
 
     const columnsContract = useMemo(()=>
         [
@@ -241,7 +265,17 @@ const SbrosAD = memo(function SbrosAD() {
             { field: 'descrip', headerName: 'Описание', width: 150, flex:0.12, },
         ],[]
     ) 
-    
+
+    const filteredContracts = useMemo(() => {
+        const contractsToFilter = Contract.filter(el => !el.anull);
+        if (selectSubject?._id) {
+            // Фильтруем по ID выбранного субъекта
+            return contractsToFilter.filter(el => el._subj._id === selectSubject._id);
+        }
+        // Если субъект не выбран, показываем все, отсортированные по time_edit по убыванию
+        return contractsToFilter.sort((a, b) => dayjs(b.time_edit).valueOf() - dayjs(a.time_edit).valueOf());
+    }, [Contract, selectSubject?._id]);
+
     return (
         <div className='animated-element' style={{height:`100%`, maxWidth:`100vw`, width:`100%`, overflow:'hidden', position:'relative'}}>
             {/* меню управления */}
@@ -259,9 +293,13 @@ const SbrosAD = memo(function SbrosAD() {
                             input: {
                                 endAdornment: (
                                 <InputAdornment position="end">
-                                    <IconButton onClick={()=>handleClearFilter()}>
-                                        <CloseIcon/>
-                                    </IconButton>
+                                    {isSearching ? (
+                                        <CircularProgress size={20} />
+                                    ) : searchSubj ? (
+                                        <IconButton onClick={()=>handleClearFilter()}>
+                                            <CloseIcon/>
+                                        </IconButton>
+                                    ) : null}
                                 </InputAdornment>
                                 ),
                             },
@@ -302,7 +340,12 @@ const SbrosAD = memo(function SbrosAD() {
                     }}>
                     {filteredSubjects.map(sbj=>{
                         return (
-                            // генерация кнопок субьектов
+                            <Fade 
+                                key={sbj._id} 
+                                in={true} 
+                                timeout={300} 
+                                style={{ transitionDelay: `300ms` }}
+                            >
                             <Box key={sbj._id} sx={{display:`flex`, flexDirection:`column`}}>
                                 <Button  variant={sbj._id === selectSubject._id ? `contained` : `outlined`} sx={{display:`flex`, flexDirection:`column`, fontSize:`11px`}} onClick={()=>getSubjectContracts(sbj)}>
                                     {sbj.name}
@@ -312,6 +355,7 @@ const SbrosAD = memo(function SbrosAD() {
                                     </Box>
                                 </Button>                          
                             </Box>
+                            </Fade>
                         )
                     })}
                     {searchSubj.length < 1 ? <Typography color='gray' sx={{justifyContent:'center', margin:'auto 0'}}>Начните вводить ФИО <br /> для поиска</Typography> : undefined}
@@ -324,8 +368,7 @@ const SbrosAD = memo(function SbrosAD() {
                         <MDataGrid 
                             conf={confContr}
                             tableData={
-                                selectSubject?._id?.length > 0 ? Contract.filter(el=>!el.anull && el._subj._id === selectSubject._id) : 
-                                Contract.filter(el=>!el.anull).sort((a, b) => new Date(b.time_edit) - new Date(a.time_edit))}
+                                filteredContracts}
                             columns={columnsContract} 
                             collectionName={`Contract`} 
                             actionEdit={(id,oldData,collectionName)=>openEditRowDialog(id,oldData,collectionName)}
@@ -363,4 +406,4 @@ const SbrosAD = memo(function SbrosAD() {
         </div>
     )
 })
-export default memo(SbrosAD)
+export default memo(Subject)

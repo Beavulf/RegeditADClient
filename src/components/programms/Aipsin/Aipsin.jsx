@@ -17,8 +17,8 @@ export default function Aipsin() {
             { field: '_sotr', headerName: 'ФИО',  flex:0.7,
                 valueGetter: (params) => params?.fio || ''
             }, 
-            { field: 'deistvie', headerName: 'Действие',flex:0.3},
-            { field: 'obosnovanie', headerName: 'Обоснование',  flex:0.3,},
+            { field: 'deistvie', headerName: 'Действие',flex:0.4},
+            { field: 'obosnovanie', headerName: 'Обоснование',  flex:0.4,},
             { field: 'data_dob', headerName: 'Дата доб.',flex:0.3,
                 type: 'date',
                 valueGetter: (params) => {

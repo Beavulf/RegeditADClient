@@ -68,11 +68,11 @@ export const createNavigation = (AccessDB) => [
       //   title: '-Обучение',
       //   icon: <ListAltIcon />,
       // },
-      // {
-      //   segment: 'stajirovka', 
-      //   title: '-Стажировка',
-      //   icon: <ListAltIcon />,
-      // },
+      {
+        segment: 'stajirovka', 
+        title: 'Стажировка',
+        icon: <ListAltIcon />,
+      },
       // {
       //   segment: 'dekret', 
       //   title: '-Декрет',

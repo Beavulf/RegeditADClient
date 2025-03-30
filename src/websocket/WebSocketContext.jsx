@@ -165,7 +165,7 @@ const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
 const loadCollection = [
   'Users', 'Otdel', 'Doljnost', 'Sotrudnik', 'Pdoka', 'Priem', 
   'SbrosAD', 'Subject', 'Company', 'Prodlenie', 'Contract', 'Access', 'Naznachenie', 'Perevod', 'VPerevod', 'Familia', 'Uvolnenie',
-  'Zapros', 'Svodka', 'Revizor', 'ChdTI', 'Aipsin', 'ADTool'
+  'Zapros', 'Svodka', 'Revizor', 'ChdTI', 'Aipsin', 'ADTool', 'Stajirovka',
 ];
 
 // Создаем контекст
@@ -196,13 +196,14 @@ const RevizorContext = createContext();
 const ChdtiContext = createContext();
 const AipsinContext = createContext();
 const AdtoolContext = createContext();
+const StajirovkaContext = createContext();
 
 
 // Создаем воркер для обработки сообщений
 const worker = new Worker(new URL('./wsWorker.js', import.meta.url));
 
 export const WebSocketProvider = ({ children, token }) => {
-  // Создаем отдельные состояния для каждой коллекции.
+  // Создаем отдельные состояния для каждой коллекции
   const [users, setUsers] = useState([]);
   const [otdel, setOtdel] = useState([]);
   const [doljnost, setDoljnost] = useState([]);
@@ -227,6 +228,7 @@ export const WebSocketProvider = ({ children, token }) => {
   const [chdti, setChdti] = useState([]);
   const [aipsin, setAipsin] = useState([]);
   const [adtool, setAdtool] = useState([]);
+  const [stajirovka, setStajirovka] = useState([]);
 
   // Общий state загрузки
   const [loading, setLoading] = useState(true);
@@ -306,6 +308,9 @@ export const WebSocketProvider = ({ children, token }) => {
       case 'ADTool':
         setAdtool(newData);
       break;
+      case 'Stajirovka':
+        setStajirovka(newData);
+      break;
       default:
         break;
     }
@@ -323,11 +328,13 @@ export const WebSocketProvider = ({ children, token }) => {
         setLoading(true);
         try {
           // Запрашиваем данные для каждой коллекции
-          await Promise.all(loadCollection.map(async (collection) => 
-          {
-            await loadData(collection);
-          }
-          ));
+          await Promise.all(loadCollection.map(async (collection) => {
+            try {
+              await loadData(collection);
+            } catch (error) {
+              console.error(`Error loading ${collection}:`, error);
+            }
+          }));
           sendJsonMessage({ type: 'getAllClientsIp' });
         } catch (error) {
           console.error('Error loading initial data:', error);
@@ -337,6 +344,9 @@ export const WebSocketProvider = ({ children, token }) => {
             setLoading(false);
           }, 1000);
         }
+      },
+      onError: (error) => {
+        console.error('WebSocket error:', error);
       }
     }
   );
@@ -344,11 +354,13 @@ export const WebSocketProvider = ({ children, token }) => {
   // Функция запроса данных по коллекции
   const loadData = useCallback(
     async (collection) => {
+      // получение последних 7 дней
       const threeDaysAgo = dayjs().subtract(7, 'day').toISOString();
       const message = {
         type: 'getCollectionMongoose',
         data: {
           collection: collection,
+          // если получаем данные из таблицы Дока, то получаем только за последние 7 дней
           filter: collection === 'Pdoka' ? { data_dob: { $gte: threeDaysAgo } } : {}
         }
       };
@@ -423,6 +435,7 @@ export const WebSocketProvider = ({ children, token }) => {
   const chdtiValue = useMemo(() => chdti, [chdti]);
   const aipsinValue = useMemo(() => aipsin, [aipsin]);
   const adtoolValue = useMemo(() => adtool, [adtool]);
+  const stajirovkaValue = useMemo(() => stajirovka, [stajirovka]);
 
   return (
     <WebSocketContext.Provider value={{ sendJsonMessage, readyState, loading }}>
@@ -452,7 +465,9 @@ export const WebSocketProvider = ({ children, token }) => {
                                                 <ChdtiContext.Provider value={chdtiValue}>
                                                   <AipsinContext.Provider value={aipsinValue}>
                                                     <AdtoolContext.Provider value={adtoolValue}>
-                                                      {children}
+                                                      <StajirovkaContext.Provider value={stajirovkaValue}>
+                                                        {children}
+                                                      </StajirovkaContext.Provider>
                                                     </AdtoolContext.Provider>
                                                   </AipsinContext.Provider>                                                  
                                                 </ChdtiContext.Provider>
@@ -510,3 +525,4 @@ export const useRevizor = () => useContext(RevizorContext);
 export const useChdti = () => useContext(ChdtiContext);
 export const useAipsin = () => useContext(AipsinContext);
 export const useAdtool = () => useContext(AdtoolContext);
+export const useStajirovka = () => useContext(StajirovkaContext);

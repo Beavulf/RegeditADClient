@@ -35,6 +35,7 @@ import Revizor from '../programms/Revizor/Revizor.jsx'
 import Chdti from '../programms/Chdti/Chdti.jsx'
 import Aipsin from '../programms/Aipsin/Aipsin.jsx'
 import ADTool from '../regestry/ADTool/ADTool.jsx'
+import Stajirovka from '../regestry/Stajirovka/Stajirovka.jsx';
 
 import { createNavigation } from './NAVIGATION.jsx'
 import { useReadyState, useLastMessage, useAccess } from '../../websocket/WebSocketContext.jsx'
@@ -227,7 +228,7 @@ function MainLayout(props) {
     );
   },[])
 
-  const demoWindow = window !== undefined ? window() : undefined;
+  // const demoWindow = window !== undefined ? window() : undefined;
   const renderRoutes = useMemo(() => (
     <>
       {router.pathname.includes(`/users`) && <ProtectedRoute><Users /></ProtectedRoute>}
@@ -253,6 +254,7 @@ function MainLayout(props) {
       {router.pathname.includes(`/chdti`) && <Chdti />}
       {router.pathname.includes(`/aipsin`) && <Aipsin />}
       {router.pathname.includes(`/adtool`) && <ADTool />}
+      {router.pathname.includes(`/stajirovka`) && <Stajirovka />}
 
     </>
   ), [router.pathname]);
@@ -262,7 +264,7 @@ function MainLayout(props) {
       navigation={filteredNAVIGATION}
       router={router}
       theme={demoTheme}
-      window={demoWindow}
+      // window={demoWindow}
       branding={{title:`RegeditAD | ${storedRole.toUpperCase()}`}}  
     >
       <DashboardLayout slots = {{
@@ -277,8 +279,8 @@ function MainLayout(props) {
   );
 }
 
-MainLayout.propTypes = {
-  window: PropTypes.func,
-};
+// MainLayout.propTypes = {
+//   window: PropTypes.func,
+// };
 
 export default MainLayout;
