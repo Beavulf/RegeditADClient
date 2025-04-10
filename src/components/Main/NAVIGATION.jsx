@@ -10,6 +10,7 @@ import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import Groups2Icon from '@mui/icons-material/Groups2';
 import KeyIcon from '@mui/icons-material/Key';
+import ContactPageIcon from '@mui/icons-material/ContactPage';
 import Chip from '@mui/material/Chip';
 import PermContactCalendarIcon from '@mui/icons-material/PermContactCalendar';
 
@@ -27,6 +28,11 @@ export const createNavigation = (AccessDB) => [
     segment: 'sotrudniki',
     title: 'Сотрудники',
     icon: <Groups2Icon />,
+  },
+  {
+    segment: 'sotrinfo',
+    title: 'О сотруднике',
+    icon: <ContactPageIcon />,
   },
   {
     segment: 'subject',

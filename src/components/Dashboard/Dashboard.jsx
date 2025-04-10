@@ -36,7 +36,6 @@ export default function Dashboard({router}){
     const { loading } = useWebSocketContext()
     const Users = useUsers()
     const Clients = useClients()
-    // const Clients = useMemo(() => clients || [], [clients]);
     const {sendJsonMessage} = useWebSocketContext()
     const [settings, setSettings] = useState(Settings())
     const [visual, setVisual] = useState(settings.btnStyle)
@@ -56,6 +55,11 @@ export default function Dashboard({router}){
       }
       await sendJsonMessage(message)
     }
+
+    // при заходе на страницу обновлем список подключенных
+    useEffect(()=>{
+      sendJsonMessage({ type: 'getAllClientsIp' })      
+    },[])
 
     // обновление настроек
     const updateSettings = useCallback((key, value) => {
@@ -178,13 +182,11 @@ export default function Dashboard({router}){
         {name:`Пользователи`,path:`/admin-edit-table/users`},
         {name:`Прием на работу`,path:`/registry/priem`},
         {name:`Сброс пароля AD`,path:`/prava/sbrosad`},     
-        // {name:`Отпуска`,path:`/otpysk`},
         {name:`Назначение`,path:`/registry/naznachenie`},
         {name:`Перевод`,path:`/registry/perevod`},
         {name:`Временный перевод`,path:`/registry/vperevod`},
         // {name:`Обучение`,path:`/obychenie`},
-        // {name:`Стажировка`,path:`/stajirovka`},
-        // {name:`Декреты`,path:`/dekret`},
+        {name:`Стажировка`,path:`/stajirovka`},
         {name:`Изменение фамилии`,path:`/registry/familia`},
         {name:`Увольнение`,path:`/registry/uvolnenie`},
         {name:`Данные из ADTool`,path:`/registry/adtool`},

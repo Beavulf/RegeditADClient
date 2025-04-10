@@ -165,7 +165,7 @@ export default function ADTool() {
 
     const columnsPerevod = useMemo(()=>
         [
-            { field: 'id_userA', headerName: 'ФИО',  flex:0.1, }, 
+            { field: 'id_userA', headerName: 'ID',  flex:0.1, }, 
             { field: 'fio', headerName: 'ФИО',flex:0.3},
             { field: 'date_s', headerName: 'Дата нач.',flex:0.3,
                 type: 'date',

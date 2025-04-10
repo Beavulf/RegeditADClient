@@ -8,7 +8,7 @@ import { useSnackbar } from 'notistack';//
 import { AppProvider } from '@toolpad/core/react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout, ThemeSwitcher } from '@toolpad/core/DashboardLayout';
-import { PageContainer  } from '@toolpad/core/PageContainer';
+import { PageContainer } from '@toolpad/core/PageContainer';
 import { useDemoRouter } from '@toolpad/core/internal';
 import {Button, IconButton, Typography} from '@mui/material'
 import Chip from '@mui/material/Chip';
@@ -36,6 +36,7 @@ import Chdti from '../programms/Chdti/Chdti.jsx'
 import Aipsin from '../programms/Aipsin/Aipsin.jsx'
 import ADTool from '../regestry/ADTool/ADTool.jsx'
 import Stajirovka from '../regestry/Stajirovka/Stajirovka.jsx';
+import SotrInfo from '../SotrInfo/SotrInfo.jsx'
 
 import { createNavigation } from './NAVIGATION.jsx'
 import { useReadyState, useLastMessage, useAccess } from '../../websocket/WebSocketContext.jsx'
@@ -128,7 +129,7 @@ function MainLayout(props) {
 
   //пока3 уведомленией
   const  showNotif = useCallback((lastJsonMessage)=>{
-    const info = `(${lastJsonMessage.collection} | ${lastJsonMessage.client})`
+    const info = `(${lastJsonMessage.collection})`
     if (lastJsonMessage.type){
       switch (lastJsonMessage.type) {
         // case `update` :
@@ -255,10 +256,11 @@ function MainLayout(props) {
       {router.pathname.includes(`/aipsin`) && <Aipsin />}
       {router.pathname.includes(`/adtool`) && <ADTool />}
       {router.pathname.includes(`/stajirovka`) && <Stajirovka />}
+      {router.pathname.includes(`/sotrinfo`) && <SotrInfo />}
 
     </>
   ), [router.pathname]);
-
+  
   return (
     <AppProvider
       navigation={filteredNAVIGATION}

@@ -257,6 +257,7 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
                 columnVisibilityModel={{_id:false}}
                 slots={{ toolbar: GridToolbar }}
                 pagination
+                
                 slotProps={{
                     toolbar: {
                       showQuickFilter: true,
