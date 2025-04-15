@@ -208,7 +208,7 @@ function MainLayout(props) {
         </Box>
         <Box sx={{ display: 'flex', justifyContent:`space-between`, alignItems:`center`, padding:`0 15px` }}>
           <Typography>Вы: </Typography>
-          <Typography style={{color:`#ff4081`}}>{localStorage.getItem('clientIp')}</Typography>
+          <Typography style={{color:`#ff4081`}}>{localStorage.getItem('clientIp').split('::')[1]}</Typography>
           <div>
             <IconButton
               size="large"

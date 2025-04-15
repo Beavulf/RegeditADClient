@@ -7,8 +7,6 @@ import MDataGrid from '../../DataGrid/MDataGrid.jsx';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
 import { useTableActions } from '../../../websocket/LayoutMessage.jsx';
 import DialogDoka from './DialogDoka.jsx'
-import DownloadIcon from '@mui/icons-material/Download';
-import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import Fade from '@mui/material/Fade';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';

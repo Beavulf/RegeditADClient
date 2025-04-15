@@ -9,7 +9,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
 
-export default function SotrInfoDataGrid({columns, data}) {
+export default function SotrInfoDataGrid({columns, data, loading}) {
     const [rows, setRows] = useState([])
 
     // переписывание строк для указания уникального значения id вместо _id
@@ -24,6 +24,7 @@ export default function SotrInfoDataGrid({columns, data}) {
     
     return (
         <DataGrid
+            loading={loading}
             sx={{
                 borderTopRightRadius: '0px',
                 borderBottomRightRadius: '0px',
