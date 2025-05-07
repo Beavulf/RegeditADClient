@@ -1,5 +1,5 @@
 import { usePdoka } from '../../../websocket/WebSocketContext.jsx'
-import { Typography, Box, IconButton, Badge, Button, Checkbox } from '@mui/material'
+import { Typography, Box, IconButton, Badge, Button, Checkbox, CircularProgress } from '@mui/material'
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import React, { useState, useMemo, useEffect, memo } from 'react';
@@ -11,6 +11,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import Fade from '@mui/material/Fade';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import ExportExcel from './Report.jsx'
+import { useSnackbar } from 'notistack';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -29,24 +30,31 @@ const Doka = React.memo(function Doka() {
     const [startDate, setStartDate] = useState(dayjs(new Date()))
     const [endDate, setEndDate] = useState(dayjs(new Date()))
     const [allDataCheck, setAllDataCheck] = useState(false)
-
+    const { enqueueSnackbar } = useSnackbar(); 
+    const [isLoad, setIsLoad] = useState(false)
     async function getAllPdoka() {
         try {
           if (!allTime){
+            setIsLoad(true)
+            
             const response = await fetch(`http://${SERVER_ADDRESS}:${SERVER_PORT}/allpdoka`);
             if (!response.ok) {
-              throw new Error('Ошибка получения Фидбеков');
+              enqueueSnackbar(`Ошибка при запросе к серверу.`, { variant: 'error' });
+              throw new Error('Ошибка получения всех данных таблицы Дока НАСТД');
             }
             const data = await response.json();            
             setAllPdoka(data); // Сохраняем данные в состоянии
             setAllTime(true)
+            setIsLoad(false)
           } else {
             setAllTime(false)
+            setIsLoad(false)
             setAllPdoka([])
           }
             
         } catch (error) {
-            console.error('Error fetching feedbacks:', error);
+            enqueueSnackbar(`Ошибка при запросе к серверу.`, { variant: 'error' });
+            console.error('Ошибка запроса на сервер для получение всех данных Дока НАСТД', error);
         }
     }
     
@@ -196,8 +204,11 @@ const Doka = React.memo(function Doka() {
                   <ReportGmailerrorredIcon sx={{color:overdueRows.length>0 ?`#e03d3d` : `green`, bgcolor:filter && 'lightGray' || '', borderRadius:'8px'}}/>
                   </IconButton>
               </Badge>
-              <Button sx={{}} variant={allTime ? 'contained' : 'text'} onClick={getAllPdoka} title='Получить список за все время отсортированный сразу по годам, месяцам, дням (дата выполнения).'>за все время</Button>
-              
+
+              <Button loading sx={{}} variant={allTime ? 'contained' : 'outlined'} onClick={getAllPdoka} 
+                title='Получить список за все время отсортированный сразу по годам, месяцам, дням (дата выполнения).'
+                >за все время {isLoad && <CircularProgress sx={{margin:'0 5px'}} color='black' size='20px'/>}</Button>
+             
               <Box sx={{marginLeft:'auto', display:'flex', gap:1}}>
                 <Fade in={fadeReporCheck}> 
                   <Box sx={{display:'flex', alignItems:'center', gap:1}}>

@@ -309,7 +309,7 @@ const Subject = memo(function Subject() {
                         variant='contained' 
                         title='Редактировать список субъектов' 
                         onClick={async ()=>await dialogs.open(DialogSubjectEdit)}
-                    >ред.</Button>
+                    >доб.</Button>
                </Box>
                <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:`center`, flex:`1`}}>
                     <Box sx={{display:`flex`}}>Контракты<Typography color='lightblue'>: {selectSubject && selectSubject.name}</Typography></Box>

@@ -124,6 +124,11 @@ export const createNavigation = (AccessDB) => [
         icon: <DvrIcon />,
       },
       {
+        segment: 'zaprsprava',
+        title: 'Запрос права Сотр.',
+        icon: <DvrIcon />,
+      },
+      {
         segment: 'svodka',
         title: 'Сводка',
         icon: <DvrIcon />,

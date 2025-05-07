@@ -48,10 +48,14 @@ function App() {
   useEffect(()=>{
     checkCurosr()
     injectCursorStyles()
+    if (!auth) {
+      localStorage.removeItem('userRole')
+      localStorage.removeItem('clientIp')
+    }
   },[])
 
-  // Проверка токена на авторизацию
-  function handleLogin(tokenAndRole) {
+  // атворизация пользователя после получение токена
+  function handleAuthUser(tokenAndRole) {
     if (tokenAndRole.token) {
       setToken(tokenAndRole.token);
       localStorage.setItem('userRole', tokenAndRole.role);
@@ -68,20 +72,14 @@ function App() {
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <Routes>
-
         {/* Маршрут для страницы входа */}
         <Route
           path="/login"
           element={
-            auth ? <Navigate to="/dashboard" /> : (<Login onLogin={handleLogin} />)
+            auth ? <Navigate to="/dashboard" /> : (<Login onLogin={handleAuthUser} />)
           }
         />
-        {/* <Route
-          path="/logout"
-          element={
-            <Login  />
-          }
-        /> */}
+
         {/* Маршрут для главной (авторизованной) части */}
         <Route
           path="/dashboard/*"

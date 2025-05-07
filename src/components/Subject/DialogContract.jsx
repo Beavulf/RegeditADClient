@@ -5,9 +5,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Fade from '@mui/material/Fade';
+import InfoIcon from '@mui/icons-material/Info';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useState, useEffect, useMemo } from 'react';
-import { TextField, Box, FormControl, Autocomplete, Typography, Checkbox } from '@mui/material';
+import { TextField, Box, FormControl, Autocomplete, Typography, Checkbox, IconButton } from '@mui/material';
 import { useUsers, useCompany, useProdlenie, useWebSocketContext } from '../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
 import { useTableActions } from '../../websocket/LayoutMessage.jsx';
@@ -170,7 +171,11 @@ export default function DialogContract({ payload, open, onClose,  }) {
         <Box>
           <span style={{color:`red`}}>{payload?.prikaz_anull?.length >1 ? 'АННУЛИРОВАН' : ''}</span>
         </Box>
-        {/* '#f714146f' */}
+        <Box>
+          <Typography variant='caption' sx={{color:`gray`}}>{ '(ESC для выхода)'}</Typography>
+          {console.log(payload)
+          }
+        </Box>
       </DialogTitle>
       <DialogContent sx={{bgcolor:payload?.prikaz_anull?.length >1 ? '#f7141429' : '',}}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: `20px`, padding:`20px 0`, }}>
@@ -223,7 +228,7 @@ export default function DialogContract({ payload, open, onClose,  }) {
                     )}
                 />
             </FormControl>
-            <Box sx={{display:`flex`, alignItems:`start`, gap:1, justifyContent:`space-between`}}>
+            <Box sx={{display:`flex`, alignItems:`center`, gap:1, justifyContent:`space-between`,}}>
                 <DatePicker 
                     label="Дата контракта"
                     value={dateContr} 
@@ -246,6 +251,7 @@ export default function DialogContract({ payload, open, onClose,  }) {
                       },
                     }}
                 />
+                <IconButton onClick={()=>alert('Для того что бы установить дату БЕССРОЧНЫЙ, необходимо указать год 2999.')} title='Для того что бы установить дату БЕССРОЧНЫЙ, необходимо указать год 2999.'><InfoIcon/></IconButton>
             </Box>
             <Box sx={{display:`flex`, alignItems:`center`, gap:1}}>
                 <TextField

@@ -1,9 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DataGrid, GridToolbar } from '@mui/x-data-grid';
-import CloseIcon from '@mui/icons-material/Close';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import {Button, Typography, Box, Pagination, PaginationItem} from '@mui/material'
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -37,7 +33,7 @@ export default function SotrInfoDataGrid({columns, data, loading}) {
             getRowId={(row) => row._id}
             columns={columns}
             initialState={{
-                pagination: { paginationModel: { pageSize: 5 } },
+                pagination: { paginationModel: { pageSize: 10 } },
             }}              
             pageSizeOptions={[5, 10, 25, 50, { value: -1, label: 'Все' }]}
             slots={{ toolbar: GridToolbar }}

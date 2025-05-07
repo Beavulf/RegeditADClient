@@ -18,7 +18,7 @@ import {
 import LogoutIcon from '@mui/icons-material/Logout';
 import AppsIcon from '@mui/icons-material/Apps';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PersonPinIcon from '@mui/icons-material/PersonPin';
 import WebIcon from '@mui/icons-material/Web';
@@ -26,6 +26,9 @@ import LastPageIcon from '@mui/icons-material/LastPage';
 import Settings from '../../Settings.jsx'
 import {CurrentTimeDisplay} from './DateTImeCalendar.jsx'
 import ColorSelect from '../ColorSelect.jsx'
+import SotrToBlockList from '../regestry/Uvolnenie/SotrToBlockList.jsx';
+import { Link } from 'react-router-dom';
+import Divider from '@mui/material/Divider';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -190,11 +193,11 @@ export default function Dashboard({router}){
         {name:`Изменение фамилии`,path:`/registry/familia`},
         {name:`Увольнение`,path:`/registry/uvolnenie`},
         {name:`Данные из ADTool`,path:`/registry/adtool`},
+        {name:`Зарос права Сотр.`,path:`/programm/zaprsprava`},
     ]
     
     return (
-        <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:loading===true?`center`: ``}}>
-            
+        <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:loading===true?`center`: ``, gap:2}}>
             {loading ? <CircularProgress sx={{justifyContent:`center`, margin:`20% auto` }}/> : 
                 <>
                 <Box>
@@ -262,17 +265,23 @@ export default function Dashboard({router}){
                     >
                         {settings.fastTravelBtn.map(renderButton)}
                     </Box>
+                    
                 </Box>
-    
+
+                {/* правый столбец с элемнетами */}
                 <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <CurrentTimeDisplay />
-                <Box sx={{ flex: 1, border: 'GrayText solid 1px', borderRadius: '8px' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 5px' }}>
+                  {/* Список на блокировку уволенных */}
+                  <SotrToBlockList/>
+                  {/* список подключенных пользователей */}
+                  <Box sx={{ flex: 1, border: 'GrayText solid 1px', borderRadius: '8px' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 10px' }}>
                       <Typography>Подключенные пользователи:</Typography>
-                      <IconButton title='Обновить' onClick={()=>sendJsonMessage({ type: 'getAllClientsIp' })}>
+                      <IconButton size='large' title='Обновить' onClick={()=>sendJsonMessage({ type: 'getAllClientsIp' })}>
                         <RefreshIcon/>
                       </IconButton>
                     </Box>
+                    <Divider />
+
                     <List sx={{ gap: 1, maxHeight: '240px', height: '240px', overflow: 'auto' }}>
                     {Clients.map((client, index) => (
                         <ListItem
@@ -288,7 +297,9 @@ export default function Dashboard({router}){
                         </ListItem>
                     ))}
                     </List>
-                </Box>
+                  </Box>
+                  {/* Календарь время */}
+                  <CurrentTimeDisplay />
                 </Box>
             </>
             }

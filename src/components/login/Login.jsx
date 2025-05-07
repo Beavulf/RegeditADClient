@@ -5,25 +5,24 @@ import { useSnackbar } from 'notistack';
 import KeyIcon from '@mui/icons-material/Key';
 import AlertDialog from './AlertDialog';
 import axios from 'axios';
+// import IMG from '../../../public/LogoRegeditAD.png'
 
 const SERVER_ADDRESS = import.meta.env.VITE_SERVER_ADDRESS
 const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
 
+// запрос к серверу на авторизация и выдчу токена
 async function authenticateUser(address) {
   try {
     const response = await axios.post(`http://${SERVER_ADDRESS}:${SERVER_PORT}/login`, {
-      address: address, // Отправляем JSON-данные с полем username
+      address: address, // Отправляем JSON-данные с полем адреса в body
     });
-
-    const data = response.data; // Получаем данные из ответа
+    const data = response.data; // Получаем данные из ответа    
     if (data.token) {
       return { token: data.token, role: data.role }; // Возвращаем JWT-токен и роль
-    } else {
-      // throw new Error('Ошибка аутентификации - пользователь не найден');
     }
   } catch (error) {
-    console.error('ОШИБКА:', error.response?.data || error.message);
-    throw error; // Пробрасываем ошибку для обработки в вызывающем коде
+    console.error('ОШИБКА:', error.response?.data.error || error.message);
+    throw error.response?.data.error || error.message; // Пробрасываем ошибку для обработки в вызывающем коде
   }
 }
 
@@ -36,11 +35,11 @@ export default function Login({onLogin}) {
     async function getToken(){
       // тут получить имя компа и авторизовать пользователя
       try {
-        const tokenAndRole = await authenticateUser(clientIp)
+        const tokenAndRole = await authenticateUser(clientIp) //возврат токена и роли пользователя
         onLogin(tokenAndRole)
       }
-      catch {
-        enqueueSnackbar('Ошибка авторизации, пользователь не найден.', { variant: 'error' });
+      catch (err) {
+        enqueueSnackbar(`Ошибка запроса к серверу - ${err}`, { variant: 'error' });
       }
     }
 
@@ -59,12 +58,13 @@ export default function Login({onLogin}) {
           })   
     },[])
 
+    // отправка запрос на добавление пользователя в систему
     async function handleGetAccess(){
       if (login.length > 2){
         try {
           const response = await axios.post(`http://${SERVER_ADDRESS}:${SERVER_PORT}/access`, {
-            text: {client:clientIp, login:login}, // Отправляем JSON-данные с полем username
-          }); 
+            userData: {client:clientIp, login:login}, // Отправляем JSON-данные с полем username
+          });           
           if (response.status === 200) {
             enqueueSnackbar('Запрос успешно отправлен.', { variant:'success' });
           } 
@@ -82,29 +82,39 @@ export default function Login({onLogin}) {
 
     return (
         <>
-            <Typography variant="h4" gutterBottom>
-              <strong style={{color: `#ccc`}}>RegeditAD</strong>
-            </Typography>
-            <h1>Авторизация</h1>
-            <h2 style={{color:`#ccc`}}>{clientIp}</h2>
-            <Button 
-              size='large'
-              variant="outlined" 
-              endIcon={<LoginIcon/>}
-              onClick={async ()=>await getToken()}
-              >ВОЙТИ
-            </Button> 
+            <Box sx={{display:'flex', justifyContent:'center',}}>
+              {/* <img 
+                src="../../../public/LogoRegeditAD1.png" 
+                alt="Лого программы" 
+                height='500px' 
+                style={{ borderRadius:'20px',}}
+              /> */}
+              <Box sx={{m:'auto',p:1}}>
+                <Typography variant="h4" gutterBottom>
+                  <strong style={{color: `#ccc`}}>RegeditAD</strong>
+                </Typography>
+                <h1>Авторизация</h1>
+                <h2 style={{color:`#ccc`}}>{clientIp}</h2>
+                <Button 
+                  size='large'
+                  variant="outlined" 
+                  endIcon={<LoginIcon/>}
+                  onClick={async ()=>await getToken()}
+                  >ВОЙТИ
+                </Button> 
 
-            <br />
+                <br />
 
-            <Button  
-              variant="text"
-              sx={{color:`#cccc`, marginTop: `20px`}}
-              size='small'
-              endIcon={<KeyIcon/>}
-              onClick={()=>setDialog(true)}
-              >Запросить доступ
-            </Button>
+                <Button  
+                  variant="text"
+                  sx={{color:`#cccc`, marginTop: `20px`}}
+                  size='small'
+                  endIcon={<KeyIcon/>}
+                  onClick={()=>setDialog(true)}
+                  >Запросить доступ
+                </Button>
+              </Box>
+            </Box>
 
             
             <AlertDialog

@@ -3,12 +3,15 @@ import DialogUvolnenie from './DialogUvolnenie.jsx';
 import MDataGrid from '../../DataGrid/MDataGrid.jsx';
 import { useTableActions } from '../../../websocket/LayoutMessage.jsx';
 import { useUvolnenie } from '../../../websocket/WebSocketContext.jsx'
+import { Typography, Box } from '@mui/material';
+import SotrToBlockList from './SotrToBlockList.jsx';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
 
 export default function Priem() {
+
     // вызываем кастомный хук для даления строки из БД
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const Uvolnenie = useUvolnenie()
@@ -65,15 +68,18 @@ export default function Priem() {
     ) 
 
     return (
-        <div className='animated-element'>
-            <MDataGrid 
-                columns={columnsPerevod} 
-                tableData={Uvolnenie.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
-                collectionName={`Uvolnenie`} 
-                actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogUvolnenie)}
-                actionDelete={handleDeleteRowBD}
-                actionAdd={()=>handleAddInTable(`Uvolnenie`,DialogUvolnenie)}
-            />
-        </div>
+        <Box className='animated-element' sx={{display:'flex', minWidth:'0', gap:1}}>
+            <Box sx={{flex:1, height:'100%', minWidth:0}}>
+              <MDataGrid 
+                  columns={columnsPerevod} 
+                  tableData={Uvolnenie.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                  collectionName={`Uvolnenie`} 
+                  actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogUvolnenie)}
+                  actionDelete={handleDeleteRowBD}
+                  actionAdd={()=>handleAddInTable(`Uvolnenie`,DialogUvolnenie)}
+              />
+            </Box>
+            <SotrToBlockList/>
+        </Box>
     )
 }

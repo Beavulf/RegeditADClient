@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 import { createTheme } from '@mui/material/styles';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -37,12 +36,13 @@ import Aipsin from '../programms/Aipsin/Aipsin.jsx'
 import ADTool from '../regestry/ADTool/ADTool.jsx'
 import Stajirovka from '../regestry/Stajirovka/Stajirovka.jsx';
 import SotrInfo from '../SotrInfo/SotrInfo.jsx'
+import ZaprosSPrava from '../regestry/ZaprosSPrava/ZaprosSPrava.jsx'
 
 import { createNavigation } from './NAVIGATION.jsx'
 import { useReadyState, useLastMessage, useAccess } from '../../websocket/WebSocketContext.jsx'
 import styles from './Main.module.css'
 
-const storedRole = localStorage.getItem('userRole');
+// const storedRole =  || 'NONE';
 
 //установка темы
 const demoTheme = createTheme({
@@ -60,6 +60,11 @@ const demoTheme = createTheme({
         main: '#FAC4C7', // Теплый розовый
         light: '#FFE3E4', // Почти белый с розовым оттенком
         dark: '#E3A4A8', // Темный розовый
+      },
+      listToBlock:{
+        main:'#24232322',
+        light: '#2423230c',
+        dark:'#242323cb'
       },
       background: {
         default: '#FFFFFF', // Фон с легким розовым оттенком
@@ -125,7 +130,7 @@ function MainLayout(props) {
       });
   }
   const resNavigation = createNavigation(AccessDB)
-  const filteredNAVIGATION = filterNavigationByRole(resNavigation,storedRole)
+  const filteredNAVIGATION = filterNavigationByRole(resNavigation,localStorage.getItem('userRole'))
 
   //пока3 уведомленией
   const  showNotif = useCallback((lastJsonMessage)=>{
@@ -251,12 +256,13 @@ function MainLayout(props) {
       {router.pathname.includes(`/updates`) && <Updates />}
       {router.pathname.includes(`/zapros`) && <Zapros />}
       {router.pathname.includes(`/svodka`) && <Svodka />}
-      {router.pathname.includes(`/revizor`) && <Revizor />}
+      {router.pathname.includes(`/revizor`) && <Revizor />} 
       {router.pathname.includes(`/chdti`) && <Chdti />}
       {router.pathname.includes(`/aipsin`) && <Aipsin />}
       {router.pathname.includes(`/adtool`) && <ADTool />}
       {router.pathname.includes(`/stajirovka`) && <Stajirovka />}
       {router.pathname.includes(`/sotrinfo`) && <SotrInfo />}
+      {router.pathname.includes(`/zaprsprava`) && <ZaprosSPrava />}
 
     </>
   ), [router.pathname]);
@@ -266,8 +272,7 @@ function MainLayout(props) {
       navigation={filteredNAVIGATION}
       router={router}
       theme={demoTheme}
-      // window={demoWindow}
-      branding={{title:`RegeditAD | ${storedRole.toUpperCase()}`}}  
+      branding={{title:`RegeditAD | ${localStorage.getItem('userRole').toUpperCase()}`}}  
     >
       <DashboardLayout slots = {{
           toolbarActions: ()=>toolbarActions(readyState),
@@ -280,9 +285,5 @@ function MainLayout(props) {
     </AppProvider>
   );
 }
-
-// MainLayout.propTypes = {
-//   window: PropTypes.func,
-// };
 
 export default MainLayout;

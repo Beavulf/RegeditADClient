@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { StaticDateTimePicker } from '@mui/x-date-pickers/StaticDateTimePicker';
+import { StaticTimePicker } from '@mui/x-date-pickers/StaticTimePicker';
 import dayjs from 'dayjs';
 
 export function CurrentTimeDisplay() {
@@ -14,17 +14,21 @@ export function CurrentTimeDisplay() {
     }, []);
 
     return (
-        <StaticDateTimePicker
+        <StaticTimePicker
             readOnly
             value={currentTime}
             slotProps={{
                 actionBar: {
                     actions: [],
                 },
-                tabs: {
-                    hidden: true,
-                },
             }}
+            sx={{
+                '& .MuiClock-root': { display: 'none' }, // скрывает циферблат
+                border:'1px solid gray',
+                mt:2,
+                borderRadius:'20px'
+            }}
+            views={['hours', 'minutes', 'seconds',]}
         />
     );
 }
