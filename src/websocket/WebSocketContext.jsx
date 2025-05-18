@@ -324,11 +324,14 @@ export const WebSocketProvider = ({ children, token }) => {
 
   // Запускаем веб-сокет соединение
   const { sendJsonMessage, lastMessage, readyState, lastJsonMessage } = useWebSocket(
-    `ws://${SERVER_ADDRESS}:${SERVER_PORT}?token=${token}`,
+    `ws://${SERVER_ADDRESS}:${SERVER_PORT}`,
     {
       shouldReconnect: () => true,
       reconnectInterval: 3000,
       reconnectAttempts: 5,
+      options : {
+        withCredentials: true,
+      },
       onOpen: async () => {
         console.log('WebSocket connected, loading data...'); 
         setLoading(true);

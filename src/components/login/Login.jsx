@@ -4,27 +4,26 @@ import LoginIcon from '@mui/icons-material/Login';
 import { useSnackbar } from 'notistack';
 import KeyIcon from '@mui/icons-material/Key';
 import AlertDialog from './AlertDialog';
-import axios from 'axios';
 // import IMG from '../../../public/LogoRegeditAD.png'
+import api from '../../apiAxios/Api';
 
 const SERVER_ADDRESS = import.meta.env.VITE_SERVER_ADDRESS
 const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
 
-// запрос к серверу на авторизация и выдчу токена
+// запрос к серверу на авторизация и получение роли
 async function authenticateUser(address) {
   try {
-    const response = await axios.post(`http://${SERVER_ADDRESS}:${SERVER_PORT}/login`, {
+    const response = await api.post(`http://${SERVER_ADDRESS}:${SERVER_PORT}/login`, {
       address: address, // Отправляем JSON-данные с полем адреса в body
     });
-    const data = response.data; // Получаем данные из ответа    
-    if (data.token) {
-      return { token: data.token, role: data.role }; // Возвращаем JWT-токен и роль
-    }
+    return response.data; //возвращаем роль
   } catch (error) {
     console.error('ОШИБКА:', error.response?.data.error || error.message);
     throw error.response?.data.error || error.message; // Пробрасываем ошибку для обработки в вызывающем коде
   }
 }
+
+
 
 export default function Login({onLogin}) {
   const { enqueueSnackbar } = useSnackbar(); 
@@ -32,48 +31,47 @@ export default function Login({onLogin}) {
   const [dialog, setDialog] = useState(false)
   const [login, setLogin] = useState(``)
 
-    async function getToken(){
+    // атворизация на сервере и получение роли
+    async function authAndGetRole(){
       // тут получить имя компа и авторизовать пользователя
       try {
-        const tokenAndRole = await authenticateUser(clientIp) //возврат токена и роли пользователя
-        onLogin(tokenAndRole)
+        const userRole = await authenticateUser(clientIp) //возврат роли пользователя
+        onLogin(userRole)
       }
       catch (err) {
         enqueueSnackbar(`Ошибка запроса к серверу - ${err}`, { variant: 'error' });
       }
     }
 
-    //получение айпишники и проверка подключения к серверу
+    // получение айпишники и проверка подключения к серверу
+    const getAddressAndCheckConnect = async () => {
+      try {
+        const response = await api.get(`http://${SERVER_ADDRESS}:${SERVER_PORT}/adress`);
+        setClientIp(response.data.ip);
+        localStorage.setItem('clientIp', response.data.ip);
+        enqueueSnackbar('Подключение к серверу УСПЕШНО.', { variant: 'success' });
+      } catch (err) {
+        enqueueSnackbar('Сервер не отвечает.', { variant: 'warning' });
+        console.error('ОШИБКА (сервер не доступен)', err);
+      }
+    };
     useEffect(() => {
-        fetch(`http://${SERVER_ADDRESS}:${SERVER_PORT}/adress`)
-          .then(response => response.json())
-          .then(data=> {
-            setClientIp(data.ip)
-            localStorage.setItem('clientIp', data.ip)
-            enqueueSnackbar('Подключение к серверу УСПЕШНО.', { variant: 'success' });
-          })
-          .catch(err=>{
-            enqueueSnackbar('Сервер не отвечает.', { variant: 'warning' });
-            console.error('ОШИБКА (сервер не доступен)',err)
-          })   
-    },[])
+      getAddressAndCheckConnect();
+    }, []);
 
     // отправка запрос на добавление пользователя в систему
     async function handleGetAccess(){
       if (login.length > 2){
         try {
-          const response = await axios.post(`http://${SERVER_ADDRESS}:${SERVER_PORT}/access`, {
-            userData: {client:clientIp, login:login}, // Отправляем JSON-данные с полем username
+          const response = await api.post(`http://${SERVER_ADDRESS}:${SERVER_PORT}/access`, {
+            userData: {client:clientIp, login}, // Отправляем JSON-данные с полем username
           });           
           if (response.status === 200) {
             enqueueSnackbar('Запрос успешно отправлен.', { variant:'success' });
           } 
           setDialog(false)
         } catch (error) {
-          if (error){
-            enqueueSnackbar(`Ошибка при отправке запроса. ${error.response.data.error}`, { variant: 'warning' });          
-          }
-          throw error; // Пробрасываем ошибку для обработки в вызывающем коде
+          enqueueSnackbar(`Ошибка при отправке запроса: ${error.response?.data?.error || error.message}`, { variant: 'error' });
         }
       } else {
         alert(`Введите Логин (больше 2-с символов).`)
@@ -94,12 +92,12 @@ export default function Login({onLogin}) {
                   <strong style={{color: `#ccc`}}>RegeditAD</strong>
                 </Typography>
                 <h1>Авторизация</h1>
-                <h2 style={{color:`#ccc`}}>{clientIp}</h2>
+                <h2 style={{color:`#ccc`}}>{clientIp.split('::')[1] === '1' ? 'localhost' : clientIp.split('::')[1]}</h2>
                 <Button 
                   size='large'
                   variant="outlined" 
                   endIcon={<LoginIcon/>}
-                  onClick={async ()=>await getToken()}
+                  onClick={async ()=>await authAndGetRole()}
                   >ВОЙТИ
                 </Button> 
 

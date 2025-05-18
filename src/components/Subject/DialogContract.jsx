@@ -173,8 +173,6 @@ export default function DialogContract({ payload, open, onClose,  }) {
         </Box>
         <Box>
           <Typography variant='caption' sx={{color:`gray`}}>{ '(ESC для выхода)'}</Typography>
-          {console.log(payload)
-          }
         </Box>
       </DialogTitle>
       <DialogContent sx={{bgcolor:payload?.prikaz_anull?.length >1 ? '#f7141429' : '',}}>

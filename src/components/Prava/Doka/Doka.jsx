@@ -205,7 +205,7 @@ const Doka = React.memo(function Doka() {
                   </IconButton>
               </Badge>
 
-              <Button loading sx={{}} variant={allTime ? 'contained' : 'outlined'} onClick={getAllPdoka} 
+              <Button sx={{}} variant={allTime ? 'contained' : 'outlined'} onClick={getAllPdoka} 
                 title='Получить список за все время отсортированный сразу по годам, месяцам, дням (дата выполнения).'
                 >за все время {isLoad && <CircularProgress sx={{margin:'0 5px'}} color='black' size='20px'/>}</Button>
              

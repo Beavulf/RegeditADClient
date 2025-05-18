@@ -1,20 +1,20 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import DialogUvolnenie from './DialogUvolnenie.jsx';
 import MDataGrid from '../../DataGrid/MDataGrid.jsx';
 import { useTableActions } from '../../../websocket/LayoutMessage.jsx';
 import { useUvolnenie } from '../../../websocket/WebSocketContext.jsx'
-import { Typography, Box } from '@mui/material';
+import { Typography, Box, Button } from '@mui/material';
 import SotrToBlockList from './SotrToBlockList.jsx';
-
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
 
-export default function Priem() {
-
+export default function Uvolnenie({router}) {
     // вызываем кастомный хук для даления строки из БД
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const Uvolnenie = useUvolnenie()
+    const [fioToUvolnenie, setFioToUvolnenie] = useState(JSON.parse(sessionStorage.getItem('fioToUvolnenie')))
+
     const columnsPerevod = useMemo(()=>
         [
             { field: '_sotr', headerName: 'ФИО',  flex:0.7,
@@ -68,18 +68,34 @@ export default function Priem() {
     ) 
 
     return (
-        <Box className='animated-element' sx={{display:'flex', minWidth:'0', gap:1}}>
+        <Box className='animated-element' sx={{display:'flex', minWidth:'0', gap:1, height:'100%'}}>
+          
             <Box sx={{flex:1, height:'100%', minWidth:0}}>
+              <Box sx={{display:'flex', alignItems:'center', justifyContent:'space-between', }}>
+                <Typography variant='body1' color='gray'>
+                  Отфильтровано по: {fioToUvolnenie?.fio} | приказ: {fioToUvolnenie?.prikaz}
+                </Typography>
+                <Button onClick={()=>setFioToUvolnenie(()=>{
+                  sessionStorage.removeItem('fioToUvolnenie')
+                  return null
+                })}>
+                  Очистить
+                </Button>
+              </Box>
               <MDataGrid 
                   columns={columnsPerevod} 
-                  tableData={Uvolnenie.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                  tableData={[...Uvolnenie].sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
+                    .filter(el=>fioToUvolnenie !== null ? (fioToUvolnenie?.fio === el._sotr.fio && fioToUvolnenie?.prikaz === el.prikaz) : true)}
                   collectionName={`Uvolnenie`} 
                   actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogUvolnenie)}
                   actionDelete={handleDeleteRowBD}
                   actionAdd={()=>handleAddInTable(`Uvolnenie`,DialogUvolnenie)}
               />
             </Box>
-            <SotrToBlockList/>
+            <Box sx={{flex: '0 0 300px'}}>
+              <SotrToBlockList/>
+              
+            </Box>
         </Box>
     )
 }

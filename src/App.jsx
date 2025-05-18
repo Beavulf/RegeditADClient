@@ -8,6 +8,16 @@ import Main from './components/Main/Main.jsx';
 import {  useSnackbar } from 'notistack';
 import { WebSocketProvider } from './websocket/WebSocketContext.jsx';
 import Settings from './Settings.jsx';
+
+// Компонент для выполнения логаута
+const LogoutComponent = ({ onLogout }) => {
+  useEffect(() => {
+    onLogout();
+  }, [onLogout]);
+  
+  return <Navigate to="/login" />;
+};
+
 // Тема оформления
 const darkTheme = createTheme({
   palette: {
@@ -21,7 +31,6 @@ const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
 function App() {
   const [auth, setAuth] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const [token, setToken] = useState(null);  
 
   //проверка наличия параметров курсоров если нет то установка по умолчанию
   const checkCurosr = () => {
@@ -56,8 +65,7 @@ function App() {
 
   // атворизация пользователя после получение токена
   function handleAuthUser(tokenAndRole) {
-    if (tokenAndRole.token) {
-      setToken(tokenAndRole.token);
+    if (tokenAndRole.role) {
       localStorage.setItem('userRole', tokenAndRole.role);
       setAuth(true);
       Settings()
@@ -66,6 +74,12 @@ function App() {
       setAuth(false);
       enqueueSnackbar('Ошибка авторизации, пользователь не найден.', { variant: 'error' });
     }
+  }
+
+  const handleLogout = () => {
+    setAuth(false);
+    localStorage.setItem('userRole', 'manager');
+    localStorage.removeItem('clientIp');
   }
 
   return (
@@ -85,14 +99,21 @@ function App() {
           path="/dashboard/*"
           element={
             auth ? (
-              <WebSocketProvider token={token}>
-                <Main token={token} />
+              <WebSocketProvider>
+                <Main/>
               </WebSocketProvider>
             ) : (
               <Navigate to="/login" />
             )
           }
         />
+
+        {/* Маршрут для выхода из системы */}
+        <Route 
+          path="/logout" 
+          element={<LogoutComponent onLogout={handleLogout} />}
+        />
+
         {/* Редирект с корневого пути */}
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>

@@ -25,10 +25,10 @@ export function CurrentTimeDisplay() {
             sx={{
                 '& .MuiClock-root': { display: 'none' }, // скрывает циферблат
                 border:'1px solid gray',
-                mt:2,
-                borderRadius:'20px'
+                borderRadius:'20px',
+
             }}
-            views={['hours', 'minutes', 'seconds',]}
+            views={['hours', 'minutes', 'seconds']}
         />
     );
 }

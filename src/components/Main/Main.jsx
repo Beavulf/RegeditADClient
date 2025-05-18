@@ -93,12 +93,13 @@ function MainLayout(props) {
   const lastUpdate = import.meta.env.VITE_DATE_UPDATE
   const router = useDemoRouter('/dashboard');  
   const AccessDB = useAccess()
-  const { window, token } = props;
   const readyState = useReadyState();
   const lastJsonMessage = useLastMessage();
   const { enqueueSnackbar } = useSnackbar(); 
   const navigate = useNavigate()
-
+  // Инициализируем состояние таймера (3600 секунд = 1 час)
+  const [sessionTime, setSessionTime] = useState(3600);
+  
   // установка флага NEW если есть новое обновление
   useEffect(()=>{
     const localLastUpdate = localStorage.getItem('lastUpdate');
@@ -133,16 +134,10 @@ function MainLayout(props) {
   const filteredNAVIGATION = filterNavigationByRole(resNavigation,localStorage.getItem('userRole'))
 
   //пока3 уведомленией
-  const  showNotif = useCallback((lastJsonMessage)=>{
+  const showNotif = useCallback((lastJsonMessage) => {
     const info = `(${lastJsonMessage.collection})`
-    if (lastJsonMessage.type){
+    if (lastJsonMessage.type) {
       switch (lastJsonMessage.type) {
-        // case `update` :
-        //   if (lastJsonMessage.full.is_locked)
-        //   enqueueSnackbar(`Начало редактирование записи в БД. ${info}`, { variant: `info` });
-        //   if (!lastJsonMessage.full.is_locked)
-        //   enqueueSnackbar(`Конец редактирование записи в БД. ${info}`, { variant: `info` });
-        //   break;
         case `insert`:
           enqueueSnackbar(`Добавление новой записи в БД. ${info}`, { variant: `info` });
           break;
@@ -150,20 +145,22 @@ function MainLayout(props) {
           enqueueSnackbar(`Удаление записи в БД. ${info}`, { variant: `info` });
           break;
         case `quit`:
-          window.location.reload();
+          alert('Вас отключил администратор')
+          navigate('/logout'); // Это эквивалент window.location.reload()
           break;
         default:
           break;
       }
     }
     if (lastJsonMessage.error) {
-        console.log(lastJsonMessage.error);
-        enqueueSnackbar(`Ошибка при работе с БД: ${lastJsonMessage.error}`, { variant: `error` });
-        if (lastJsonMessage.cmd === 'logout') {
-          window.location.reload();
-        }
+      console.log(lastJsonMessage.error);
+      enqueueSnackbar(`Ошибка при работе с БД: ${lastJsonMessage.error}`, { variant: `error` });
+      if (lastJsonMessage.cmd === 'logout') {
+        alert(`Время вашей сессии истекло. Авторизуйтесь снова.`);
+        navigate('/logout');
+      }
     }
-  },[])
+  }, [navigate, enqueueSnackbar]);
 
   // обертка для проверки доступа к странице
   const ProtectedRoute = ({ children }) => {
@@ -186,15 +183,39 @@ function MainLayout(props) {
     }
   }, [lastJsonMessage]); 
 
+  // Добавляем функцию форматирования времени
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  useEffect(() => {
+    const sessionTimer = setInterval(() => {
+      setSessionTime((prevTime) => {
+        if (prevTime <= 0) {
+          clearInterval(sessionTimer);
+          // Когда время истекло, показываем уведомление и делаем логаут
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+
+    // Очистка таймера при размонтировании компонента
+    return () => clearInterval(sessionTimer);
+  }, []); // Пустой массив зависимостей, чтобы эффект выполнился только при монтировании
+
   //слот строки монитринга онлайн офлайн сервера
   const toolbarActions = useCallback((readyState)=>{
     return (
-      <Box sx={{display:`flex`, flexDirection:`row`, justifyContent:`space-between`, margin:`0px`, alignItems:'center'}}>
+      <Box sx={{display:`flex`, flexDirection:`row`, justifyContent:`space-between`, margin:`0px`, alignItems:'center', gap:1}}>
+        <Typography>Сессия: {formatTime(sessionTime)}</Typography>
         <p className={readyState===1 ? styles.online : styles.ofline}>{`${readyState === 0 ? 'Connecting...' : readyState === 1 ? 'Online' : 'Offline'}`}</p>
         <ThemeSwitcher />
       </Box>
     )
-  },[]);
+  },[sessionTime]);
   
   // нижняя часть бокового меню для кнопок настройки
   const SidebarFooter = useCallback(()=> {
@@ -234,7 +255,6 @@ function MainLayout(props) {
     );
   },[])
 
-  // const demoWindow = window !== undefined ? window() : undefined;
   const renderRoutes = useMemo(() => (
     <>
       {router.pathname.includes(`/users`) && <ProtectedRoute><Users /></ProtectedRoute>}
@@ -251,7 +271,7 @@ function MainLayout(props) {
       {router.pathname.includes(`/perevod`) && <Perevod />}
       {router.pathname.includes(`/vperevod`) && <VPerevod />}
       {router.pathname.includes(`/familia`) && <Familia />}
-      {router.pathname.includes(`/uvolnenie`) && <Uvolnenie />}
+      {router.pathname.includes(`/uvolnenie`) && <Uvolnenie router={router} />}
       {router.pathname.includes(`/info`) && <Info />}
       {router.pathname.includes(`/updates`) && <Updates />}
       {router.pathname.includes(`/zapros`) && <Zapros />}

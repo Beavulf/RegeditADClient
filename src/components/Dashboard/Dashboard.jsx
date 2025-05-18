@@ -27,7 +27,6 @@ import Settings from '../../Settings.jsx'
 import {CurrentTimeDisplay} from './DateTImeCalendar.jsx'
 import ColorSelect from '../ColorSelect.jsx'
 import SotrToBlockList from '../regestry/Uvolnenie/SotrToBlockList.jsx';
-import { Link } from 'react-router-dom';
 import Divider from '@mui/material/Divider';
 
 import dayjs from 'dayjs';
@@ -49,6 +48,7 @@ export default function Dashboard({router}){
       return stored === 'true';
     });
 
+    // отключение пользователя
     async function quitClient(ip){
       const message = {
         type: 'quitClientConnect',
@@ -269,11 +269,13 @@ export default function Dashboard({router}){
                 </Box>
 
                 {/* правый столбец с элемнетами */}
-                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap:2 }}>
                   {/* Список на блокировку уволенных */}
-                  <SotrToBlockList/>
+                  <Box sx={{flex:1, maxHeight:'300px'}}>
+                    <SotrToBlockList router={router}/>
+                  </Box>
                   {/* список подключенных пользователей */}
-                  <Box sx={{ flex: 1, border: 'GrayText solid 1px', borderRadius: '8px' }}>
+                  <Box sx={{ flex: 1, border: 'GrayText solid 1px', borderRadius: '8px', minHeight:'300px', display:'flex', flexDirection:'column'}}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 10px' }}>
                       <Typography>Подключенные пользователи:</Typography>
                       <IconButton size='large' title='Обновить' onClick={()=>sendJsonMessage({ type: 'getAllClientsIp' })}>
@@ -282,11 +284,11 @@ export default function Dashboard({router}){
                     </Box>
                     <Divider />
 
-                    <List sx={{ gap: 1, maxHeight: '240px', height: '240px', overflow: 'auto' }}>
+                    <List sx={{ padding: 1, flex:1, overflow: 'auto' }}>
                     {Clients.map((client, index) => (
                         <ListItem
                           key={index}
-                          sx={{ alignItems: 'center', gap: 2, bgcolor: '#9c92921d', margin:'5px 0' }}
+                          sx={{ alignItems: 'center', gap: 2, bgcolor: '#9c92921d', margin:'5px 0', borderRadius:'8px' }}
                         >
                         <PersonPinIcon />
                         <Typography>{Users.find(us=>us.address === client).name}</Typography>
@@ -299,7 +301,9 @@ export default function Dashboard({router}){
                     </List>
                   </Box>
                   {/* Календарь время */}
-                  <CurrentTimeDisplay />
+                  <Box sx={{flex:1}}>
+                    <CurrentTimeDisplay />
+                  </Box>
                 </Box>
             </>
             }

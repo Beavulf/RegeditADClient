@@ -177,6 +177,7 @@ export default function ZaprosForm() {
             />
             <Button onClick={()=>filterWithPrava(pravaToSearch)}>Поиск</Button>
           </Box>
+
           <MDataGrid 
             columns={columnsZaprosSPrava} 
             tableData={filteredData}
@@ -186,6 +187,7 @@ export default function ZaprosForm() {
             actionAdd={()=>handleAddInTable(`ZaprosSPrava`,DialogZaprosSPrava)}
           />
           <Typography variant='body' color='gray'>Статусы: ❌- 0 - не выдано, ✅ - 1 - выдано, ⚠️ - 2 - спец; S - spec</Typography>
+          
         </Box>
     );
 }
