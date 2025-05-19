@@ -62,6 +62,14 @@ const demoTheme = createTheme({
         dark: '#E3A4A8', // Темный розовый
       },
       listToBlock:{
+        main:'#2423230c',
+      },
+      listPravaOtdel: {
+        main: '#fc88b944', // Сохраняем как в светлой теме, если не переопределяется
+        light: '#fc88b944',
+        dark: '#ad49734e',
+      },
+      pravaOtdel:{
         main:'#24232322',
         light: '#2423230c',
         dark:'#242323cb'
@@ -75,7 +83,47 @@ const demoTheme = createTheme({
         secondary: '#7A7A7A',
       },
     },
-  }, dark: true },
+  }, dark: {
+    palette: {
+      primary: {
+        main: '#90caf9', // Голубой
+        light: '#e3f2fd',
+        dark: '#42a5f5',
+        contrastText: '#000000',
+      },
+      secondary: {
+        main: '#ce93d8', // Фиолетовый
+        light: '#f3e5f5',
+        dark: '#ab47bc',
+        contrastText: '#000000',
+      },
+      listToBlock:{
+        main:'#242323cb',
+      },
+      listPravaOtdel: {
+        main: '#383030', // Сохраняем как в светлой теме, если не переопределяется
+        light: '#383030',
+        dark: '#2e2727',
+      },
+      background: {
+        default: '#121212', // Тёмный фон
+        paper: '#121212', // Чуть светлее для карточек 1d1d1d
+      },
+      text: {
+        primary: '#ffffff', // Белый текст
+        secondary: 'rgba(255, 255, 255, 0.7)', // Полупрозрачный белый
+        disabled: 'rgba(255, 255, 255, 0.5)',
+      },
+      divider: 'rgba(255, 255, 255, 0.12)', // Разделители
+      action: {
+        active: '#ffffff',
+        hover: 'rgba(255, 255, 255, 0.08)',
+        selected: 'rgba(255, 255, 255, 0.16)',
+        disabled: 'rgba(255, 255, 255, 0.3)',
+        disabledBackground: 'rgba(255, 255, 255, 0.12)',
+      },
+    },
+  }, },
   breakpoints: {
     values: {
       xs: 0,

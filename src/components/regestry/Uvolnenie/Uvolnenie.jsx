@@ -71,17 +71,19 @@ export default function Uvolnenie({router}) {
         <Box className='animated-element' sx={{display:'flex', minWidth:'0', gap:1, height:'100%'}}>
           
             <Box sx={{flex:1, height:'100%', minWidth:0}}>
-              <Box sx={{display:'flex', alignItems:'center', justifyContent:'space-between', }}>
+              {/* описание по ком отфильтровано с кнопкой очистки */}
+              <Box sx={{display:'flex', alignItems:'center', justifyContent:'space-between', bgcolor:'#9c92921d', padding:0.5, borderRadius:'8px'}}>
                 <Typography variant='body1' color='gray'>
                   Отфильтровано по: {fioToUvolnenie?.fio} | приказ: {fioToUvolnenie?.prikaz}
                 </Typography>
                 <Button onClick={()=>setFioToUvolnenie(()=>{
                   sessionStorage.removeItem('fioToUvolnenie')
                   return null
-                })}>
+                })} title='Очистить фильтр'>
                   Очистить
                 </Button>
               </Box>
+              {/* таблица */}
               <MDataGrid 
                   columns={columnsPerevod} 
                   tableData={[...Uvolnenie].sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
@@ -92,9 +94,9 @@ export default function Uvolnenie({router}) {
                   actionAdd={()=>handleAddInTable(`Uvolnenie`,DialogUvolnenie)}
               />
             </Box>
+            {/* список сотрудников на блокировку */}
             <Box sx={{flex: '0 0 300px'}}>
               <SotrToBlockList/>
-              
             </Box>
         </Box>
     )

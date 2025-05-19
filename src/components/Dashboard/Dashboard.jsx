@@ -271,7 +271,7 @@ export default function Dashboard({router}){
                 {/* правый столбец с элемнетами */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap:2 }}>
                   {/* Список на блокировку уволенных */}
-                  <Box sx={{flex:1, maxHeight:'300px'}}>
+                  <Box sx={{flex:1, minHeight:'300px'}}>
                     <SotrToBlockList router={router}/>
                   </Box>
                   {/* список подключенных пользователей */}

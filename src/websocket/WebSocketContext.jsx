@@ -165,7 +165,7 @@ const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
 const loadCollection = [
   'Users', 'Otdel', 'Doljnost', 'Sotrudnik', 'Pdoka', 'Priem', 
   'SbrosAD', 'Subject', 'Company', 'Prodlenie', 'Contract', 'Access', 'Naznachenie', 'Perevod', 'VPerevod', 'Familia', 'Uvolnenie',
-  'Zapros', 'Svodka', 'Revizor', 'ChdTI', 'Aipsin', 'ADTool', 'Stajirovka', 'ZaprosSPrava',
+  'Zapros', 'Svodka', 'Revizor', 'ChdTI', 'Aipsin', 'ADTool', 'Stajirovka', 'ZaprosSPrava', 'PravaOtdel'
 ];
 
 // Создаем контекст
@@ -198,6 +198,7 @@ const AipsinContext = createContext();
 const AdtoolContext = createContext();
 const StajirovkaContext = createContext();
 const ZaprosSPravaContext = createContext();
+const PravaOtdelContext = createContext();
 
 
 // Создаем воркер для обработки сообщений
@@ -231,6 +232,7 @@ export const WebSocketProvider = ({ children, token }) => {
   const [adtool, setAdtool] = useState([]);
   const [stajirovka, setStajirovka] = useState([]);
   const [zaprosSPrava, setZaprosSPrava] = useState([]);
+  const [pravaOtdel, setPravaOtdel] = useState([]);
   
 
   // Общий state загрузки
@@ -316,6 +318,9 @@ export const WebSocketProvider = ({ children, token }) => {
       break;
       case 'ZaprosSPrava':
         setZaprosSPrava(newData);
+      break;
+      case 'PravaOtdel':
+        setPravaOtdel(newData);
       break;
       default:
         break;
@@ -446,7 +451,7 @@ export const WebSocketProvider = ({ children, token }) => {
   const adtoolValue = useMemo(() => adtool, [adtool]);
   const stajirovkaValue = useMemo(() => stajirovka, [stajirovka]);
   const zaprosSPravaValue = useMemo(() => zaprosSPrava, [zaprosSPrava]);
-
+  const pravaOtdelValue = useMemo(() => pravaOtdel, [pravaOtdel]);
 
   return (
     <WebSocketContext.Provider value={{ sendJsonMessage, readyState, loading }}>
@@ -478,7 +483,9 @@ export const WebSocketProvider = ({ children, token }) => {
                                                     <AdtoolContext.Provider value={adtoolValue}>
                                                       <StajirovkaContext.Provider value={stajirovkaValue}>
                                                         <ZaprosSPravaContext.Provider value={zaprosSPravaValue}>
-                                                          {children}
+                                                          <PravaOtdelContext.Provider value={pravaOtdelValue}>
+                                                            {children}
+                                                          </PravaOtdelContext.Provider>
                                                         </ZaprosSPravaContext.Provider>
                                                       </StajirovkaContext.Provider>
                                                     </AdtoolContext.Provider>
@@ -540,3 +547,4 @@ export const useAipsin = () => useContext(AipsinContext);
 export const useAdtool = () => useContext(AdtoolContext);
 export const useStajirovka = () => useContext(StajirovkaContext);
 export const useZaprosSPrava = () => useContext(ZaprosSPravaContext);
+export const usePravaOtdel = () => useContext(PravaOtdelContext);

@@ -23,7 +23,7 @@ export default function SotrToBlockList({ router }) {
 
     // получение списка сотрудников, которые не заблокированы и срок увольнения еще не наступил
     const  getNotBlocked = () => {
-        return Uvolnenie.filter(el=>!el.descrip.toUpperCase().includes('ЗБ') && (dayjs().isAfter(dayjs(el.data_uvol)) || dayjs().isSame(dayjs(el.data_uvol), 'day')))
+        return [...Uvolnenie].filter(el=>!el.descrip.toUpperCase().includes('ЗБ') && (dayjs().isAfter(dayjs(el.data_uvol)) || dayjs().isSame(dayjs(el.data_uvol), 'day')))
     }
 
     // элемент списка сотрудников, которые не заблокированы и срок увольнения еще не наступил
@@ -32,7 +32,7 @@ export default function SotrToBlockList({ router }) {
             <Box 
                 key={el._id} 
                 sx={{
-                    bgcolor:mode==='light' ? 'listToBlock.light' : 'listToBlock.dark', 
+                    bgcolor:'listToBlock.main',  //берем цвета из темы которые кастомно установили
                     borderRadius:'8px',
                     cursor: 'pointer',
                     '&:hover': {
