@@ -45,7 +45,7 @@ const Subject = memo(function Subject() {
     const [openDialog, setOpenDialog] = useState(false)
 
     const [searchSubj, setSearchSubj] = useState(``) //поле ввода фио textfield
-    const [selectSubject, setSelectSubject] = useState({}) //обьект выбранное субьекта
+    const [selectSubject, setSelectSubject] = useState(null) //обьект выбранное субьекта
     const [isSearching, setIsSearching] = useState(false) // состояние для отслеживания процесса поиска
     const [debouncedSearchSubj, setDebouncedSearchSubj] = useState('') // значение после задержки
     
@@ -66,7 +66,40 @@ const Subject = memo(function Subject() {
         };
     }, [searchSubj]);
 
-    
+    // Добавьте этот useEffect в компонент Subject
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            // Игнорируем, если нажаты модификаторы (Ctrl, Alt и т.д.) или спецклавиши
+            if (event.ctrlKey || event.altKey || event.metaKey || 
+                event.key === 'Tab' || event.key === 'Escape' || 
+                event.key === 'Enter' || event.key.length !== 1) {
+                return;
+            }
+            
+            // Игнорируем, если фокус уже на текстовом поле или другом элементе ввода
+            if (event.target.tagName === 'INPUT' || 
+                event.target.tagName === 'TEXTAREA' || 
+                event.target.isContentEditable) {
+                return;
+            }
+            
+            // Найти и фокусировать поле поиска
+            const searchField = document.getElementById('isearchSubj');
+            if (searchField) {
+                // Предотвращаем стандартное поведение (добавление символа браузером)
+                event.preventDefault();
+                searchField.focus();
+                // Устанавливаем введенный символ в поле поиска
+                setSearchSubj(event.key);
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
 
     const filteredSubjects = useMemo(() => {
         if (!debouncedSearchSubj || debouncedSearchSubj.length < 3) return [];
@@ -84,8 +117,9 @@ const Subject = memo(function Subject() {
 
     // скрытие окна субьектов при открытии диалогового окна редактирования контрактов
     async function openAddRowDialog() {
+        if (!selectSubject) {dialogs.alert(`Выберите человека для добавления контракта`); return}
         setOpenDialog(true)
-        await handleAddInTable(`Contract`,DialogContract,selectSubject)
+        await handleAddInTable(`Contract`,DialogContract, selectSubject)
         setOpenDialog(false)
     }
     const handleFilterSubjects = useCallback((value) => {
@@ -95,7 +129,7 @@ const Subject = memo(function Subject() {
     // очистка фильтра
     function handleClearFilter(){
         setSearchSubj('');
-        setSelectSubject({})
+        setSelectSubject(null)
     }
 
     // получение списка контрактов выбранного субьекта
@@ -103,62 +137,6 @@ const Subject = memo(function Subject() {
         setSelectSubject(sbj);
     }, []);
 
-    //загрузка файла excel для импорта массива данных
-    // const [fileContent, setFileContent] = useState([]);
-    // const handleFileUpload = (event) => {
-    //   const file = event.target.files[0];
-    //   if (!file) return;
-  
-    //   const reader = new FileReader();
-  
-    //   reader.onload = (e) => {
-    //     const data = new Uint8Array(e.target.result);
-    //     const workbook = xlsx.read(data, { type: "array", });
-    //     const sheetName = workbook.SheetNames[1];
-    //     const worksheet = workbook.Sheets[sheetName];
-    //     const jsonData = xlsx.utils.sheet_to_json(worksheet);
-  
-    //     console.log("Массив из Excel:", jsonData);
-    //     setFileContent(jsonData);
-    //   };
-  
-    //   reader.readAsArrayBuffer(file);
-    // };
-
-    // нормальзация полученной даты из excel
-    // function excelDateToJSDate(excelDate) {
-    //     const baseDate = new Date(1899, 11, 30); // 30 декабря 1899 года
-    //     return new Date(baseDate.getTime() + (excelDate * 24 * 60 * 60 * 1000));
-    // }
-
-    // запись полученых контрактов в нормальзованный вид для БД и запись в БД
-    // async function getContracts() {
-    //     fileContent.forEach(async (contract,index)=>{
-    //         const message = {
-    //             type: 'insertInToCollection',
-    //             data: {
-    //               collection: 'Contract',
-    //               body: {
-    //                 _subj: Subject.find(el=>el.name === contract.subj.trim())?._id || console.log(`SUBJ-------${index}`),
-    //                 _com: Company.find(el=>el.unp.toString() === contract.unp.toString())?._id,
-    //                 data_cert: excelDateToJSDate(contract.data_cert),
-    //                 data_contr: typeof (contract.data_contr) != 'string' ? excelDateToJSDate(contract.data_contr) : new Date(`10.10.2999`),
-    //                 data_dover: typeof (contract.data_dover) != 'string' ? excelDateToJSDate(contract.data_dover) : new Date(`10.10.2999`),
-    //                 certif: contract.cert || index,
-    //                 prikaz: contract.prikaz || index,
-    //                 data_zakl: excelDateToJSDate(contract.data_zakl),
-    //                 descrip: '',
-    //                 _who: '679791da9eed96a34b351bb0',
-    //                 data_dob: new Date(),
-    //                 is_locked: false,
-    //                 time_edit: new Date(),
-    //                 certif_edit: null
-    //             },
-    //             },
-    //         };
-    //         await sendJsonMessage(message)
-    //     })
-    // }
 
     const columnsContract = useMemo(()=>
         [
@@ -270,7 +248,7 @@ const Subject = memo(function Subject() {
         const contractsToFilter = Contract.filter(el => !el.anull);
         if (selectSubject?._id) {
             // Фильтруем по ID выбранного субъекта
-            return contractsToFilter.filter(el => el._subj._id === selectSubject._id);
+            return contractsToFilter.filter(el => el._subj._id === selectSubject._id).sort((a, b) => dayjs(b.time_edit).valueOf() - dayjs(a.time_edit).valueOf());;
         }
         // Если субъект не выбран, показываем все, отсортированные по time_edit по убыванию
         return contractsToFilter.sort((a, b) => dayjs(b.time_edit).valueOf() - dayjs(a.time_edit).valueOf());
@@ -288,6 +266,11 @@ const Subject = memo(function Subject() {
                         label="ФИО"
                         size='small'
                         value={searchSubj}
+                        onKeyDown={(event)=>{
+                            if (event.key === 'Escape') {
+                                handleClearFilter();
+                            }}
+                        }
                         onChange={(event)=>{handleFilterSubjects(event.target.value)}}
                         slotProps={{
                             input: {
@@ -320,7 +303,7 @@ const Subject = memo(function Subject() {
                         отчет <DownloadIcon></DownloadIcon></Button>
                         <Button variant='outlined' title='Добавить Субьекта и Компанию сразу' onClick={async ()=>await dialogs.open(DialogFullAdd)}>
                         полное добавление</Button>
-                        <Button variant='contained' title='Просмотреть ВСЕ контракты' onClick={()=>{setSelectSubject({})}}>
+                        <Button variant='contained' title='Просмотреть ВСЕ контракты' onClick={()=>{setSelectSubject(null)}}>
                         ВСЕ</Button>
                     </Box>
                         
@@ -347,7 +330,7 @@ const Subject = memo(function Subject() {
                                 style={{ transitionDelay: `300ms` }}
                             >
                             <Box key={sbj._id} sx={{display:`flex`, flexDirection:`column`}}>
-                                <Button  variant={sbj._id === selectSubject._id ? `contained` : `outlined`} sx={{display:`flex`, flexDirection:`column`, fontSize:`11px`}} onClick={()=>getSubjectContracts(sbj)}>
+                                <Button  variant={selectSubject && sbj._id === selectSubject._id ? `contained` : `outlined`} sx={{display:`flex`, flexDirection:`column`, fontSize:`11px`}} onClick={()=>getSubjectContracts(sbj)}>
                                     {sbj.name}
                                     <Box color={`GrayText`} sx={{display:`flex`, justifyContent:`space-between`, padding:`0 3px`}}>
                                         <Typography variant='caption'>{dayjs(new Date(sbj.data_dob)).format(`DD.MM.YYYY`)}-</Typography>
@@ -358,7 +341,9 @@ const Subject = memo(function Subject() {
                             </Fade>
                         )
                     })}
-                    {searchSubj.length < 1 ? <Typography color='gray' sx={{justifyContent:'center', margin:'auto 0'}}>Начните вводить ФИО <br /> для поиска</Typography> : undefined}
+                    {searchSubj.length < 1 ? <Typography color='gray' 
+                    sx={{justifyContent:'center', margin:'auto 0', textShadow: '10px 10px 10px rgb(10, 9, 9)'}}>
+                        Просто начните вводить ФИО <br /> для поиска...</Typography> : undefined}
                 </Paper>
 
                 {/* столбец с данными таблицы контрактов и компаний*/}
@@ -367,8 +352,7 @@ const Subject = memo(function Subject() {
                     <Paper variant='elevation' elevation={1} sx={{ overflow:`hidden`, height:'100%', maxWidth:'1270px'}}>
                         <MDataGrid 
                             conf={confContr}
-                            tableData={
-                                filteredContracts}
+                            tableData={filteredContracts}
                             columns={columnsContract} 
                             collectionName={`Contract`} 
                             actionEdit={(id,oldData,collectionName)=>openEditRowDialog(id,oldData,collectionName)}
@@ -383,7 +367,7 @@ const Subject = memo(function Subject() {
                             aria-controls="panel1-content"
                             id="com-accordion"
                         >
-                            <Typography component="span">Компании</Typography>
+                            <Typography color='primary.main' component="span">Список компаний (редактирование, добавление)</Typography>
                         </AccordionSummary>
                         <AccordionDetails sx={{ overflow: 'auto', display: 'block', minHeight:`520px` }}>
                             <Paper variant='elevation' elevation={1} sx={{minHeight:`361px`}}>

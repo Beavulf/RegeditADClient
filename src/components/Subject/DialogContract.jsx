@@ -7,12 +7,13 @@ import DialogActions from '@mui/material/DialogActions';
 import Fade from '@mui/material/Fade';
 import InfoIcon from '@mui/icons-material/Info';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { TextField, Box, FormControl, Autocomplete, Typography, Checkbox, IconButton } from '@mui/material';
 import { useUsers, useCompany, useProdlenie, useWebSocketContext } from '../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
 import { useTableActions } from '../../websocket/LayoutMessage.jsx';
 import DialogProdlenie from './DialogProdlenie.jsx';
+import KeyboardDoubleArrowLeftIcon from '@mui/icons-material/KeyboardDoubleArrowLeft';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -35,9 +36,11 @@ export default function DialogContract({ payload, open, onClose,  }) {
   const [dateContr, setDateContr] = useState(dayjs(new Date()));
   const [dateDover, setDateDover] = useState(dayjs(new Date()));
   const [dateRegi, setDateRegi] = useState(dayjs(new Date()));
-  const [prikaz, seetPrikaz] = useState(``)
+  const [prikaz, setPrikaz] = useState(``)
   const [timeEdit, setTimeEdit] = useState(null);
   const [editCertif, setEditCertif] = useState(false);
+  const [originDateContr, setOriginDateContr] = useState(null);
+  const [originDateDover, setOriginDateDover] = useState(null);
 
   const [prikazAnull, setPrikazAnull] = useState('')
   const [dateAnull, setDateAnull] = useState(dayjs(new Date()))
@@ -49,35 +52,38 @@ export default function DialogContract({ payload, open, onClose,  }) {
 
   // Заполняем начальные данные при открытии окна
   useEffect(() => {     
-    if (payload) {   
-        if (payload.addcontext) {  
-            setSubject(payload.addcontext._id);
-        } else {      
+    if (payload) {          
+      if (payload.addcontext) {  
+          setSubject(payload.addcontext._id);
+      }
+      else {      
         setPrikazAnull(payload.prikaz_anull || '');
         setDateAnull(dayjs(new Date(payload.data_anull)) || dayjs(new Date()).format('DD.MM.YYYY'));
 
         setCertif(payload.certif || '');
         setTimeEdit(dayjs(new Date(payload.time_edit)) || dayjs(new Date()).format('DD.MM.YYYY HH:mm'));
         setDateCertif(dayjs(new Date(payload.data_cert)) || dayjs(new Date()));
-        setCompany(payload._com._id || '');
+        setCompany(payload?._com?._id || '');
         setDateContr(dayjs(new Date(payload.data_contr)) || dayjs(new Date()));
         setDateDover(dayjs(new Date(payload.data_dover)) || dayjs(new Date()));
         setDateRegi(dayjs(new Date(payload.data_zakl)) || dayjs(new Date()));
-        seetPrikaz(payload.prikaz || '');
+        setPrikaz(payload.prikaz || '');
         setDataDob(dayjs(new Date(payload.data_dob)) || dayjs(new Date()));
         setDescrip(payload.descrip || '');
         setSubject(payload._subj._id);
-        }
+        setOriginDateContr(payload.originData ? dayjs(new Date(payload.originData.contract)) : null);
+        setOriginDateDover(payload.originData ? dayjs(new Date(payload.originData.dover)) : null);
+      }
     }
   }, [payload]);
 
   //установка флага на изменение сертификата
-  function handleChangeEditCertif(event) {
+  const handleChangeEditCertif = useCallback((event) => {
     setEditCertif(event.target.checked);
-  }
+  }, []);
 
   // аннулирование контракта
-  async function handleAnullClick() {
+  const handleAnullClick = useCallback(async () => {
     if (prikazAnull.length > 0 && dateAnull!=null) {
       const confirmed = await dialogs.confirm(`Аннулировать контракт ?`, {
         okText: 'Да',
@@ -89,17 +95,17 @@ export default function DialogContract({ payload, open, onClose,  }) {
           data: {
             collection: 'Contract',
             filter: { _id: payload._id },
-            value: { prikaz_anull:prikazAnull, data_anull:dateAnull, anull:true },
+            value: { prikaz_anull: prikazAnull, data_anull: dateAnull, anull: true },
           },
         };
         sendJsonMessage(message);
       }
-      setFade(false)
+      setFade(false);
+    } else {
+      dialogs.alert('Заполните поля "Приказ аннулирования" и "Дата аннулирования"!');
     }
-    else {
-      dialogs.alert('Заполните поля "Приказ аннулирования" и "Дата аннулирования"!')
-    }
-  }
+  }, [prikazAnull, dateAnull, payload, dialogs, sendJsonMessage, setFade]);
+
   const columnsProdlenie = useMemo(()=>
     [
         { field: 'ndata_contr', headerName: 'Дата контр.',flex:0.25,
@@ -155,18 +161,25 @@ export default function DialogContract({ payload, open, onClose,  }) {
                 return null;
               },
         }, 
-        { field: '_who', headerName: 'Кто доб.',  width:`80`,
+        { field: '_who', headerName: 'Кто доб.',  width:`100`,
             valueGetter: (params) => params?.name || ''
         }, 
         { field: 'descrip', headerName: 'Описание', width: 150, flex:0.12, },
     ],[]) 
 
+  const filteredProdlenie = useMemo(() => 
+    Prodlenie.filter(el => el._contr._id === payload?._id),
+    [Prodlenie, payload]
+  );
+
   return (
-    <Dialog fullScreen open={open} onClose={() => onClose()} >
+    <Dialog fullScreen open={open} onClose={() => onClose()}>
+
+      {/* заголовок */}
       <DialogTitle sx={{display:'flex', justifyContent:'space-between'}}>
         <Box>
           Редактирование данных контракта: 
-          <span style={{color:`lightblue`}}> послед. редактирование {dayjs(timeEdit).format('DD.MM.YYYY HH:mm')}</span> 
+          <span style={{color:`lightblue`}}> послед. редактирование {timeEdit && dayjs(timeEdit).format('DD.MM.YYYY HH:mm') || '| ИДЕТ СОЗДАНИЕ'}</span> 
         </Box>
         <Box>
           <span style={{color:`red`}}>{payload?.prikaz_anull?.length >1 ? 'АННУЛИРОВАН' : ''}</span>
@@ -175,6 +188,8 @@ export default function DialogContract({ payload, open, onClose,  }) {
           <Typography variant='caption' sx={{color:`gray`}}>{ '(ESC для выхода)'}</Typography>
         </Box>
       </DialogTitle>
+
+      {/* контент */}
       <DialogContent sx={{bgcolor:payload?.prikaz_anull?.length >1 ? '#f7141429' : '',}}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: `20px`, padding:`20px 0`, }}>
             <Box sx={{display:`flex`, alignItems:`center`, gap:2}}>
@@ -191,7 +206,7 @@ export default function DialogContract({ payload, open, onClose,  }) {
                     }}
                 />
                 <DatePicker 
-                    label="Дата конц. сертиф"
+                    label="Дата конц. сертиф*"
                     value={dateCertif} 
                     onChange={(newValue) => {setDateCertif(newValue)}} 
                 />
@@ -227,29 +242,61 @@ export default function DialogContract({ payload, open, onClose,  }) {
                 />
             </FormControl>
             <Box sx={{display:`flex`, alignItems:`center`, gap:1, justifyContent:`space-between`,}}>
-                <DatePicker 
-                    label="Дата контракта"
-                    value={dateContr} 
-                    onChange={(newValue) => {setDateContr(newValue)}} 
-                    sx={{flex:1}}
-                    slotProps={{
-                      textField: {
-                        helperText: dateContr.format('YYYY') === '2999' ? 'Бессрочный' : '',
-                      },
-                    }}
-                />
-                <DatePicker 
-                    label="Дата доверенности"
-                    value={dateDover} 
-                    onChange={(newValue) => {setDateDover(newValue)}} 
-                    sx={{flex:1}}
-                    slotProps={{
-                      textField: {
-                        helperText: dateDover.format('YYYY') === '2999' ? 'Бессрочный' : '',
-                      },
-                    }}
-                />
-                <IconButton onClick={()=>alert('Для того что бы установить дату БЕССРОЧНЫЙ, необходимо указать год 2999.')} title='Для того что бы установить дату БЕССРОЧНЫЙ, необходимо указать год 2999.'><InfoIcon/></IconButton>
+                <Box sx={{display:`flex`, alignItems:`center`, flex:1}}>
+                  <DatePicker 
+                      label="Оригинальная"
+                      value={originDateContr} 
+                      onChange={(newValue) => {setOriginDateContr(newValue)}} 
+                      sx={{flex:0.3, bgcolor:'listToBlock.main'}}
+                      slotProps={{
+                        textField: {
+                          helperText: originDateContr && originDateContr.format('YYYY') === '2999' ? 'Бессрочный' : '',
+                        },
+                      }}
+                  />
+                  <IconButton title='Скопировать' size='small' sx={{m:0}} onClick={()=>{setOriginDateContr(dateContr)}}>
+                    <KeyboardDoubleArrowLeftIcon/>
+                  </IconButton>
+                  <DatePicker 
+                      label="Дата контракта*"
+                      value={dateContr} 
+                      onChange={(newValue) => {setDateContr(newValue)}} 
+                      sx={{flex:1}}
+                      slotProps={{
+                        textField: {
+                          helperText: dateContr.format('YYYY') === '2999' ? 'Бессрочный' : '',
+                        },
+                      }}
+                  />
+                </Box>
+                <Box  sx={{display:`flex`, alignItems:`center`, flex:1}}>
+                  <DatePicker 
+                      label="Оригинальная"
+                      value={originDateDover} 
+                      onChange={(newValue) => {setOriginDateDover(newValue)}} 
+                      sx={{flex:0.3, bgcolor:'listToBlock.main'}}
+                      slotProps={{
+                        textField: {
+                          helperText: originDateDover && originDateDover.format('YYYY') === '2999' ? 'Бессрочный' : '',
+                        },
+                      }}
+                  />
+                  <IconButton title='Скопировать' size='small' sx={{m:0}} onClick={()=>{setOriginDateDover(dateDover)}}>
+                    <KeyboardDoubleArrowLeftIcon/>
+                  </IconButton>
+                  <DatePicker 
+                      label="Дата доверенности*"
+                      value={dateDover} 
+                      onChange={(newValue) => {setDateDover(newValue)}} 
+                      sx={{flex:1}}
+                      slotProps={{
+                        textField: {
+                          helperText: dateDover.format('YYYY') === '2999' ? 'Бессрочный' : '',
+                        },
+                      }}
+                  />
+                </Box>
+                <IconButton onClick={()=>dialogs.alert('Для того что бы установить дату БЕССРОЧНЫЙ, необходимо указать год 2999.')} title='Для того что бы установить дату БЕССРОЧНЫЙ, необходимо указать год 2999.'><InfoIcon/></IconButton>
             </Box>
             <Box sx={{display:`flex`, alignItems:`center`, gap:1}}>
                 <TextField
@@ -257,10 +304,10 @@ export default function DialogContract({ payload, open, onClose,  }) {
                     label="Приказ*"
                     fullWidth={true}
                     value={prikaz}
-                    onChange={(event) => seetPrikaz(event.target.value)}
+                    onChange={(event) => setPrikaz(event.target.value)}
                 />
                 <DatePicker 
-                    label="Дата регистрации"
+                    label="Дата регистрации*"
                     value={dateRegi} 
                     onChange={(newValue) => {setDateRegi(newValue)}} 
                 />
@@ -274,41 +321,49 @@ export default function DialogContract({ payload, open, onClose,  }) {
             />
         </Box>
         <hr />
-        <Box sx={{display:`flex`, flexDirection:`column`}}>
-            <Typography variant="h6">Продление</Typography>
-            <MDataGrid 
-                conf={conf}
-                columns={columnsProdlenie} 
-                tableData={Prodlenie.filter(el=>el._contr._id === payload._id)}
-                collectionName={`Prodlenie`} 
-                actionEdit={()=>console.log('no')}
-                actionDelete={handleDeleteRowBD}
-                actionAdd={async ()=>{await handleAddInTable(`Prodlenie`,DialogProdlenie,{_contr:payload._id}) && onClose()}}
-            />
-        </Box>
-        {/* аннулирование контракта */}
-        <Box sx={{display:'flex', gap:1, alignItems:'center', margin:'0.5rem 0'}}>
-            <Button variant={fade === false ? 'outlined' : 'contained'} sx={{height:'55px'}} color='error' onClick={()=>setFade((prev)=>!prev)}>
-              аннулировать
-            </Button>
-              <Fade in={fade}>
-                <Box sx={{display:'flex', gap:1, alignItems:'center'}}>
-                  <TextField
-                      id="prikaz-anull"
-                      label="Приказ"
-                      fullWidth
-                      value={prikazAnull}
-                      onChange={(event) => setPrikazAnull(event.target.value)}
-                  />
-                  <DatePicker 
-                    label="Дата аннулирования"
-                    value={dateAnull} 
-                    onChange={(newValue) => {setDateAnull(newValue)}} 
-                  />
-                  <Button variant='contained' sx={{height:'55px'}} onClick={()=>{handleAnullClick(); }}>ok</Button>
-                </Box>
-              </Fade>
-        </Box>
+        {payload.prikaz && (
+          <>
+            <Box sx={{display:`flex`, flexDirection:`column`}}>
+                <Typography variant="h6">Продление</Typography>
+                <MDataGrid 
+                    conf={conf}
+                    columns={columnsProdlenie} 
+                    tableData={filteredProdlenie}
+                    collectionName={`Prodlenie`} 
+                    actionEdit={()=>console.log('no')}
+                    actionDelete={handleDeleteRowBD}
+                    actionAdd={async ()=>{await handleAddInTable(`Prodlenie`,DialogProdlenie,{_contr:payload._id}) && onClose()}}
+                />
+            </Box>
+            {/* аннулирование контракта */}
+            <Box sx={{display:'flex', gap:1, alignItems:'center', margin:'0.5rem 0'}}>
+                <Button variant={fade === false ? 'outlined' : 'contained'} sx={{height:'55px'}} color='error' onClick={()=>setFade((prev)=>!prev)}>
+                  аннулировать
+                </Button>
+                  <Fade in={fade}>
+                    <Box sx={{display:'flex', gap:1, alignItems:'center'}}>
+                      <TextField
+                          id="prikaz-anull"
+                          label="Приказ"
+                          fullWidth
+                          value={prikazAnull}
+                          onChange={(event) => setPrikazAnull(event.target.value)}
+                      />
+                      <DatePicker 
+                        label="Дата аннулирования"
+                        value={dateAnull} 
+                        onChange={(newValue) => {setDateAnull(newValue)}} 
+                      />
+                      <Button variant='contained' sx={{height:'55px'}} onClick={()=>{handleAnullClick(); }}>ok</Button>
+                    </Box>
+                  </Fade>
+            </Box>
+          </>
+        ) || 
+          <Box sx={{display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', mt:'10%'}}>
+            <Typography color='gray' variant="h6">Продление и аннулирование возможно после добавления контракта</Typography>
+          </Box>
+        }
       </DialogContent>
 
       <DialogActions>
@@ -324,6 +379,10 @@ export default function DialogContract({ payload, open, onClose,  }) {
                 data_dover:dateDover,
                 data_cert:dateCertif,
                 data_zakl:dateRegi,
+                ...(originDateContr && originDateDover ? { originData:{
+                  contract:originDateContr,
+                  dover:originDateDover
+                }} : {}),
                 time_edit:dayjs(new Date()),
                 ...(editCertif ? { certif_edit: dayjs(new Date()) } : {}),
                 prikaz,
@@ -332,6 +391,7 @@ export default function DialogContract({ payload, open, onClose,  }) {
                 _who:(payload?._who && payload?._who?._id) || Users.find(el=>el.address === localStorage.getItem(`clientIp`))._id, 
                 data_dob:dataDob
             };
+            //итоговая отправка новых данных
             if (certif.length>0 && prikaz.length>0 && company.length>0 && subject ) {
                 onClose(res);                
             }

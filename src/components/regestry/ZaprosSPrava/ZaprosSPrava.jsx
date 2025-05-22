@@ -61,7 +61,7 @@ export default function ZaprosForm() {
             { field: 'data_prikaza', headerName: 'Дата приказа',flex:0.3,
                 type: 'date',
                 valueGetter: (params) => {
-                    const date = dayjs(params);
+                    const date = dayjs(params.value);
                     return date.isValid() ? date.toDate() : null;
                 },
                 renderCell: (params) => {

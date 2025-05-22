@@ -20,7 +20,7 @@ export default function DialogProdlenie({ payload, open, onClose }) {
 
   const [contract, setContract] = useState('');
 
-  const [prikaz, setPrikaz] = useState('');
+  const [prikaz, setPrikaz] = useState('Эл. почта');
   const [dateDover, setDateDover] = useState(null);
   const [dateContr, setDateContr] = useState(null);
   const [datePrikaz, setDatePrikaz] = useState(dayjs(new Date()));
@@ -49,10 +49,10 @@ export default function DialogProdlenie({ payload, open, onClose }) {
       <DialogContent>
         <Box sx={{ display: 'flex', gap: 2, padding:1,}}>
           <DatePicker 
-              sx={{flex:1}}
-              label="Дата контракта"
-              value={dateContr} 
-              onChange={(newValue) => {setDateContr(newValue)}} 
+            sx={{flex:1}}
+            label="Дата контракта"
+            value={dateContr} 
+            onChange={(newValue) => {setDateContr(newValue)}} 
           />
           <DatePicker 
               sx={{flex:1}}

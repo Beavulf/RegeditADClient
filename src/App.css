@@ -62,3 +62,19 @@
     transform: translateY(0);
   }
 }
+/* Удаление фокуса с кнопок Material UI */
+.MuiButtonBase-root:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.MuiButtonBase-root:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Отмена фокуса для IconButton */
+.MuiIconButton-root:focus {
+  outline: none !important;
+  background-color: transparent !important;
+}
