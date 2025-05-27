@@ -9,6 +9,9 @@ import {
 } from '@mui/material'
 import { useDialogs } from '@toolpad/core/useDialogs';
 import { useUsers, useWebSocketContext } from '../../websocket/WebSocketContext.jsx'
+import { useSnackbar } from 'notistack';
+import api from '../../apiAxios/Api.jsx'
+// import api from '../../utils/apiAxios'
 const SERVER_ADDRESS = import.meta.env.VITE_SERVER_ADDRESS
 const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
 
@@ -23,15 +26,17 @@ const Feedback = () => {
     const [image, setImage] = useState(null);
     const [feedbacks, setFeedbacks] = useState([]);
     const dialogs = useDialogs();
-  
+    const { enqueueSnackbar } = useSnackbar();
+
     //   получение фидбеков при подключении
     async function getFeedbacks() {
         try {
-            const response = await fetch(`http://${SERVER_ADDRESS}:${SERVER_PORT}/feedbacks`);
-            if (!response.ok) {
-                throw new Error('Ошибка получения Фидбеков');
+            const response = await api.get(`http://${SERVER_ADDRESS}:${SERVER_PORT}/feedbacks`);
+            if (!response.status === 200) {
+                enqueueSnackbar(`Ошибка получения Фидбеков`, { variant: 'error' });
+                return;
             }
-            const data = await response.json();
+            const data = await response.data;
             setFeedbacks(data); // Сохраняем данные в состоянии
         } catch (error) {
             console.error('Error fetching feedbacks:', error);
@@ -42,6 +47,7 @@ const Feedback = () => {
         getFeedbacks();
     }, []);
 
+    // отправка фидбека
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -55,25 +61,22 @@ const Feedback = () => {
         }
 
         try {
-        const response = await fetch(`http://${SERVER_ADDRESS}:${SERVER_PORT}/feedback`, {
-            method: 'POST',
-            body: formData,
-        });
-
-        if (response.ok) {
-            dialogs.alert('Feedback отправлен успешно!');
-            getFeedbacks();
-            setTitle('');
-            setDescription('');
-            setImage(null);
-        } else {
-            alert('Ошибка отправки feedback.');
-        }
+            const response = await api.post(`http://${SERVER_ADDRESS}:${SERVER_PORT}/feedback`, formData);
+            if (response.status === 201) {
+                await dialogs.alert('Feedback отправлен успешно!');
+                getFeedbacks();
+                setTitle('' );
+                setDescription('');
+                setImage(null);
+            } else {
+                enqueueSnackbar(`Ошибка отправки feedback.`, { variant: 'error' });
+            }
         } catch (error) {
-        console.error('Error submitting feedback:', error);
+            enqueueSnackbar(`Ошибка отправки feedback. ${error.message}`, { variant: 'error' });
         }
     };
 
+    // изменение статуса фидбека
     async function setStatus(id,status){
         const result = await window.prompt('Вписать статус', `${status}`,{
             okText: 'Сохранить',
@@ -93,30 +96,23 @@ const Feedback = () => {
         }        
     }
     
-
+    // удаление фидбека
     async function handleDeleteFeedBack(id,who) {
         const author = Users.find(el=>el._id === who).address || null
         if (author === localStorage.getItem(`clientIp`) || localStorage.getItem('userRole') === 'admin') {
             const result = await dialogs.confirm('Вы уверены, что хотите удалить фидбек?')
             if (result) {
                 try {
-                    const response = await fetch(`http://${SERVER_ADDRESS}:${SERVER_PORT}/feedbackdel`, {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json'
-                      },
-                      body: JSON.stringify({ id: id })
-                    });
-                
-                    if (response.ok) {
+                    const response = await api.post(`http://${SERVER_ADDRESS}:${SERVER_PORT}/feedbackdel`, { id: id });
+                    if (response.status === 200 || response.status === 201) {
                       getFeedbacks();
                     }
                   } catch (error) {
-                    console.error('Ошибка удаления feedback:', error);
+                    enqueueSnackbar(`Ошибка удаления feedback. ${error.message}`, { variant: 'error' });
                   }
             }
         } else {
-            dialogs.alert('Вы не можете удалить фидбек другого пользователя')
+            enqueueSnackbar(`Вы не можете удалить фидбек другого пользователя`, { variant: 'error' });
         }
     }
   return (
@@ -165,7 +161,6 @@ const Feedback = () => {
         </Box>
         <hr style={{width:'100%', margin:0}}/>
         <Box>
-            {/* <h2>Список фидбека</h2> */}
             {feedbacks && feedbacks.map(feedback =>{
                 const color = feedback.status.split(',')[0]=== '1' ? '#1fe81c' : 
                             feedback.status.split(',')[0]=== '2' ? '#e81c29' :  

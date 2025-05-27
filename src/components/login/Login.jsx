@@ -23,8 +23,6 @@ async function authenticateUser(address) {
   }
 }
 
-
-
 export default function Login({onLogin}) {
   const { enqueueSnackbar } = useSnackbar(); 
   const [clientIp, setClientIp] = useState(`Сервер недоступен`)
@@ -81,18 +79,13 @@ export default function Login({onLogin}) {
     return (
         <>
             <Box sx={{display:'flex', justifyContent:'center',}}>
-              {/* <img 
-                src="../../../public/LogoRegeditAD1.png" 
-                alt="Лого программы" 
-                height='500px' 
-                style={{ borderRadius:'20px',}}
-              /> */}
+
               <Box sx={{m:'auto',p:1}}>
                 <Typography variant="h4" gutterBottom>
                   <strong style={{color: `#ccc`}}>RegeditAD</strong>
                 </Typography>
                 <h1>Авторизация</h1>
-                <h2 style={{color:`#ccc`}}>{clientIp.split('::')[1] === '1' ? 'localhost' : clientIp.split('::')[1]}</h2>
+                <h2 style={{color:`#ccc`}}>{clientIp}</h2>
                 <Button 
                   size='large'
                   variant="outlined" 

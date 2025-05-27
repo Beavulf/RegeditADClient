@@ -2,11 +2,12 @@ import axios from 'axios';
 
 // Создаем экземпляр axios с базовыми настройками
 const api = axios.create({
-  baseURL: process.env.VITE_API_URL || 'http://localhost:3000/api',
+  baseURL: 'http://10.6.100.126:3000/',
   timeout: 10000, // таймаут 10 секунд
   headers: {
     'Content-Type': 'application/json',
-  }
+  },
+  withCredentials: true,
 });
 
 // Интерцептор для добавления токена авторизации

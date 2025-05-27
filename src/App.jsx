@@ -66,6 +66,7 @@ function App() {
   // атворизация пользователя после получение токена
   function handleAuthUser(tokenAndRole) {
     if (tokenAndRole.role) {
+      localStorage.removeItem('sessionStart');
       localStorage.setItem('userRole', tokenAndRole.role);
       setAuth(true);
       Settings()
@@ -80,6 +81,7 @@ function App() {
     setAuth(false);
     localStorage.setItem('userRole', 'manager');
     localStorage.removeItem('clientIp');
+    localStorage.removeItem('sessionStart');
   }
 
   return (

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import DialogUvolnenie from './DialogUvolnenie.jsx';
 import MDataGrid from '../../DataGrid/MDataGrid.jsx';
 import { useTableActions } from '../../../websocket/LayoutMessage.jsx';
@@ -14,6 +14,7 @@ export default function Uvolnenie({router}) {
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const Uvolnenie = useUvolnenie()
     const [fioToUvolnenie, setFioToUvolnenie] = useState(JSON.parse(sessionStorage.getItem('fioToUvolnenie')))
+
 
     const columnsPerevod = useMemo(()=>
         [
@@ -68,7 +69,7 @@ export default function Uvolnenie({router}) {
     ) 
 
     return (
-        <Box className='animated-element' sx={{display:'flex', minWidth:'0', gap:1, height:'100%'}}>
+        <Box className='animated-element' sx={{display:'flex', minWidth:'0', gap:1, height:'100%',}}>
           
             <Box sx={{flex:1, height:'100%', minWidth:0}}>
               {/* описание по ком отфильтровано с кнопкой очистки */}
@@ -86,7 +87,7 @@ export default function Uvolnenie({router}) {
               {/* таблица */}
               <MDataGrid 
                   columns={columnsPerevod} 
-                  tableData={[...Uvolnenie].sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
+                  tableData={Uvolnenie.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
                     .filter(el=>fioToUvolnenie !== null ? (fioToUvolnenie?.fio === el._sotr.fio && fioToUvolnenie?.prikaz === el.prikaz) : true)}
                   collectionName={`Uvolnenie`} 
                   actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogUvolnenie)}
@@ -96,7 +97,9 @@ export default function Uvolnenie({router}) {
             </Box>
             {/* список сотрудников на блокировку */}
             <Box sx={{flex: '0 0 300px'}}>
-              <SotrToBlockList/>
+              <SotrToBlockList onSelect={
+                (fio)=>{setFioToUvolnenie(fio)}
+              }/>
             </Box>
         </Box>
     )

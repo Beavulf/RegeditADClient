@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { DataGrid, GridToolbar, GridPagination, useGridApiContext, useGridSelector, gridPageSelector, gridPageCountSelector  } from '@mui/x-data-grid';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { DataGrid, GridToolbar, useGridApiContext, useGridSelector, gridPageSelector, gridPageCountSelector  } from '@mui/x-data-grid';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -9,11 +9,15 @@ import { useTableActions } from '../../websocket/LayoutMessage.jsx';
 import isEqual from 'lodash/isEqual';
 import './MDataGrid.css'
 import '../../App.css'
+import getRowStyles from './rowStyles.jsx';
+import { useTheme } from '@mui/material/styles';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
+
 const storedRole = localStorage.getItem('userRole');
+
 function CustomPagination() {
     const apiRef = useGridApiContext();
     const page = useGridSelector(apiRef, gridPageSelector);
@@ -57,7 +61,7 @@ function CustomPagination() {
     );
 }
 
-const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionDelete, actionAdd, filters, conf }) => {
+const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionDelete, actionAdd, filters, conf, topSlot }) => {
     const {handleSetBlockedRow } = useTableActions();
     const [rows, setRows] = useState([]);
     const [selectionModel, setSelectionModel] = useState([]);
@@ -66,6 +70,7 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
         rows.filter(row => row.is_locked === true).map(row => row.id)
     );
     const rowsRef = useRef(rows);
+    const theme = useTheme();
 
     // Обновление строк таблицы при изменении socketData
     useEffect(() => {        
@@ -110,7 +115,7 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
     useEffect(() => {
         const newBlockID = rows.filter(row => row.is_locked).map(row => row.id);
         if (!isEqual(newBlockID, blockID)) {setTimeout(() => setBlockID(newBlockID), 0);}
-    }, [rows]);
+    }, [rows, blockID]);
 
     //отмена выбора строки с блоком
     const handleSelectionChange = useCallback((newSelection) => {              
@@ -122,28 +127,14 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
     }, [blockID]);
 
     //классы для покраски строк
-    const rowClasses = useMemo(() => {
-        const map = new Map();
-        rows.forEach(row => {
-            let className = '';
-
-            // Проверка is_locked
-            if (row.is_locked) {
-                className = 'selected-row';
-            }
-            // Проверка obosnovanie
-            else if (row.obosnovanie === 'ДЗ по GW') {
-                className = 'dzgw';
-            }
-            // Проверка data_cert
-            else if (row.data_cert && new Date(row.data_cert) < new Date()) {
-                className = 'subject-cert-end'; // Дата истекла
-            }
-
-            map.set(row.id, className);
-        });
-        return map;
-      }, [rows]);
+    const rowStyles = useMemo(() => getRowStyles(theme), [theme]);
+    const getRowClassName = useCallback(({ row }) => {
+        if (row.is_locked) return 'selected';
+        if (row.obosnovanie === 'ДЗ по GW') return 'dzgw';
+        if (row.data_cert && new Date(row.data_cert) < new Date() && !row.anull) return 'certEnd';
+        if (row.anull) return 'anull';
+        return '';
+    }, []);
     
     //доп столбец с кнопками управления
     const actionsColumn = useMemo(() => ({
@@ -225,9 +216,9 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
     return (
         <div style={{ width: '100%',overflow: 'hidden', display:'flex', flexDirection:'column',}} className='animated-element'>
 
-            <Box sx={{display:`flex`, justifyContent:`space-between`,}}>
-                <Box>
-
+            <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:`center`}}>
+                <Box sx={{display:`flex`, alignItems:`center`, height:'100%', flex:1, p:1}}>
+                    {topSlot}
                 </Box>
                 <Button 
                     title='Добавить в БД' 
@@ -236,14 +227,10 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
                     onClick={actionAdd}
                     >добавить
                 </Button>
-                
             </Box>
             <DataGrid 
                 {...conf}
                 disableVirtualization={false}
-                sx={{
-                    minHeight: `200px`,
-                }}
                 initialState={{
                     pagination: { paginationModel: { pageSize: 10 } },
                 }}              
@@ -253,11 +240,18 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
                 rowSelectionModel={selectionModel}  // список выделенных строк
                 isRowSelectable={isRowSelectable}
                 onRowSelectionModelChange={handleSelectionChange} //колбек при выборе строки
-                getRowClassName={({ row }) => rowClasses.get(row.id) || ''}
+                getRowClassName={getRowClassName}
+                // getRowClassName={({ row }) => rowClasses.get(row.id) || ''}
                 columnVisibilityModel={{_id:false}}
                 slots={{ toolbar: GridToolbar }}
                 pagination
-                
+                sx={{
+                    minHeight: `200px`,
+                    '& .MuiDataGrid-row.selected': rowStyles.selected,
+                    '& .MuiDataGrid-row.dzgw': rowStyles.dzgw,
+                    '& .MuiDataGrid-row.certEnd': rowStyles.certEnd,
+                    '& .MuiDataGrid-row.anull': rowStyles.anull,
+                }}
                 slotProps={{
                     toolbar: {
                       showQuickFilter: true,

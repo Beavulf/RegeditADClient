@@ -1,6 +1,6 @@
 import { useUvolnenie } from '../../../websocket/WebSocketContext.jsx'
 import { Typography, Box, IconButton } from '@mui/material';
-import { useColorScheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import Divider from '@mui/material/Divider';
 import InfoIcon from '@mui/icons-material/Info';
 
@@ -8,13 +8,17 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
 
-export default function SotrToBlockList({ router }) {
+export default function SotrToBlockList({ router, onSelect }) {
     const Uvolnenie = useUvolnenie()
-    const { mode } = useColorScheme();
+    const theme = useTheme()
 
     // переход на страницу с увольнением
     const handleNavigate = (fio) => {   
+        if (onSelect) {
+            onSelect(fio);
+        }
         if (!router){
+            sessionStorage.setItem('fioToUvolnenie', JSON.stringify(fio))
             return;
         }
         router.navigate('/registry/uvolnenie');
@@ -25,18 +29,38 @@ export default function SotrToBlockList({ router }) {
     const  getNotBlocked = () => {
         return [...Uvolnenie].filter(el=>!el.descrip.toUpperCase().includes('ЗБ') && (dayjs().isAfter(dayjs(el.data_uvol)) || dayjs().isSame(dayjs(el.data_uvol), 'day')))
     }
-
     // элемент списка сотрудников, которые не заблокированы и срок увольнения еще не наступил
-    const elementSotrToBlock = (el) => {
+    const renderElementSotrToBlock = (el) => {
         return (
             <Box 
                 key={el._id} 
                 sx={{
-                    bgcolor:'listToBlock.main',  //берем цвета из темы которые кастомно установили
+                    bgcolor:'listToBlock.main',
                     borderRadius:'8px',
                     cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    background: theme.palette.listToBlock.gradient,
                     '&:hover': {
-                        opacity: 0.8
+                        opacity: 0.9,
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    },
+                    animation: 'pulseIn 0.5s ease-out',
+                    '@keyframes pulseIn': {
+                        '0%': {
+                            opacity: 0,
+                            transform: 'scale(0.95)'
+                        },
+                        '50%': {
+                            opacity: 0.5,
+                            transform: 'scale(1.05)'
+                        },
+                        '100%': {
+                            opacity: 1,
+                            transform: 'scale(1)'
+                        }
                     }
                 }}
                 title="Перейти в Увольнение"
@@ -52,8 +76,7 @@ export default function SotrToBlockList({ router }) {
             <Typography variant='h5' sx={{display:'flex', justifyContent:'center', alignItems:'center', gap:1}}>
                 Надо заблокировать 
                 <IconButton size='small' title='Для того, чтобы убрать из списка, добавить в описание ЗБ.'
-                    onClick={() => handleNavigate(null)}
-                >
+                    onClick={() => handleNavigate(null)}>
                     <InfoIcon sx={{color:'primary.main'}} />
                 </IconButton> 
             </Typography>
@@ -66,7 +89,7 @@ export default function SotrToBlockList({ router }) {
                 flexDirection: 'column',
                 gap: 1,
             }}>
-                {getNotBlocked() && getNotBlocked().map(el => elementSotrToBlock(el))}
+                {getNotBlocked() && getNotBlocked().map(el => renderElementSotrToBlock(el))}
             </Box>           
         </Box>
     )

@@ -11,7 +11,6 @@ import {
     Accordion,
     Checkbox,
     CircularProgress,
-    useTheme,
     Switch,
     IconButton
 } from '@mui/material'
@@ -42,7 +41,6 @@ export default function Dashboard({router}){
     const [settings, setSettings] = useState(Settings())
     const [visual, setVisual] = useState(settings.btnStyle)
     const [checkedSwitchBtn, setCheckedSwitchBtn] = useState(settings.btnStyle === 'elevation' ? true : false)
-    const theme = useTheme();
     const [useCustomCursors, setUseCustomCursors] = useState(() => {
       const stored = localStorage.getItem('useCustomCursors');
       return stored === 'true';
@@ -104,6 +102,7 @@ export default function Dashboard({router}){
       }
     }, [useCustomCursors]);
 
+    // рендер кнопки быстрого перехода
     const renderButton = useCallback(
         (item, index) => (
           <Button
@@ -134,6 +133,7 @@ export default function Dashboard({router}){
         [router, visual]
     );
     
+    // рендер списка кнопок быстрого перехода
     const renderListItem = useCallback(
         (item, index) => {
           const isChecked = settings.fastTravelBtn.some(btn => btn.path === item.path);
@@ -202,7 +202,7 @@ export default function Dashboard({router}){
                 <>
                 <Box>
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', padding: '5px' }}>
-                        <Accordion sx={{ flex: 1, bgcolor:theme.palette.primary.secondary }} >
+                        <Accordion sx={{ flex: 1, bgcolor:'primary.secondary' }} >
                             <AccordionSummary
                                 expandIcon={<SettingsIcon />}
                                 aria-controls="panel1-content"

@@ -1,6 +1,5 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import Box from '@mui/material/Box';
-import { createTheme } from '@mui/material/styles';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useSnackbar } from 'notistack';//
@@ -37,104 +36,15 @@ import ADTool from '../regestry/ADTool/ADTool.jsx'
 import Stajirovka from '../regestry/Stajirovka/Stajirovka.jsx';
 import SotrInfo from '../SotrInfo/SotrInfo.jsx'
 import ZaprosSPrava from '../regestry/ZaprosSPrava/ZaprosSPrava.jsx'
+import SessionTimer from './SessionTimer';
 
 import { createNavigation } from './NAVIGATION.jsx'
 import { useReadyState, useLastMessage, useAccess } from '../../websocket/WebSocketContext.jsx'
 import styles from './Main.module.css'
+import demoTheme from '../../theme/theme';
+import dayjs from 'dayjs';
 
 // const storedRole =  || 'NONE';
-
-//установка темы
-const demoTheme = createTheme({
-  cssVariables: {
-    colorSchemeSelector: 'data-toolpad-color-scheme',
-  },
-  colorSchemes: { light: {
-    palette: {
-      primary: {
-        main: '#F8C9D4', // Легкий розовый
-        light: '#FDE7EC', // Очень светлый розовый
-        dark: '#E8B0BD', // Немного темнее
-      },
-      secondary: {
-        main: '#FAC4C7', // Теплый розовый
-        light: '#FFE3E4', // Почти белый с розовым оттенком
-        dark: '#E3A4A8', // Темный розовый
-      },
-      listToBlock:{
-        main:'#2423230c',
-      },
-      listPravaOtdel: {
-        main: '#fc88b944', // Сохраняем как в светлой теме, если не переопределяется
-        light: '#fc88b944',
-        dark: '#ad49734e',
-      },
-      pravaOtdel:{
-        main:'#24232322',
-        light: '#2423230c',
-        dark:'#242323cb'
-      },
-      background: {
-        default: '#FFFFFF', // Фон с легким розовым оттенком
-        paper: '#FFF9FA',
-      },
-      text: {
-        primary: '#5A5A5A',
-        secondary: '#7A7A7A',
-      },
-    },
-  }, dark: {
-    palette: {
-      primary: {
-        main: '#90caf9', // Голубой
-        light: '#e3f2fd',
-        dark: '#42a5f5',
-        contrastText: '#000000',
-      },
-      secondary: {
-        main: '#ce93d8', // Фиолетовый
-        light: '#f3e5f5',
-        dark: '#ab47bc',
-        contrastText: '#000000',
-      },
-      listToBlock:{
-        main:'#242323cb',
-      },
-      listPravaOtdel: {
-        main: '#383030', // Сохраняем как в светлой теме, если не переопределяется
-        light: '#383030',
-        dark: '#2e2727',
-      },
-      background: {
-        default: '#121212', // Тёмный фон
-        paper: '#121212', // Чуть светлее для карточек 1d1d1d
-      },
-      text: {
-        primary: '#ffffff', // Белый текст
-        secondary: 'rgba(255, 255, 255, 0.7)', // Полупрозрачный белый
-        disabled: 'rgba(255, 255, 255, 0.5)',
-      },
-      divider: 'rgba(255, 255, 255, 0.12)', // Разделители
-      action: {
-        active: '#ffffff',
-        hover: 'rgba(255, 255, 255, 0.08)',
-        selected: 'rgba(255, 255, 255, 0.16)',
-        disabled: 'rgba(255, 255, 255, 0.3)',
-        disabledBackground: 'rgba(255, 255, 255, 0.12)',
-      },
-    },
-  }, },
-  breakpoints: {
-    values: {
-      xs: 0,
-      sm: 600,
-      md: 600,
-      lg: 1200,
-      xl: 1900,
-    },
-  },
-});
-
 
 //во3врат главного компонента (страницы)
 function MainLayout(props) {
@@ -145,22 +55,19 @@ function MainLayout(props) {
   const lastJsonMessage = useLastMessage();
   const { enqueueSnackbar } = useSnackbar(); 
   const navigate = useNavigate()
-  // Инициализируем состояние таймера (3600 секунд = 1 час)
-  const [sessionTime, setSessionTime] = useState(3600);
   
   // установка флага NEW если есть новое обновление
   useEffect(()=>{
     const localLastUpdate = localStorage.getItem('lastUpdate');
-      // const localCheckUpdate = localStorage.getItem('checkUpdate');
-      if (localLastUpdate) {
-        if (localLastUpdate !== lastUpdate) {
-          localStorage.setItem('checkUpdate', false)
-          localStorage.setItem('lastUpdate', lastUpdate)
-        }
-      } else {
+    if (localLastUpdate) {
+      if (localLastUpdate !== lastUpdate) {
         localStorage.setItem('checkUpdate', false)
-        localStorage.setItem('lastUpdate', lastUpdate)   
+        localStorage.setItem('lastUpdate', lastUpdate)
       }
+    } else {
+      localStorage.setItem('checkUpdate', false)
+      localStorage.setItem('lastUpdate', lastUpdate)   
+    }
   },[])
 
   // фильтруем меню навигаци в соответствию с ролью
@@ -219,7 +126,7 @@ function MainLayout(props) {
       if (storedRole !== 'admin') {
         router.navigate('/dashboard');
       }
-    }, []);
+    }, [router]);
   
     return storedRole === 'admin' ? children : null;
   };
@@ -229,44 +136,21 @@ function MainLayout(props) {
     if (lastJsonMessage && Object.keys(lastJsonMessage).length > 0) {
       showNotif(lastJsonMessage)
     }
-  }, [lastJsonMessage]); 
-
-  // Добавляем функцию форматирования времени
-  const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  useEffect(() => {
-    const sessionTimer = setInterval(() => {
-      setSessionTime((prevTime) => {
-        if (prevTime <= 0) {
-          clearInterval(sessionTimer);
-          // Когда время истекло, показываем уведомление и делаем логаут
-          return 0;
-        }
-        return prevTime - 1;
-      });
-    }, 1000);
-
-    // Очистка таймера при размонтировании компонента
-    return () => clearInterval(sessionTimer);
-  }, []); // Пустой массив зависимостей, чтобы эффект выполнился только при монтировании
+  }, [lastJsonMessage, showNotif]); 
 
   //слот строки монитринга онлайн офлайн сервера
   const toolbarActions = useCallback((readyState)=>{
     return (
       <Box sx={{display:`flex`, flexDirection:`row`, justifyContent:`space-between`, margin:`0px`, alignItems:'center', gap:1}}>
-        <Typography>Сессия: {formatTime(sessionTime)}</Typography>
+        <SessionTimer />
         <p className={readyState===1 ? styles.online : styles.ofline}>{`${readyState === 0 ? 'Connecting...' : readyState === 1 ? 'Online' : 'Offline'}`}</p>
         <ThemeSwitcher />
       </Box>
     )
-  },[sessionTime]);
+  },[]);
   
   // нижняя часть бокового меню для кнопок настройки
-  const SidebarFooter = useCallback(()=> {
+  const SidebarFooter = ()=> {
     return (
       <Box>
         <Box>
@@ -301,7 +185,7 @@ function MainLayout(props) {
         </Box>
       </Box>
     );
-  },[])
+  }
 
   const renderRoutes = useMemo(() => (
     <>

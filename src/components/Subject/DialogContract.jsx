@@ -9,7 +9,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { TextField, Box, FormControl, Autocomplete, Typography, Checkbox, IconButton } from '@mui/material';
-import { useUsers, useCompany, useProdlenie, useWebSocketContext } from '../../websocket/WebSocketContext.jsx'
+import { useUsers, useCompany, useProdlenie, useWebSocketContext, useContract } from '../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
 import { useTableActions } from '../../websocket/LayoutMessage.jsx';
 import DialogProdlenie from './DialogProdlenie.jsx';
@@ -17,6 +17,7 @@ import KeyboardDoubleArrowLeftIcon from '@mui/icons-material/KeyboardDoubleArrow
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
+import { enqueueSnackbar } from 'notistack';
 dayjs.locale('ru');
 
 export default function DialogContract({ payload, open, onClose,  }) {
@@ -25,6 +26,7 @@ export default function DialogContract({ payload, open, onClose,  }) {
   const Users = useUsers()
   const Company = useCompany()
   const Prodlenie = useProdlenie()
+  const Contract = useContract()
   const { handleDeleteRowBD, handleAddInTable } = useTableActions();
   const [fade, setFade] = useState(false)
 
@@ -167,10 +169,30 @@ export default function DialogContract({ payload, open, onClose,  }) {
         { field: 'descrip', headerName: 'Описание', width: 150, flex:0.12, },
     ],[]) 
 
+  // данные о продлении отфильтрованные по контракту
   const filteredProdlenie = useMemo(() => 
-    Prodlenie.filter(el => el._contr._id === payload?._id),
+    Prodlenie.filter(el => el._contr._id === payload?._id)
+      .sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf()),
     [Prodlenie, payload]
   );
+
+  // проверка на дубликат сертификата
+  const checkCertifDuplicate =()=>{
+    const duplicate = Contract.find(el => el.certif === certif.trim());
+    if (duplicate) {
+      dialogs.alert('Сертификат уже существует.');
+      return;
+    }
+    enqueueSnackbar('Дубликата сертификата нет.', { variant: 'success' });
+  }
+  // кнопка проверки на дубликат сертификата
+  const btnCheckCertifDuplicate =  (
+      <Button 
+      disabled={certif.length < 1} 
+      variant='outlined' 
+      size='small' 
+      onClick={checkCertifDuplicate} title='Проверить наличие дубликата сертификата'>проверить</Button>
+  )
 
   return (
     <Dialog fullScreen open={open} onClose={() => onClose()}>
@@ -201,7 +223,12 @@ export default function DialogContract({ payload, open, onClose,  }) {
                     onChange={(event) => setCertif(event.target.value)}
                     slotProps={{
                       input: {
-                        endAdornment:  <Checkbox checked={editCertif} onChange={handleChangeEditCertif} size='large' title='Изменить только сертификат (используется при обновлении только сертификата)'/>,
+                        endAdornment: payload?.prikaz ? 
+                        <>
+                          <Checkbox checked={editCertif} onChange={handleChangeEditCertif} size='large' title='Изменить только сертификат (используется при обновлении только сертификата)'/>
+                          {btnCheckCertifDuplicate}
+                        </> :
+                        btnCheckCertifDuplicate,
                       },
                     }}
                 />
@@ -321,7 +348,7 @@ export default function DialogContract({ payload, open, onClose,  }) {
             />
         </Box>
         <hr />
-        {payload.prikaz && (
+        {payload?.prikaz ? (
           <>
             <Box sx={{display:`flex`, flexDirection:`column`}}>
                 <Typography variant="h6">Продление</Typography>
@@ -330,9 +357,11 @@ export default function DialogContract({ payload, open, onClose,  }) {
                     columns={columnsProdlenie} 
                     tableData={filteredProdlenie}
                     collectionName={`Prodlenie`} 
-                    actionEdit={()=>console.log('no')}
                     actionDelete={handleDeleteRowBD}
-                    actionAdd={async ()=>{await handleAddInTable(`Prodlenie`,DialogProdlenie,{_contr:payload._id}) && onClose()}}
+                    actionAdd={async ()=>{
+                      await handleAddInTable(`Prodlenie`,DialogProdlenie,{_contr:payload._id}) &&
+                      onClose();
+                    }}
                 />
             </Box>
             {/* аннулирование контракта */}
@@ -359,11 +388,11 @@ export default function DialogContract({ payload, open, onClose,  }) {
                   </Fade>
             </Box>
           </>
-        ) || 
+        ) : (
           <Box sx={{display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', mt:'10%'}}>
-            <Typography color='gray' variant="h6">Продление и аннулирование возможно после добавления контракта</Typography>
+            <Typography color='gray' variant="h6">Продление и аннулирование возможно после добавления сертификата...</Typography>
           </Box>
-        }
+        )}
       </DialogContent>
 
       <DialogActions>

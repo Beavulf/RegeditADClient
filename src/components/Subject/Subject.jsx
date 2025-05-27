@@ -1,4 +1,4 @@
-import { useSubject, useCompany, useContract, useWebSocketContext } from '../../websocket/WebSocketContext.jsx'
+import { useSubject, useCompany, useContract } from '../../websocket/WebSocketContext.jsx'
 import {
     Button, 
     Typography, 
@@ -34,10 +34,9 @@ dayjs.locale('ru');
 const Subject = memo(function Subject() {
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const dialogs = useDialogs();
-    const Subject = useSubject()
+    const Subjects = useSubject()
     const Company = useCompany();
     const Contract = useContract();
-    // const {sendJsonMessage} = useWebSocketContext()
 
     const conf = useMemo(() => ({ density: 'compact'}), []);
     const confContr = useMemo(() => ({density: 'compact', }), []);
@@ -48,6 +47,7 @@ const Subject = memo(function Subject() {
     const [selectSubject, setSelectSubject] = useState(null) //обьект выбранное субьекта
     const [isSearching, setIsSearching] = useState(false) // состояние для отслеживания процесса поиска
     const [debouncedSearchSubj, setDebouncedSearchSubj] = useState('') // значение после задержки
+    const [showAnull, setShowAnull] = useState(false) // состояние для отслеживания процесса поиска
     
     // Эффект для debounce поискового запроса
     useEffect(() => {
@@ -55,7 +55,6 @@ const Subject = memo(function Subject() {
         if (searchSubj.length >= 2) {
             setIsSearching(true);
         }
-        
         const timer = setTimeout(() => {
             setDebouncedSearchSubj(searchSubj);
             setIsSearching(false); // Скрываем индикатор после завершения debounce
@@ -66,23 +65,21 @@ const Subject = memo(function Subject() {
         };
     }, [searchSubj]);
 
-    // Добавьте этот useEffect в компонент Subject
+    // ввод текста в компонент, при начале ввода текста на странице
     useEffect(() => {
         const handleKeyDown = (event) => {
             // Игнорируем, если нажаты модификаторы (Ctrl, Alt и т.д.) или спецклавиши
             if (event.ctrlKey || event.altKey || event.metaKey || 
                 event.key === 'Tab' || event.key === 'Escape' || 
-                event.key === 'Enter' || event.key.length !== 1) {
+                event.key === 'Enter' || event?.key?.length !== 1) {
                 return;
             }
-            
             // Игнорируем, если фокус уже на текстовом поле или другом элементе ввода
             if (event.target.tagName === 'INPUT' || 
                 event.target.tagName === 'TEXTAREA' || 
                 event.target.isContentEditable) {
                 return;
             }
-            
             // Найти и фокусировать поле поиска
             const searchField = document.getElementById('isearchSubj');
             if (searchField) {
@@ -93,9 +90,7 @@ const Subject = memo(function Subject() {
                 setSearchSubj(event.key);
             }
         };
-
         document.addEventListener('keydown', handleKeyDown);
-        
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
@@ -103,16 +98,21 @@ const Subject = memo(function Subject() {
 
     const filteredSubjects = useMemo(() => {
         if (!debouncedSearchSubj || debouncedSearchSubj.length < 3) return [];
-        return Subject.filter((subj) =>
+        return Subjects.filter((subj) =>
           subj?.name.toLowerCase().includes(debouncedSearchSubj.toLowerCase())
         );
-    }, [Subject, debouncedSearchSubj]);
+    }, [Subjects, debouncedSearchSubj]);
 
     // скрытие окна субьектов при открытии диалогового окна редактирования контрактов
     async function openEditRowDialog(id,oldData,collectionName) {
         setOpenDialog(true)
-        await handleEditRow(id,oldData,collectionName,DialogContract)
-        setOpenDialog(false)
+        try {
+            await handleEditRow(id,oldData,collectionName,DialogContract)
+        } catch (error) {
+            console.error("Ошибка при редактировании:", error)
+        } finally {
+            setOpenDialog(false)
+        }
     }
 
     // скрытие окна субьектов при открытии диалогового окна редактирования контрактов
@@ -150,6 +150,7 @@ const Subject = memo(function Subject() {
             { field: 'data_cert', headerName: 'Дата серт.',width:`95`, maxWidth:'96',
                 type: 'date',
                 valueGetter: (params) => {
+                    if (!params) return null;
                     const date = dayjs(params);
                     return date.isValid() ? date.toDate() : null;
                 },
@@ -163,6 +164,7 @@ const Subject = memo(function Subject() {
             { field: 'data_contr', headerName: 'Дата контр.',width:`95`,maxWidth:'96',
                 type: 'date',
                 valueGetter: (params) => {
+                    if (!params) return null;
                     const date = dayjs(params);
                     return date.isValid() ? date.toDate() : null;
                   },
@@ -176,6 +178,7 @@ const Subject = memo(function Subject() {
             { field: 'data_dover', headerName: 'Дата довер.',width:`95`, maxWidth:'96',
                 type: 'date',
                 valueGetter: (params) => {
+                    if (!params) return null;
                     const date = dayjs(params);
                     return date.isValid() ? date.toDate() : null;
                   },
@@ -189,6 +192,7 @@ const Subject = memo(function Subject() {
             { field: 'data_zakl', headerName: 'Дата рег.',width:`95`, maxWidth:'96',
                 type: 'date',
                 valueGetter: (params) => {
+                    if (!params) return null;
                     const date = dayjs(params);
                     return date.isValid() ? date.toDate() : null;
                   },
@@ -203,6 +207,7 @@ const Subject = memo(function Subject() {
             { field: 'time_edit', headerName: 'Пос. изм.',width:`140`, 
                 type: 'date',
                 valueGetter: (params) => {
+                    if (!params) return null;
                     const date = dayjs(params);
                     return date.isValid() ? date.toDate() : null;
                   },
@@ -227,6 +232,7 @@ const Subject = memo(function Subject() {
             { field: 'data_dob', headerName: 'Дата доб.',flex:0.25,
                 type: 'date',
                 valueGetter: (params) => {
+                    if (!params) return null;
                     const date = dayjs(params);
                     return date.isValid() ? date.toDate() : null;
                   },
@@ -244,15 +250,31 @@ const Subject = memo(function Subject() {
         ],[]
     ) 
 
+    // сортировка контрактов по времени изменения и по выбранному человеку
     const filteredContracts = useMemo(() => {
-        const contractsToFilter = Contract.filter(el => !el.anull);
+        const contractsToFilter = showAnull ? Contract.filter(el=>el.anull) : Contract;
         if (selectSubject?._id) {
-            // Фильтруем по ID выбранного субъекта
-            return contractsToFilter.filter(el => el._subj._id === selectSubject._id).sort((a, b) => dayjs(b.time_edit).valueOf() - dayjs(a.time_edit).valueOf());;
+            return contractsToFilter
+                .filter(el => el._subj._id === selectSubject._id)
+                .sort((a, b) => dayjs(b.time_edit).valueOf() - dayjs(a.time_edit).valueOf());
         }
         // Если субъект не выбран, показываем все, отсортированные по time_edit по убыванию
         return contractsToFilter.sort((a, b) => dayjs(b.time_edit).valueOf() - dayjs(a.time_edit).valueOf());
-    }, [Contract, selectSubject?._id]);
+    }, [Contract, selectSubject?._id, showAnull]);
+
+    // слот в ДатаГрид для отображение информации
+    const colorInfoSlot = (
+        <>
+            <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:`center`, gap:1, mr:1}}>
+                <Box sx={{width:'20px', height:'20px', backgroundColor:'subjectAnull.main', borderRadius:'3px'}}></Box>
+                <Typography color='gray'>- аннулированные сертификаты</Typography>
+            </Box>
+            <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:`center`, gap:1}}>
+                <Box sx={{width:'20px', height:'20px', backgroundColor:'subjectCertEnd.main', borderRadius:'3px'}}></Box>
+                <Typography color='gray'>- истекшие сертификаты</Typography>
+            </Box>
+        </>
+    )
 
     return (
         <div className='animated-element' style={{height:`100%`, maxWidth:`100vw`, width:`100%`, overflow:'hidden', position:'relative'}}>
@@ -295,18 +317,17 @@ const Subject = memo(function Subject() {
                     >доб.</Button>
                </Box>
                <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:`center`, flex:`1`}}>
-                    <Box sx={{display:`flex`}}>Контракты<Typography color='lightblue'>: {selectSubject && selectSubject.name}</Typography></Box>
+                    <Box sx={{display:`flex`}}>Контракты<Typography color='primary.main'>: {selectSubject && selectSubject.name}</Typography></Box>
                     <Box sx={{display:`flex`,alignItems:`center`, gap:1}}>
-                        {/* <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
-                        <Button>LOAD</Button> */}
                         <Button variant='text' title='Загрузить ежедневный отчет' onClick={async ()=>await dialogs.open(DialogReport)}>
                         отчет <DownloadIcon></DownloadIcon></Button>
                         <Button variant='outlined' title='Добавить Субьекта и Компанию сразу' onClick={async ()=>await dialogs.open(DialogFullAdd)}>
                         полное добавление</Button>
-                        <Button variant='contained' title='Просмотреть ВСЕ контракты' onClick={()=>{setSelectSubject(null)}}>
+                        <Button variant={showAnull ? 'contained' : 'outlined'} title='Просмотреть аннул. сертификаты (вкл\выкл)' onClick={()=>{setShowAnull((prev)=>!prev)}}>
+                        аннул.</Button>
+                        <Button variant='outlined' title='Просмотреть ВСЕ контракты' onClick={()=>{handleClearFilter(); setShowAnull(false)}}>
                         ВСЕ</Button>
                     </Box>
-                        
                </Box>
             </Box>
 
@@ -348,7 +369,6 @@ const Subject = memo(function Subject() {
 
                 {/* столбец с данными таблицы контрактов и компаний*/}
                 <Box sx={{flex:1, display:`flex`, flexDirection:`column`, gap:1}}>
-
                     <Paper variant='elevation' elevation={1} sx={{ overflow:`hidden`, height:'100%', maxWidth:'1270px'}}>
                         <MDataGrid 
                             conf={confContr}
@@ -358,6 +378,7 @@ const Subject = memo(function Subject() {
                             actionEdit={(id,oldData,collectionName)=>openEditRowDialog(id,oldData,collectionName)}
                             actionDelete={handleDeleteRowBD}
                             actionAdd={openAddRowDialog}
+                            topSlot={colorInfoSlot}
                         />
                     </Paper>
                     {/* список компаний */}
@@ -366,6 +387,7 @@ const Subject = memo(function Subject() {
                             expandIcon={<ExpandMoreIcon />}
                             aria-controls="panel1-content"
                             id="com-accordion"
+                            sx={{backgroundColor:'#9c92921d'}}
                         >
                             <Typography color='primary.main' component="span">Список компаний (редактирование, добавление)</Typography>
                         </AccordionSummary>
@@ -384,10 +406,9 @@ const Subject = memo(function Subject() {
                         </AccordionDetails>
                     </Accordion>
                 </Box>
-
             </Box>
             </>}
         </div>
     )
 })
-export default memo(Subject)
+export default Subject

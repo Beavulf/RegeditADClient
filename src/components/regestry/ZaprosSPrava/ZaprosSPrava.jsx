@@ -9,6 +9,9 @@ import Collapse from '@mui/material/Collapse';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { Autocomplete, FormControl } from '@mui/material';
 import { useSnackbar } from 'notistack';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import { useDialogs } from '@toolpad/core/useDialogs';
 
 import {
   IconButton,
@@ -46,7 +49,9 @@ export default function ZaprosForm() {
     const PravaOtdel = usePravaOtdel()
     const { sendJsonMessage } = useWebSocketContext();
     const Otdel = useOtdel()
+    const [updatePravaOtdel, setUpdatePravaOtdel] = useState(null);
     const { enqueueSnackbar } = useSnackbar();
+    const dialogs = useDialogs();
 
     useEffect(()=>{
       setFilteredData([...ZaprosSPrava].sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf()))
@@ -180,6 +185,22 @@ export default function ZaprosForm() {
           enqueueSnackbar('Некорректный формат прав', { variant: 'warning' });
           return;
         }
+        // если выбрали обновить права отдела
+        if (updatePravaOtdel) {
+          const formattedPrava = newOtdPrava.split(',').map(el=>'#'+el.trim()).join(', ')
+          const message = {
+            type: 'updateInCollection',
+            data: {
+              collection: 'PravaOtdel',
+              filter: { _id: updatePravaOtdel },
+              value: { prava:formattedPrava, descrip:newOtdDescrip || '' },
+            },
+          };
+          await sendJsonMessage(message);
+          handleCancelAddPravaOtdel()
+          enqueueSnackbar('Права отдела обновлены', { variant: 'success' });
+          return;
+        }
         const formattedPrava = newOtdPrava.split(',').map(el=>'#'+el.trim()).join(', ')
         const message = {
           type: 'insertInToCollection',
@@ -193,6 +214,22 @@ export default function ZaprosForm() {
           }
         };
         await sendJsonMessage(message);
+        handleCancelAddPravaOtdel()
+      }
+
+      // удаление права отдела
+      const handleDeletePravaOtdel = async (id) => {
+        const confirmed = await dialogs.confirm('Вы уверены, что хотите удалить этот отдел и его права?', {
+          okText: 'Да',
+          cancelText: 'Нет'
+        });
+        if (confirmed) {
+          const message = {
+            type: 'deleteFromCollection',
+            data: { collection: 'PravaOtdel', filter: { _id: id } }
+          };
+          await sendJsonMessage(message);
+        }
       }
       
       // отмена добавления отдела и прав для него
@@ -201,8 +238,18 @@ export default function ZaprosForm() {
         setNewOtdName('')
         setNewOtdPrava('')
         setNewOtdDescrip('')
+        setUpdatePravaOtdel(null)
       }
       
+      // редактирование права отдела вставка данных в форму
+      const handleEditPravaOtdel = (el)=> {
+        setUpdatePravaOtdel(el._id)
+        setOpenOtdEdit(true)
+        setNewOtdName(el._otdel._id)
+        setNewOtdPrava(el.prava.split('#').map(el=>el.trim()).join(''))
+        setNewOtdDescrip(el.descrip)
+      }
+
       // получение элемента для отображения прав отдела
       const getElementPravaOtdel = (el) => {
         return (
@@ -213,9 +260,24 @@ export default function ZaprosForm() {
               transition:'scale 0.3s ease-in-out', cursor:'pointer'
             }}
           >
-              <Typography textAlign='left'>
-                {el._otdel.name}
-              </Typography>
+              <Box sx={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:1}}>
+                <Box sx={{display:'flex', flexDirection:'row', gap:1}}>
+                  <Typography textAlign='left'>
+                    {el._otdel.name}
+                  </Typography>
+                  <Typography variant='body' color='gray' sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {el.descrip}
+                  </Typography>
+                </Box>
+                <Box sx={{display:'flex', flexDirection:'row'}}>
+                  <IconButton size='small' onClick={()=>handleEditPravaOtdel(el)}>
+                    <EditIcon/>
+                  </IconButton>
+                  <IconButton size='small' onClick={()=>handleDeletePravaOtdel(el._id)}>
+                    <DeleteForeverIcon/>
+                  </IconButton>
+                </Box>
+              </Box>
               <TextField sx={{bgcolor:'listPravaOtdel.dark', borderRadius:'8px', p:0.5}} size='small' variant='standard' fullWidth value={el.prava}/>
           </Box>
         )
@@ -291,7 +353,7 @@ export default function ZaprosForm() {
                     />
                     <TextField label='Описание' fullWidth size='small' variant='filled' value={newOtdDescrip} onChange={e=>setNewOtdDescrip(e.target.value)}/>
                     <Box sx={{display:'flex', justifyContent:'flex-end', gap:0.2, p:0.2}}>
-                      <Button fullWidth variant='contained' onClick={handleAddPravaOtdel}>Добавить</Button>
+                      <Button fullWidth variant='contained' onClick={handleAddPravaOtdel}>{updatePravaOtdel ? 'Обновить' : 'Добавить'}</Button>
                       <Button fullWidth variant='outlined' onClick={handleCancelAddPravaOtdel}>Отмена</Button>
                     </Box>
                   </Collapse>
