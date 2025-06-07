@@ -4,10 +4,12 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TextField, Box, FormControl, Autocomplete } from '@mui/material';
 import { useSotrudnik, useOtdel, useUsers } from '../../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
+import CAutoCompleate from '../../utils/CAutoCompleate.jsx';
+import getWhoId from '../../users/GetWhoID.jsx';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -40,6 +42,19 @@ export default function DialogPriem({ payload, open, onClose }) {
     }
   }, [payload]);
 
+  const handleChangeSotrudnik = useCallback((newValue) => {
+    setSotrudnik(newValue ? newValue._id : ''); 
+    setOtdel(newValue ? newValue._otdel._id : '') 
+  }, []);
+
+  const handleChangeOtdel = useCallback((newValue) => {
+    setOtdel(newValue ? newValue._id : '')
+  }, []);
+
+  const handleChangeUser = useCallback((newValue) => {
+    setUser(newValue ? newValue._id : '')
+  }, []);
+
   return (
     <Dialog fullWidth open={open} onClose={() => onClose()}>
       <DialogTitle>Редактирование данных:</DialogTitle>
@@ -48,64 +63,22 @@ export default function DialogPriem({ payload, open, onClose }) {
 
             {/* Поле для ввода ФИО */}
             <Box sx={{display:`flex`,gap:1}}>
-                <FormControl sx={{flex:`1`}}>
-                    <Autocomplete
-                        id="sotrudnik"
-                        value={Sotrudnik.find(o => o._id === sotrudnik) || null}
-                        onChange={(event, newValue) => {
-                            setSotrudnik(newValue ? newValue._id : ''); 
-                            setOtdel(newValue ? newValue._otdel._id : ``) 
-                        }}
-                        onInputChange={(event, value) => {
-                            const filteredOptions = Sotrudnik.filter(option => option.fio.toLowerCase().includes(value.toLowerCase()));
-                            if (filteredOptions.length === 1) {
-                                setSotrudnik(filteredOptions[0]._id);
-                                setOtdel(filteredOptions[0] ? filteredOptions[0]._otdel._id : ``)
-                                event?.target?.blur();
-                            }                            
-                        }}
-                        options={Sotrudnik}
-                        getOptionLabel={(option) => option.fio}
-                        isOptionEqualToValue={(option, value) => option._id === value?._id}
-                        title='Выбор сотрудника'
-                        renderInput={(params) => (
-                            <TextField
-                            {...params}
-                            label="Сотрудники"
-                            variant="outlined"
-                            size='large'
-                            />
-                        )}
-                    />
-                </FormControl>
-                <FormControl sx={{flex:`0.45`}}>
-                    <Autocomplete
-                        id="otdel"
-                        value={Otdel.find(o => o._id === otdel) || null}
-                        onChange={(event, newValue) => {
-                            setOtdel(newValue ? newValue._id : '');
-                        }}
-                        onInputChange={(event, value) => {
-                            const filteredOptions = Otdel.filter(option => option.name.toLowerCase().includes(value.toLowerCase()));
-                            if (filteredOptions.length === 1) {
-                                setOtdel(filteredOptions[0]._id);
-                                event?.target?.blur();
-                            }
-                        }}
-                        options={Otdel}
-                        getOptionLabel={(option) => option.name}
-                        isOptionEqualToValue={(option, value) => option._id === value?._id}
-                        title='Выбор Отдела/ПТО'
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Отдел/ПТО"
-                                variant="outlined"
-                            />
-                        )}
-                    />
-                </FormControl>
-                
+                <CAutoCompleate
+                    idComp={`sotrudnik`}
+                    label={`Сотрудник*`}
+                    memoizedData={Sotrudnik}
+                    elementToSelect={sotrudnik}
+                    onChangeElement={handleChangeSotrudnik}
+                />
+                <CAutoCompleate
+                    idComp={`otdel`}
+                    label={`Отдел/ПТО*`}
+                    memoizedData={Otdel}
+                    elementToSelect={otdel}
+                    onChangeElement={handleChangeOtdel}
+                    flex={0.45}
+                    optionLabel='name'
+                />
             </Box>
 
             {/* прика3 и его дата */}
@@ -131,39 +104,23 @@ export default function DialogPriem({ payload, open, onClose }) {
 
             <Box sx={{display:`flex`, gap:1}}>
                 <TextField
+                    sx={{flex:`1`}}
                     id="descrip"
                     label="Описание"
                     fullWidth
                     value={descrip}
                     onChange={(event) => setDescrip(event.target.value)}
                 />
-                <FormControl sx={{width:`400px`}}>
-                    <Autocomplete
-                        id="user"
-                        value={Users.find(o => o._id === user) || null}
-                        onChange={(event, newValue) => { setUser(newValue ? newValue._id : ''); }}
-                        options={Users}
-                        onInputChange={(event, value) => {
-                            const filteredOptions = Users.filter(option => option.name.toLowerCase().includes(value.toLowerCase()));
-                            if (filteredOptions.length === 1) {
-                                setUser(filteredOptions[0]._id);
-                                event?.target?.blur();
-                            }
-                        }}
-                        getOptionLabel={(option) => option.name}
-                        isOptionEqualToValue={(option, value) => option._id === value?._id}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Кто выполнял"
-                                variant="outlined"
-                                title='Выбрать того кто раздавал права'
-                            />
-                        )}
-                    />
-                </FormControl>
+                <CAutoCompleate
+                    idComp={`user`}
+                    label={`Кто выполнял*`}
+                    memoizedData={Users}
+                    elementToSelect={user}
+                    onChangeElement={handleChangeUser}
+                    optionLabel='name'
+                    flex={0.6}
+                />
             </Box>
-
         </Box>
       </DialogContent>
 
@@ -171,6 +128,7 @@ export default function DialogPriem({ payload, open, onClose }) {
         <Button onClick={() => onClose()}>Отмена</Button>
         <Button
           title="Отправить запрос на сервер"
+          disabled={!sotrudnik || !otdel || !action || !date || !user}
           onClick={async () => {
             const res = { 
               _otdel:otdel,
@@ -179,10 +137,10 @@ export default function DialogPriem({ payload, open, onClose }) {
               action,
               data:date, 
               _who_do:user,
-              _who:(payload?._who && payload?._who?._id) || Users.find(el=>el.address === localStorage.getItem(`clientIp`))._id,
+              _who:getWhoId(payload, Users),
               data_dob:dataDob
             };
-            if (sotrudnik.length>0 && otdel.length>0 && action.length>0 ) {
+            if ([sotrudnik, otdel, action, date, user].every(Boolean)) {
                 onClose(res);                
             }
             else {

@@ -12,6 +12,7 @@ export default function Revizor() {
     // вызываем кастомный хук для даления строки из БД
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const Revizor = useRevizor()
+
     const columnsRevizor = useMemo(()=>
         [
             { field: '_sotr', headerName: 'ФИО',  flex:0.7,
@@ -23,14 +24,14 @@ export default function Revizor() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
-                  renderCell: (params) => {
+                renderCell: (params) => {
                     if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY HH:mm');
+                        return dayjs(params.value).format('DD.MM.YYYY HH:mm');
                     }
                     return null;
-                  },
+                },
             }, 
             { field: '_who', headerName: 'Кто доб.',  flex:0.3,
               valueGetter: (params) => params?.name || ''
@@ -39,11 +40,15 @@ export default function Revizor() {
         ],[]
     ) 
 
+    const sortRevizor = useMemo(()=>{
+        return Revizor.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf());
+    },[Revizor])
+
     return (
         <div className='animated-element'>
             <MDataGrid 
                 columns={columnsRevizor} 
-                tableData={Revizor.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                tableData={sortRevizor}
                 collectionName={`Revizor`} 
                 actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogRevizor)}
                 actionDelete={handleDeleteRowBD}

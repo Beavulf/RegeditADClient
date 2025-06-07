@@ -1,8 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import DialogSbrosAD from './DialogSbrosAD.jsx';
 import MDataGrid from '../../DataGrid/MDataGrid.jsx';
 import { useTableActions } from '../../../websocket/LayoutMessage.jsx';
-import { useSbrosAD, useWebSocketContext } from '../../../websocket/WebSocketContext.jsx'
+import { useSbrosAD } from '../../../websocket/WebSocketContext.jsx'
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
@@ -10,21 +10,9 @@ dayjs.locale('ru');
 export default function SbrosAD() { 
     // вызываем кастомный хук для даления строки из БД
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
-    const {sendJsonMessage} = useWebSocketContext();
     const SbrosAD = useSbrosAD();
-    useEffect(()=>{
-        sendJsonMessage(
-            {
-                type: 'getCollectionMongoose',
-                data: {
-                  collection: 'SbrosAD',
-                  
-                }
-            }
-        )
-    },[])
     
-    const columnsSotrudniki = useMemo(()=>
+    const columnsSbrosAD = useMemo(()=>
         [
             { field: '_otdel', headerName: 'Отдел',  flex:0.17,
                 valueGetter: (params) => params?.name || ''
@@ -37,7 +25,7 @@ export default function SbrosAD() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -53,7 +41,7 @@ export default function SbrosAD() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -69,11 +57,15 @@ export default function SbrosAD() {
         ],[]
     ) 
 
+    const filteredSbrosAD = useMemo(()=>{
+        return SbrosAD.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
+    },[SbrosAD])
+
     return (
         <div className='animated-element'>
             <MDataGrid 
-                columns={columnsSotrudniki} 
-                tableData={SbrosAD.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                columns={columnsSbrosAD} 
+                tableData={filteredSbrosAD}
                 collectionName={`SbrosAD`} 
                 actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogSbrosAD)}
                 actionDelete={handleDeleteRowBD}

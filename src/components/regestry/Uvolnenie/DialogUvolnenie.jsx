@@ -4,11 +4,12 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { useState, useEffect } from 'react';
-import { TextField, Box, FormControl, Autocomplete } from '@mui/material';
+import { useState, useEffect, useCallback } from 'react';
+import { TextField, Box } from '@mui/material';
 import { useSotrudnik, useUsers } from '../../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
-
+import CAutoCompleate from '../../utils/CAutoCompleate.jsx';
+import getWhoId from '../../users/GetWhoID.jsx';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
@@ -38,6 +39,10 @@ export default function DialogUvolnenie({ payload, open, onClose }) {
     }
   }, [payload]);
 
+  const handleChangeSotrudnik = useCallback((newValue) => {
+    setSotrudnik(newValue ? newValue._id : '')
+  }, []);
+
   return (
     <Dialog fullWidth open={open} onClose={() => onClose()}>
       <DialogTitle>Редактирование данных:</DialogTitle>
@@ -46,36 +51,13 @@ export default function DialogUvolnenie({ payload, open, onClose }) {
 
             {/* Поле для ввода ФИО */}
             <Box sx={{display:`flex`,gap:1}}>
-                <FormControl fullWidth={true}> 
-                    <Autocomplete
-                        id="sotrudnik"
-                        value={Sotrudnik.find(o => o._id === sotrudnik) || null}
-                        onChange={(event, newValue) => {
-                            setSotrudnik(newValue ? newValue._id : '')
-                        }}
-                        onInputChange={(event, value) => {
-                            // Фильтруем варианты по введенному значению
-                            const filteredOptions = Sotrudnik.filter(option => option.fio.toLowerCase().includes(value.toLowerCase()));
-                            // Если после фильтрации остался только один вариант, автоматически выбираем его
-                            if (filteredOptions.length === 1) {
-                                setSotrudnik(filteredOptions[0]._id);
-                                event?.target?.blur();
-                            }                            
-                        }}
-                        options={Sotrudnik}
-                        getOptionLabel={(option) => option.fio}
-                        isOptionEqualToValue={(option, value) => option._id === value?._id}
-                        title='Выбор сотрудника'
-                        renderInput={(params) => (
-                            <TextField
-                            {...params}
-                            label="Сотрудник*"
-                            variant="outlined"
-                            size='large'
-                            />
-                        )}
-                    />
-                </FormControl>
+                <CAutoCompleate
+                    idComp={`sotrudnik`}
+                    label={`Сотрудник*`}
+                    memoizedData={Sotrudnik}
+                    elementToSelect={sotrudnik}
+                    onChangeElement={handleChangeSotrudnik}
+                /> 
                 <DatePicker 
                     label="Дата увольнения*"
                     value={dataUvol} 
@@ -86,7 +68,7 @@ export default function DialogUvolnenie({ payload, open, onClose }) {
             {/* прика3 и его дата */}
             <Box sx={{display:`flex`, gap:1}}>
                 <TextField
-                    title='Приказ(д/з) увольнения*'
+                    title='Приказ(д/з) о увольнении*'
                     id="prikaz"
                     label="Приказ*"
                     fullWidth
@@ -115,6 +97,7 @@ export default function DialogUvolnenie({ payload, open, onClose }) {
         <Button onClick={() => onClose()}>Отмена</Button>
         <Button
           title="Отправить запрос на сервер"
+          disabled={!prikaz || !sotrudnik || !dataUvol}
           onClick={async () => {
             const res = { 
               _sotr:sotrudnik, 
@@ -122,10 +105,10 @@ export default function DialogUvolnenie({ payload, open, onClose }) {
               data_prikaza:datePrikaz,
               data_uvol: dataUvol,
               descrip, 
-              _who:(payload?._who && payload?._who?._id) || Users.find(el=>el.address === localStorage.getItem(`clientIp`))._id,
+              _who:getWhoId(payload,Users),
               data_dob:dataDob
             };
-            if ([prikaz, sotrudnik].every(value => value.length > 0) && dataUvol!=null) {
+            if ([prikaz, sotrudnik, dataUvol].every(Boolean)) {
                 onClose(res);
             }
             else {

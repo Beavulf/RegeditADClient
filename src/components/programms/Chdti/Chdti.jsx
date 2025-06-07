@@ -12,6 +12,7 @@ export default function Chdti() {
     // вызываем кастомный хук для даления строки из БД
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const Chdti = useChdti()
+
     const columnsChdti = useMemo(()=>
         [
             { field: '_sotr', headerName: 'ФИО',  flex:0.7,
@@ -24,7 +25,7 @@ export default function Chdti() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -40,11 +41,15 @@ export default function Chdti() {
         ],[]
     ) 
 
+    const filteredChdti = useMemo(()=>{
+        return Chdti.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
+    },[Chdti])
+
     return (
         <div className='animated-element'>
             <MDataGrid 
                 columns={columnsChdti} 
-                tableData={Chdti.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                tableData={filteredChdti}
                 collectionName={`ChdTI`} 
                 actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogChdti)}
                 actionDelete={handleDeleteRowBD}

@@ -12,6 +12,11 @@ export default function Stajirovka() {
     // вызываем кастомный хук для даления строки из БД
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const Stajirovka = useStajirovka()
+
+    const filteredStajirovka = useMemo(()=>{
+        return [...Stajirovka].sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
+    },[Stajirovka])
+
     const columnsStajirovka = useMemo(()=>
         [
             { field: '_sotr', headerName: 'ФИО',  flex:0.7,
@@ -22,7 +27,7 @@ export default function Stajirovka() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -35,7 +40,7 @@ export default function Stajirovka() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -48,7 +53,7 @@ export default function Stajirovka() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -67,7 +72,7 @@ export default function Stajirovka() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -87,7 +92,7 @@ export default function Stajirovka() {
         <div className='animated-element'>
             <MDataGrid 
                 columns={columnsStajirovka} 
-                tableData={Stajirovka.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                tableData={filteredStajirovka}
                 collectionName={`Stajirovka`} 
                 actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogStajirovka)}
                 actionDelete={handleDeleteRowBD}

@@ -6,9 +6,10 @@ import DialogActions from '@mui/material/DialogActions';
 import { useState, useEffect } from 'react';
 import { TextField, Box, FormControl, Autocomplete } from '@mui/material';
 import { useDoljnost, useOtdel } from '../../websocket/WebSocketContext.jsx'
+import { useDialogs } from '@toolpad/core/useDialogs';
+
 
 export default function DialogAddSotrudnik({ payload, open, onClose }) {
-  // const { Doljnost, Otdel } = useWebSocketContext()
   const Doljnost = useDoljnost()
   const Otdel = useOtdel()
   const [disabled, setDisabled] = useState(false);
@@ -20,7 +21,7 @@ export default function DialogAddSotrudnik({ payload, open, onClose }) {
   const [otdel, setOtdel] = useState('');
   const [lnp, setLnp] = useState(0);
   const [textFieldError, setTextFieldError] = useState(false);
-  
+  const dialogs = useDialogs();
 
   // Обработчик изменения ФИО
   function handleNameChange(event) {
@@ -44,7 +45,6 @@ export default function DialogAddSotrudnik({ payload, open, onClose }) {
       setDoljnost(payload._doljnost._id || '');
       setOtdel(payload._otdel._id || '');
       setLnp(payload.lnp || '');
-
     }
   }, [payload]);
 
@@ -86,7 +86,7 @@ export default function DialogAddSotrudnik({ payload, open, onClose }) {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Должность"
+                  label="Должность*"
                   variant="outlined"
                 />
               )}
@@ -104,7 +104,7 @@ export default function DialogAddSotrudnik({ payload, open, onClose }) {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Отдел"
+                  label="Отдел*"
                   variant="outlined"
                 />
               )}
@@ -122,7 +122,7 @@ export default function DialogAddSotrudnik({ payload, open, onClose }) {
           {/* Поле для ввода логина */}
           <TextField
             id="dns"
-            label="DNS"
+            label="Логин AD*"
             fullWidth
             value={login}
             onChange={(event) => setLogin(event.target.value)}
@@ -147,6 +147,10 @@ export default function DialogAddSotrudnik({ payload, open, onClose }) {
           title="Отправить запрос на сервер"
           disabled={disabled}
           onClick={() => {
+            if (login.length < 3) {
+              dialogs.alert('Необходимо указать логин AD')
+              return;
+            }
             const res = { fio, descrip, _doljnost: doljnost, _otdel: otdel, phone: phone, login:login,lnp:lnp};
             onClose(fio.length > 2 ? res : null);
           }}

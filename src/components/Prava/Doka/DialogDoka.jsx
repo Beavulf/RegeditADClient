@@ -3,13 +3,14 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { TextField, Box, MenuItem, Select, FormControl, Autocomplete, Typography, Table, TableBody, TableCell, TableHead, TableRow, useTheme } from '@mui/material';
 import { useUsers, useSotrudnik, useOtdel, usePdoka } from '../../../websocket/WebSocketContext.jsx'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useDialogs } from '@toolpad/core/useDialogs';
 import { useTableActions } from '../../../websocket/LayoutMessage.jsx';
-
+import getWhoId from '../../users/GetWhoID.jsx'
+import { useSetFocusAndText } from '../../hooks/SetFocusAndText.jsx';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
@@ -32,6 +33,8 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
   const [user, setUser] = useState(''); //кто выполнял
   const [sotrudnik, setSotrudnik] = useState(''); //выбранный сотрудник в автоподстановке
   const [formatedRows,setFormatedRows] = useState([]) //группа строк по совпадению даты и обоснования
+  useSetFocusAndText(setSotrudnik, 'sotrudnik', true)
+  
   const [error, setError] = useState({
     obosnovanie:false,
     user: false,
@@ -41,7 +44,7 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
   })  
 
   //получение  группы строк по дате и тому кто добавил, для редактирования
-  function getAddedGroup() {
+  const getAddedGroup = useCallback(() => {
     const filterDataDob = payload.data_dob || '';  // дата, по которой фильтруем
     const filterWhoId = payload._who._id || '';    // id пользователя, по которому фильтруем
     
@@ -59,7 +62,7 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
         action: item.type      // Действие (например, добавление или редактирование)
     }));
     return formattedItems;
-  }
+  }, [Pdoka, payload]);
 
   // Заполняем начальные данные при открытии окна
   useEffect(() => {
@@ -79,27 +82,31 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
     }    
   }, [payload]);
 
-  const handleAddEmployee = () => {
+  // добавление сотрудника в список
+  const handleAddEmployee = useCallback(() => {
     const selected = Sotrudnik.find((o) => o._id === sotrudnik);
     if (selected && !selectedSotrudniki.some((item) => item._id === selected._id)) {
       setSelectedSotrudniki([...selectedSotrudniki, { ...selected, action: 'Предоставить' }]);
     }
     setSotrudnik(null)
-  };
+  }, [Sotrudnik, sotrudnik, selectedSotrudniki]);
 
-  const handleRemoveEmployee = (id) => {
+  // удаление сотрудника из списка
+  const handleRemoveEmployee = useCallback((id) => {
     setSelectedSotrudniki(selectedSotrudniki.filter((item) => item._id !== id));
-  };
+  }, [selectedSotrudniki]);
 
-  const handleActionChange = (id, newAction) => {
+  // изменение действия сотрудника в списке
+  const handleActionChange = useCallback((id, newAction) => {
     setSelectedSotrudniki(
       selectedSotrudniki.map((item) =>
         item._id === id ? { ...item, action: newAction } : item
       )
     );
-  };
+  }, [selectedSotrudniki]);
 
-  async function returnData(){
+  // возвращает данные для отправки на сервер
+  const returnData = useCallback(()=>{
     let resData = []
     selectedSotrudniki.forEach((sotr)=>{
         const resSotr ={
@@ -111,7 +118,7 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
             obosnovanie:obosnovanie,
             data_prikaza:datePrikaz, 
             data_dob: dataDob, 
-            _who:(payload?._who && payload?._who?._id) || Users.find(el=>el.address === localStorage.getItem(`clientIp`))._id,
+            _who:getWhoId(payload,Users),
             _who_do: user,
             descrip:descrip
         }
@@ -119,7 +126,7 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
     })
   
     return resData
-  }
+  }, [selectedSotrudniki, pto, obosnovanie, datePrikaz, dataDob, user, descrip, payload, Users]);
 
   return (
     <Dialog maxWidth="80vw" open={open} onClose={() => onClose()}
@@ -220,10 +227,10 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
                             title='Выбор сотрудника'
                             renderInput={(params) => (
                                 <TextField
-                                {...params}
-                                label="Сотрудники"
-                                variant="outlined"
-                                size='small'
+                                    {...params}
+                                    label="Сотрудники"
+                                    variant="outlined"
+                                    size='small'
                                 />
                             )}
                             

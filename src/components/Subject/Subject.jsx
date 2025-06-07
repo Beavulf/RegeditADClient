@@ -25,7 +25,7 @@ import DialogFullAdd from './DialogFullAdd.jsx';
 import DialogReport from './DialogReport.jsx';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DownloadIcon from '@mui/icons-material/Download';
-// import * as xlsx from 'xlsx'
+import { useSetFocusAndText } from '../hooks/SetFocusAndText.jsx';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -37,7 +37,6 @@ const Subject = memo(function Subject() {
     const Subjects = useSubject()
     const Company = useCompany();
     const Contract = useContract();
-
     const conf = useMemo(() => ({ density: 'compact'}), []);
     const confContr = useMemo(() => ({density: 'compact', }), []);
 
@@ -48,6 +47,8 @@ const Subject = memo(function Subject() {
     const [isSearching, setIsSearching] = useState(false) // состояние для отслеживания процесса поиска
     const [debouncedSearchSubj, setDebouncedSearchSubj] = useState('') // значение после задержки
     const [showAnull, setShowAnull] = useState(false) // состояние для отслеживания процесса поиска
+
+    useSetFocusAndText(setSearchSubj, 'isearchSubj')
     
     // Эффект для debounce поискового запроса
     useEffect(() => {
@@ -65,36 +66,6 @@ const Subject = memo(function Subject() {
         };
     }, [searchSubj]);
 
-    // ввод текста в компонент, при начале ввода текста на странице
-    useEffect(() => {
-        const handleKeyDown = (event) => {
-            // Игнорируем, если нажаты модификаторы (Ctrl, Alt и т.д.) или спецклавиши
-            if (event.ctrlKey || event.altKey || event.metaKey || 
-                event.key === 'Tab' || event.key === 'Escape' || 
-                event.key === 'Enter' || event?.key?.length !== 1) {
-                return;
-            }
-            // Игнорируем, если фокус уже на текстовом поле или другом элементе ввода
-            if (event.target.tagName === 'INPUT' || 
-                event.target.tagName === 'TEXTAREA' || 
-                event.target.isContentEditable) {
-                return;
-            }
-            // Найти и фокусировать поле поиска
-            const searchField = document.getElementById('isearchSubj');
-            if (searchField) {
-                // Предотвращаем стандартное поведение (добавление символа браузером)
-                event.preventDefault();
-                searchField.focus();
-                // Устанавливаем введенный символ в поле поиска
-                setSearchSubj(event.key);
-            }
-        };
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, []);
 
     const filteredSubjects = useMemo(() => {
         if (!debouncedSearchSubj || debouncedSearchSubj.length < 3) return [];

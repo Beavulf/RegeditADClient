@@ -12,7 +12,7 @@ export default function Priem() {
     // вызываем кастомный хук для даления строки из БД
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const Priem = usePriem()
-    const columnsSotrudniki = useMemo(()=>
+    const columnsPriem = useMemo(()=>
         [
             { field: '_sotr', headerName: 'ФИО',  flex:0.7,
                 valueGetter: (params) => params?.fio || ''
@@ -22,7 +22,7 @@ export default function Priem() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -35,7 +35,7 @@ export default function Priem() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -48,7 +48,7 @@ export default function Priem() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -64,11 +64,15 @@ export default function Priem() {
         ],[]
     ) 
 
+    const filteredPriem = useMemo(()=>{
+        return [...Priem].sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
+    },[Priem])
+
     return (
         <div className='animated-element'>
             <MDataGrid 
-                columns={columnsSotrudniki} 
-                tableData={Priem.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                columns={columnsPriem} 
+                tableData={filteredPriem}
                 collectionName={`Priem`} 
                 actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogPriem)}
                 actionDelete={handleDeleteRowBD}

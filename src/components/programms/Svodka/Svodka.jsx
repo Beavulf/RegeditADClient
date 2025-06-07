@@ -39,11 +39,15 @@ export default function Svodka() {
         ],[]
     ) 
 
+    const sortSvodka = useMemo(()=>{
+        return Svodka.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf());
+    },[Svodka])
+
     return (
         <div className='animated-element'>
             <MDataGrid 
                 columns={columnsSvodka} 
-                tableData={Svodka.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                tableData={sortSvodka}
                 collectionName={`Svodka`} 
                 actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogSvodka)}
                 actionDelete={handleDeleteRowBD}

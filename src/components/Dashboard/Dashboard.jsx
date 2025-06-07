@@ -24,8 +24,8 @@ import WebIcon from '@mui/icons-material/Web';
 import LastPageIcon from '@mui/icons-material/LastPage';
 import Settings from '../../Settings.jsx'
 import {CurrentTimeDisplay} from './DateTImeCalendar.jsx'
-import ColorSelect from '../ColorSelect.jsx'
-import SotrToBlockList from '../regestry/Uvolnenie/SotrToBlockList.jsx';
+import ColorSelect from '../../components/utils/ColorSelect.jsx'
+import SotrToBlockList from '../regestry/Uvolnenie/BlockList/SotrToBlockList.jsx';
 import Divider from '@mui/material/Divider';
 
 import dayjs from 'dayjs';

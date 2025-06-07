@@ -4,14 +4,16 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TextField, Box, FormControl, Autocomplete } from '@mui/material';
 import { useSotrudnik, useUsers, useDoljnost } from '../../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
-
+import getWhoId from '../../users/GetWhoID.jsx';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
+import CAutoCompleate from '../../utils/CAutoCompleate.jsx';
+
 
 export default function DialogNaznachenie({ payload, open, onClose }) {
   const Sotrudnik = useSotrudnik()
@@ -43,6 +45,19 @@ export default function DialogNaznachenie({ payload, open, onClose }) {
     }
   }, [payload]);
 
+  const handleChangeSotrudnik = useCallback((newValue) => {
+    setSotrudnik(newValue ? newValue._id : '')
+    setOldDoljnost(newValue ? newValue._doljnost._id : ``) 
+  }, []);
+
+  const handleChangeOldDoljnost = useCallback((newValue) => {
+    setOldDoljnost(newValue ? newValue._id : '')
+  }, []);
+  
+  const handleChangeNewDoljnost = useCallback((newValue) => {
+    setNewDoljnost(newValue ? newValue._id : '')
+  }, []);
+
   return (
     <Dialog fullWidth open={open} onClose={() => onClose()}>
       <DialogTitle>Редактирование данных:</DialogTitle>
@@ -51,39 +66,13 @@ export default function DialogNaznachenie({ payload, open, onClose }) {
 
             {/* Поле для ввода ФИО */}
             <Box sx={{display:`flex`,gap:1}}>
-                <FormControl fullWidth={true}> 
-                    <Autocomplete
-                        id="sotrudnik"
-                        value={Sotrudnik.find(o => o._id === sotrudnik) || null}
-                        onChange={(event, newValue) => {
-                            setSotrudnik(newValue ? newValue._id : '')
-                            setOldDoljnost(newValue ? newValue._doljnost._id : ``) 
-                        }}
-                        onInputChange={(event, value) => {
-                            // Фильтруем варианты по введенному значению
-                            const filteredOptions = Sotrudnik.filter(option => option.fio.toLowerCase().includes(value.toLowerCase()));
-                            // Если после фильтрации остался только один вариант, автоматически выбираем его
-                            if (filteredOptions.length === 1) {
-                                setSotrudnik(filteredOptions[0]._id);
-                                setOldDoljnost(filteredOptions[0] ? filteredOptions[0]._doljnost._id : ``)
-                                event?.target?.blur();
-                            }                            
-                        }}
-                        options={Sotrudnik}
-                        getOptionLabel={(option) => option.fio}
-                        isOptionEqualToValue={(option, value) => option._id === value?._id}
-                        title='Выбор сотрудника'
-                        renderInput={(params) => (
-                            <TextField
-                            {...params}
-                            label="Сотрудник*"
-                            variant="outlined"
-                            size='large'
-                            />
-                        )}
-                    />
-                </FormControl>
-
+                <CAutoCompleate
+                    idComp={`sotrudnik`}
+                    label={`Сотрудник*`}
+                    memoizedData={Sotrudnik}
+                    elementToSelect={sotrudnik}
+                    onChangeElement={handleChangeSotrudnik}
+                />
                 <DatePicker 
                     label="Дата назначения*"
                     value={dateNaznach} 
@@ -92,62 +81,22 @@ export default function DialogNaznachenie({ payload, open, onClose }) {
             </Box>
 
             <Box sx={{display:`flex`, gap:1}}>
-                <FormControl sx={{flex:`1`}}>
-                    <Autocomplete
-                        id="old-doljnost"
-                        fullWidth
-                        value={Doljnost.find(o => o._id === oldDoljnost) || null}
-                        onChange={(event, newValue) => {
-                            setOldDoljnost(newValue ? newValue._id : '');
-                        }}
-                        onInputChange={(event, value) => {
-                            const filteredOptions = Doljnost.filter(option => option.name.toLowerCase().includes(value.toLowerCase()));
-                            if (filteredOptions.length === 1) {
-                                setOldDoljnost(filteredOptions[0]._id);
-                                event?.target?.blur();
-                            }
-                        }}
-                        options={Doljnost}
-                        getOptionLabel={(option) => option.name}
-                        isOptionEqualToValue={(option, value) => option._id === value?._id}
-                        title='Выбор должности'
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Старая должность"
-                                variant="outlined"
-                            />
-                        )}
-                    />
-                </FormControl>
-                <FormControl sx={{flex:`1`}}>
-                    <Autocomplete
-                        id="new-doljnost"
-                        fullWidth
-                        value={Doljnost.find(o => o._id === newDoljnost) || null}
-                        onChange={(event, newValue) => {
-                            setNewDoljnost(newValue ? newValue._id : '');
-                        }}
-                        onInputChange={(event, value) => {
-                            const filteredOptions = Doljnost.filter(option => option.name.toLowerCase().includes(value.toLowerCase()));
-                            if (filteredOptions.length === 1) {
-                                setNewDoljnost(filteredOptions[0]._id);
-                                event?.target?.blur();
-                            }
-                        }}
-                        options={Doljnost}
-                        getOptionLabel={(option) => option.name}
-                        isOptionEqualToValue={(option, value) => option._id === value?._id}
-                        title='Выбор должности'
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Новая должность*"
-                                variant="outlined"
-                            />
-                        )}
-                    />
-                </FormControl>
+                <CAutoCompleate
+                    idComp={`old-doljnost`}
+                    label={`Старая должность*`}
+                    memoizedData={Doljnost}
+                    elementToSelect={oldDoljnost}
+                    onChangeElement={handleChangeOldDoljnost}
+                    optionLabel='name'
+                />
+                <CAutoCompleate
+                    idComp={`new-doljnost`}
+                    label={`Новая должность*`}
+                    memoizedData={Doljnost}
+                    elementToSelect={newDoljnost}
+                    onChangeElement={handleChangeNewDoljnost}
+                    optionLabel='name'
+                />
             </Box>
 
             {/* прика3 и его дата */}
@@ -182,6 +131,7 @@ export default function DialogNaznachenie({ payload, open, onClose }) {
         <Button onClick={() => onClose()}>Отмена</Button>
         <Button
           title="Отправить запрос на сервер"
+          disabled={!sotrudnik || !newDoljnost || !dateNaznach || !oldDoljnost}
           onClick={async () => {
             const res = { 
               _sotr:sotrudnik, 
@@ -191,10 +141,10 @@ export default function DialogNaznachenie({ payload, open, onClose }) {
               _pred_znach:oldDoljnost,
               _new_znach: newDoljnost,
               descrip, 
-              _who:(payload?._who && payload?._who?._id) || Users.find(el=>el.address === localStorage.getItem(`clientIp`))._id,
+              _who:getWhoId(payload,Users),
               data_dob:dataDob
             };
-            if ([prikaz, sotrudnik, newDoljnost].every(value => value.length > 0) && dateNaznach!=null) {
+            if ([prikaz, sotrudnik, newDoljnost].every(Boolean) && dateNaznach!=null) {
                 onClose(res);
             }
             else {

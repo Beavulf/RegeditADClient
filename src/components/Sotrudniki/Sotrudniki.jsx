@@ -3,9 +3,7 @@ import DialogAddSotrudnik from './DialogSotrudnik.jsx';
 import MDataGrid from '../DataGrid/MDataGrid.jsx';
 import { useTableActions } from '../../websocket/LayoutMessage.jsx';
 import { useSotrudnik  } from '../../websocket/WebSocketContext.jsx'
-import { Button, Typography } from '@mui/material'
-import * as xlsx from 'xlsx'
-import { useOtdel, useDoljnost,  useWebSocketContext } from '../../websocket/WebSocketContext.jsx'
+import { Typography } from '@mui/material'
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -14,10 +12,7 @@ dayjs.locale('ru');
 const Sotrudniki = React.memo(function Sotrudniki() {
     // вызываем кастомный хук для даления строки из БД
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
-    const Otdel = useOtdel()
     const Sotrudnik = useSotrudnik()
-    const Doljnost = useDoljnost();
-    const {sendJsonMessage} = useWebSocketContext()
     const columnsSotrudniki = useMemo(()=>
         [
             { field: 'lnp', headerName: 'ЛНП',flex:0.15},
@@ -38,55 +33,9 @@ const Sotrudniki = React.memo(function Sotrudniki() {
         handleEditRow(id, oldData, collectionName, DialogAddSotrudnik);
      }, [handleEditRow]);
     
-    //загрузка файла excel для импорта массива данных
-    // const [fileContent, setFileContent] = useState([]);
-    // const handleFileUpload = (event) => {
-    //     const file = event.target.files[0];
-    //     if (!file) return;
 
-    //     const reader = new FileReader();
-
-    //     reader.onload = (e) => {
-    //         const data = new Uint8Array(e.target.result);
-    //         const workbook = xlsx.read(data, { type: "array", });
-    //         const sheetName = workbook.SheetNames[0];
-    //         const worksheet = workbook.Sheets[sheetName];
-    //         const jsonData = xlsx.utils.sheet_to_json(worksheet);
-
-    //         console.log("Массив из Excel:", jsonData);
-    //         setFileContent(jsonData);
-    //     };
-
-    //     reader.readAsArrayBuffer(file);
-    // };
-
-    // // запись полученых контрактов в нормальзованный вид для БД и запись в БД
-    // async function getSotrudnik() {
-    //     fileContent.forEach(async (sotr,index)=>{
-    //         const message = {
-    //             type: 'insertInToCollection',
-    //             data: {
-    //             collection: 'Sotrudnik',
-    //             body: {
-    //                 _otdel: Otdel.find(el=>el.name === sotr.otdel.trim() || el.descrip === sotr.otdel.trim())?._id || console.log(`OTDEL-------${index}`),
-    //                 _doljnost: Doljnost.find(el=>el.name === sotr.doljnost.trim())?._id || console.log(`DOLJNoST-------${index}`),
-    //                 fio:sotr.fio,
-    //                 phone:'',
-    //                 login: sotr.login.trim(),
-    //                 lnp:sotr.lnp != 0 ? sotr.lnp : null,
-    //                 descrip: sotr.descrip,
-    //                 is_locked: false,
-    //             },
-    //             },
-    //         };
-            
-    //         await sendJsonMessage(message)
-    //     })
-    // }
     return (
         <div className='animated-element'>
-            {/* <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
-            <Button onClick={getSotrudnik}>LOAD</Button> */}
             <MDataGrid 
                 columns={columnsSotrudniki} 
                 tableData={Sotrudnik}

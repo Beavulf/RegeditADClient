@@ -3,10 +3,11 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { TextField, Box, FormControl, Autocomplete } from '@mui/material';
 import { useSotrudnik, useUsers } from '../../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
+import CAutoCompleate from '../../utils/CAutoCompleate.jsx';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -37,6 +38,12 @@ export default function DialogChdti({ payload, open, onClose }) {
     }
   }, [payload]);
 
+  const memoizedSotrudnik = useMemo(() => Sotrudnik, [Sotrudnik]);
+
+  const handleChangeSotrudnik = (newValue) => {
+    setSotrudnik(newValue ? newValue._id : ''); 
+  }
+    
   return (
     <Dialog fullWidth open={open} onClose={() => onClose()}>
       <DialogTitle>Редактирование данных:</DialogTitle>
@@ -45,36 +52,13 @@ export default function DialogChdti({ payload, open, onClose }) {
 
             {/* Поле для ввода ФИО */}
             <Box sx={{display:`flex`,gap:1}}>
-                <FormControl fullWidth={true}> 
-                    <Autocomplete
-                        id="sotrudnik"
-                        value={Sotrudnik.find(o => o._id === sotrudnik) || null}
-                        onChange={(event, newValue) => {
-                            setSotrudnik(newValue ? newValue._id : '')
-                        }}
-                        onInputChange={(event, value) => {
-                            // Фильтруем варианты по введенному значению
-                            const filteredOptions = Sotrudnik.filter(option => option.fio.toLowerCase().includes(value.toLowerCase()));
-                            // Если после фильтрации остался только один вариант, автоматически выбираем его
-                            if (filteredOptions.length === 1) {
-                                setSotrudnik(filteredOptions[0]._id);
-                                event?.target?.blur();
-                            }                            
-                        }}
-                        options={Sotrudnik}
-                        getOptionLabel={(option) => option.fio}
-                        isOptionEqualToValue={(option, value) => option._id === value?._id}
-                        title='Выбор сотрудника'
-                        renderInput={(params) => (
-                            <TextField
-                            {...params}
-                            label="Сотрудник*"
-                            variant="outlined"
-                            size='large'
-                            />
-                        )}
-                    />
-                </FormControl>
+              <CAutoCompleate
+                idComp={`sotrudnik`}
+                label={`Сотрудник*`}
+                memoizedData={memoizedSotrudnik}
+                elementToSelect={sotrudnik}
+                onChangeElement={handleChangeSotrudnik}
+              />
             </Box>
 
             {/* прика3 и его дата */}
@@ -122,6 +106,7 @@ export default function DialogChdti({ payload, open, onClose }) {
       <DialogActions>
         <Button onClick={() => onClose()}>Отмена</Button>
         <Button
+          disabled={!deistvie || !sotrudnik || !obosnovanie}
           title="Отправить запрос на сервер"
           onClick={async () => {
             const res = { 

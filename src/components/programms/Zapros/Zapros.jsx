@@ -24,7 +24,7 @@ export default function Zapros() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -40,11 +40,15 @@ export default function Zapros() {
         ],[]
     ) 
 
+    const sortZapros = useMemo(()=>{
+        return Zapros.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf());
+    },[Zapros])
+
     return (
         <div className='animated-element'>
             <MDataGrid 
                 columns={columnsZapros} 
-                tableData={Zapros.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                tableData={sortZapros}
                 collectionName={`Zapros`} 
                 actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogZapros)}
                 actionDelete={handleDeleteRowBD}

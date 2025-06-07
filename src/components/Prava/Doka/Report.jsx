@@ -3,6 +3,8 @@ import { saveAs } from 'file-saver';
 import DownloadIcon from '@mui/icons-material/Download';
 import { IconButton } from '@mui/material'
 import { useSnackbar } from 'notistack';//
+import api from '../../../apiAxios/Api.jsx';
+import { memo, useCallback, useMemo } from 'react';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -14,25 +16,37 @@ const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
 const ExportExcel = ({ startDate, endDate }) => {
   const { enqueueSnackbar } = useSnackbar(); 
 
-  const exportToExcel = async () => {
+  const mucol = useMemo(()=>[
+    {header:'ПТО', key:'_pto'},
+    {header:'ФИО', key:'_sotr'},
+    {header:'Тип', key:'type'},
+    {header:'ЛНП', key:'lnp'},
+    {header:'Обоснование', key:'obosnovanie'},
+    {header:'Дата приказа', key:'data_prikaza'},
+    {header:'Дата добавления', key:'data_dob'},
+    {header:'Кто добавил', key:'_who'},
+    {header:'Кто выполнял', key:'_who_do'},
+    {header:'Описание', key:'descrip'},
+  ],[])
+
+  const exportToExcel = useCallback(async () => {
     // Создаем новую книгу и рабочий лист
     const workbook = new ExcelJS.Workbook();
-    const worksheet =workbook.addWorksheet(`C ${startDate && dayjs(startDate).format('DD.MM.YYYY') || 'начала'} ПО ${endDate && dayjs(endDate)?.format('DD.MM.YYYY') || 'конец'}`); ;    
+    const worksheet = workbook.addWorksheet(`C ${startDate && dayjs(startDate).format('DD.MM.YYYY') || 'начала'} ПО ${endDate && dayjs(endDate)?.format('DD.MM.YYYY') || 'конец'}`); ;    
     let data;
 
     async function getAllPdoka(){
-      const response = await fetch(`http://${SERVER_ADDRESS}:${SERVER_PORT}/allpdoka`);
-      if (!response.ok) {
+      const response = await api.get(`http://${SERVER_ADDRESS}:${SERVER_PORT}/allpdoka`);
+      if (response.statusText !== 'OK') {
         throw new Error('Ошибка получения Фидбеков');
       }
-      const dataRes = await response.json();            
-      data = dataRes; // Сохраняем данные в состоянии
+      data = await response.data;            
+      return;
     }
 
     await getAllPdoka()
 
     if (data && data.length > 0) {
-
       // с и по
       if (startDate && endDate) {
         const startDateObj = dayjs(startDate);
@@ -42,7 +56,6 @@ const ExportExcel = ({ startDate, endDate }) => {
           return itemDate.isBetween(startDateObj, endDateObj, 'day', '[]');
         });
       }
-      
       // только С
       if (startDate && !endDate) {        
         const startDateObj = dayjs(startDate);
@@ -51,7 +64,6 @@ const ExportExcel = ({ startDate, endDate }) => {
           return itemDate.isAfter(startDateObj, 'day') || itemDate.isSame(startDateObj, 'day');
         });
       }
-
       // только ПО
       if (!startDate && endDate) {
         const endDateObj = dayjs(endDate);
@@ -61,20 +73,9 @@ const ExportExcel = ({ startDate, endDate }) => {
         });
       }
 
-      const mucol = [
-        {header:'ПТО', key:'_pto'},
-        {header:'ФИО', key:'_sotr'},
-        {header:'Тип', key:'type'},
-        {header:'ЛНП', key:'lnp'},
-        {header:'Обоснование', key:'obosnovanie'},
-        {header:'Дата приказа', key:'data_prikaza'},
-        {header:'Дата добавления', key:'data_dob'},
-        {header:'Кто добавил', key:'_who'},
-        {header:'Кто выполнял', key:'_who_do'},
-        {header:'Описание', key:'descrip'},
-      ]
       worksheet.columns = mucol;
-      // Сортировка по data_prikaza (новые записи сверху)
+
+      // Сортировка по data_dob (новые записи сверху)
       data.sort((a, b) => {
         const aDate = dayjs(a.data_dob);
         const bDate = dayjs(b.data_dob);
@@ -92,7 +93,7 @@ const ExportExcel = ({ startDate, endDate }) => {
           data_dob: dayjs(item.data_dob).format('DD.MM.YYYY'),
           _who: item._who.name,
           _who_do: item._who_do.name,
-          desctip:item.descrip
+          descrip:item.descrip
         }
         worksheet.addRow(resItem);
       });
@@ -134,10 +135,15 @@ const ExportExcel = ({ startDate, endDate }) => {
     }
 
     // Генерируем Excel-файл и запускаем его загрузку
+    if (!data || data.length === 0) {
+      enqueueSnackbar(`Нет данных для выгрузки.`, { variant: `error` });
+      return;
+    }
+    
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(new Blob([buffer]), `DokaNASTD_Archive_${dayjs(new Date()).format('DD.MM.YYYY')}.xlsx`);
     enqueueSnackbar(`Файл успешно загружен (DokaNASTD_Archive_${dayjs(new Date()).format('DD.MM.YYYY')}.xlsx).`, { variant: `success` });
-  };
+  }, [startDate, endDate, enqueueSnackbar, mucol]);
 
   return (
     <div>
@@ -146,4 +152,4 @@ const ExportExcel = ({ startDate, endDate }) => {
   );
 };
 
-export default ExportExcel;
+export default memo(ExportExcel);

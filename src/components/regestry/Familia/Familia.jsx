@@ -22,7 +22,7 @@ export default function Priem() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -37,7 +37,7 @@ export default function Priem() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -53,11 +53,15 @@ export default function Priem() {
         ],[]
     ) 
 
+    const filteredFamilia = useMemo(()=>{
+        return [...Familia].sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
+    },[Familia])
+
     return (
         <div className='animated-element'>
             <MDataGrid 
                 columns={columnsPerevod} 
-                tableData={Familia.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                tableData={filteredFamilia}
                 collectionName={`Familia`} 
                 actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogFamilia)}
                 actionDelete={handleDeleteRowBD}

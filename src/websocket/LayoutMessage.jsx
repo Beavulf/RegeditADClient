@@ -7,6 +7,7 @@ export function useTableActions() {
 
   // Удаление строки
   const handleDeleteRowBD = async (id, collectionName, row) => {
+    
     const confirmed = await dialogs.confirm(`Удалить выбранную строку ?`, {
       okText: 'Да',
       cancelText: 'Нет',

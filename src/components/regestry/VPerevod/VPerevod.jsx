@@ -12,7 +12,7 @@ export default function Priem() {
     // вызываем кастомный хук для даления строки из БД
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const VPerevod = useVPerevod()
-    const columnsPerevod = useMemo(()=>
+    const columnsVPerevod = useMemo(()=>
         [
             { field: '_sotr', headerName: 'ФИО',  flex:0.7,
                 valueGetter: (params) => params?.fio || ''
@@ -84,11 +84,15 @@ export default function Priem() {
         ],[]
     ) 
 
+    const filteredVPerevod = useMemo(()=>{
+        return VPerevod.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
+    },[VPerevod])
+
     return (
         <div className='animated-element'>
             <MDataGrid 
-                columns={columnsPerevod} 
-                tableData={VPerevod.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                columns={columnsVPerevod} 
+                tableData={filteredVPerevod}
                 collectionName={`VPerevod`} 
                 actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogVPerevod)}
                 actionDelete={handleDeleteRowBD}

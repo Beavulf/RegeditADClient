@@ -4,14 +4,15 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { useState, useEffect } from 'react';
-import { TextField, Box, FormControl, Autocomplete } from '@mui/material';
+import { useState, useEffect, useCallback } from 'react';
+import { TextField, Box } from '@mui/material';
 import { useSotrudnik, useUsers } from '../../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
-
+import getWhoId from '../../users/GetWhoID.jsx';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
+import CAutoCompleate from '../../utils/CAutoCompleate.jsx';
 
 export default function DialogFamilia({ payload, open, onClose }) {
   const Sotrudnik = useSotrudnik()
@@ -40,6 +41,11 @@ export default function DialogFamilia({ payload, open, onClose }) {
     }
   }, [payload]);
 
+  const handleChangeSotrudnik = useCallback((newValue) => {
+    setSotrudnik(newValue ? newValue._id : '')
+    setOldFam(newValue ? newValue.fio.split(' ')[0]: ``) 
+  }, []);
+
   return (
     <Dialog fullWidth open={open} onClose={() => onClose()}>
       <DialogTitle>Редактирование данных:</DialogTitle>
@@ -48,38 +54,13 @@ export default function DialogFamilia({ payload, open, onClose }) {
 
             {/* Поле для ввода ФИО */}
             <Box sx={{display:`flex`,gap:1}}>
-                <FormControl fullWidth={true}> 
-                    <Autocomplete
-                        id="sotrudnik"
-                        value={Sotrudnik.find(o => o._id === sotrudnik) || null}
-                        onChange={(event, newValue) => {
-                            setSotrudnik(newValue ? newValue._id : '')
-                            setOldFam(newValue ? newValue.fio.split(' ')[0]: ``) 
-                        }}
-                        onInputChange={(event, value) => {
-                            // Фильтруем варианты по введенному значению
-                            const filteredOptions = Sotrudnik.filter(option => option.fio.toLowerCase().includes(value.toLowerCase()));
-                            // Если после фильтрации остался только один вариант, автоматически выбираем его
-                            if (filteredOptions.length === 1) {
-                                setSotrudnik(filteredOptions[0]._id);
-                                setOldFam(filteredOptions[0] ? filteredOptions[0].fio.split(' ')[0] : ``)
-                                event?.target?.blur();
-                            }                            
-                        }}
-                        options={Sotrudnik}
-                        getOptionLabel={(option) => option.fio}
-                        isOptionEqualToValue={(option, value) => option._id === value?._id}
-                        title='Выбор сотрудника'
-                        renderInput={(params) => (
-                            <TextField
-                            {...params}
-                            label="Сотрудник*"
-                            variant="outlined"
-                            size='large'
-                            />
-                        )}
-                    />
-                </FormControl>
+                <CAutoCompleate
+                    idComp={`sotrudnik`}
+                    label={`Сотрудник*`}
+                    memoizedData={Sotrudnik}
+                    elementToSelect={sotrudnik}
+                    onChangeElement={handleChangeSotrudnik}
+                />
             </Box>
 
             <Box sx={{display:`flex`, gap:1}}>
@@ -133,6 +114,7 @@ export default function DialogFamilia({ payload, open, onClose }) {
         <Button onClick={() => onClose()}>Отмена</Button>
         <Button
           title="Отправить запрос на сервер"
+          disabled={!sotrudnik || !prikaz || !newFam}
           onClick={async () => {
             const res = { 
               _sotr:sotrudnik, 
@@ -141,10 +123,10 @@ export default function DialogFamilia({ payload, open, onClose }) {
               pred_znach:oldFam, 
               new_znach:newFam,
               descrip, 
-              _who:(payload?._who && payload?._who?._id) || Users.find(el=>el.address === localStorage.getItem(`clientIp`))._id,
+              _who:getWhoId(payload,Users),
               data_dob:dataDob
             };
-            if ([prikaz, sotrudnik, newFam].every(value => value.length > 0)) {
+            if ([prikaz, sotrudnik, newFam].every(Boolean)) {
                 onClose(res);
             }
             else {

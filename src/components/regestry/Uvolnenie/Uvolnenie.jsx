@@ -1,21 +1,24 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import DialogUvolnenie from './DialogUvolnenie.jsx';
 import MDataGrid from '../../DataGrid/MDataGrid.jsx';
 import { useTableActions } from '../../../websocket/LayoutMessage.jsx';
 import { useUvolnenie } from '../../../websocket/WebSocketContext.jsx'
 import { Typography, Box, Button } from '@mui/material';
-import SotrToBlockList from './SotrToBlockList.jsx';
+import SotrToBlockList from './BlockList/SotrToBlockList.jsx';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
 
-export default function Uvolnenie({router}) {
+export default function Uvolnenie() {
     // вызываем кастомный хук для даления строки из БД
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const Uvolnenie = useUvolnenie()
     const [fioToUvolnenie, setFioToUvolnenie] = useState(JSON.parse(sessionStorage.getItem('fioToUvolnenie')))
-
-
+    
+    const selectSotrFromBlockList = useCallback((fio)=>{
+        setFioToUvolnenie(fio)
+    },[setFioToUvolnenie])
+    
     const columnsPerevod = useMemo(()=>
         [
             { field: '_sotr', headerName: 'ФИО',  flex:0.7,
@@ -66,7 +69,7 @@ export default function Uvolnenie({router}) {
             }, 
             { field: 'descrip', headerName: 'Описание', flex:0.3, },
         ],[]
-    ) 
+      ) 
 
     return (
         <Box className='animated-element' sx={{display:'flex', minWidth:'0', gap:1, height:'100%',}}>
@@ -97,9 +100,7 @@ export default function Uvolnenie({router}) {
             </Box>
             {/* список сотрудников на блокировку */}
             <Box sx={{flex: '0 0 300px'}}>
-              <SotrToBlockList onSelect={
-                (fio)=>{setFioToUvolnenie(fio)}
-              }/>
+              <SotrToBlockList onSelect={selectSotrFromBlockList}/>
             </Box>
         </Box>
     )

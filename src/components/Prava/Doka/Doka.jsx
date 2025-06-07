@@ -1,8 +1,6 @@
 import { usePdoka } from '../../../websocket/WebSocketContext.jsx'
 import { Typography, Box, IconButton, Badge, Button, Checkbox, CircularProgress } from '@mui/material'
-import { TreeItem } from '@mui/x-tree-view/TreeItem';
-import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
-import React, { useState, useMemo, useEffect, memo } from 'react';
+import React, { useState, useMemo, useEffect, memo, useCallback } from 'react';
 import MDataGrid from '../../DataGrid/MDataGrid.jsx';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
 import { useTableActions } from '../../../websocket/LayoutMessage.jsx';
@@ -12,6 +10,9 @@ import Fade from '@mui/material/Fade';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import ExportExcel from './Report.jsx'
 import { useSnackbar } from 'notistack';
+import api from '../../../apiAxios/Api.jsx';
+import TreeViewComponent from './TreeView/TreeViewComponent.jsx';
+
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -21,114 +22,66 @@ const SERVER_ADDRESS = import.meta.env.VITE_SERVER_ADDRESS
 const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
 
 const Doka = React.memo(function Doka() {
+    // вызываем кастомный хук для даления строки из БД
+    const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const Pdoka = usePdoka()
+    const { enqueueSnackbar } = useSnackbar(); 
+
     const [filter, setFilter] = useState(false);
-    const [overdueRows, setOverdueRows] = useState([]);  
+    const [overdueRowsCount, setOverdueRowsCount] = useState([]);  
     const [allPdoka, setAllPdoka] = useState([])  
-    const [allTime, setAllTime] = useState(false)
+    const [allTimeSelected, setAllTimeSelected] = useState(false)
     const [fadeReporCheck, setFadeReporCheck] = useState(false)
     const [startDate, setStartDate] = useState(dayjs(new Date()))
     const [endDate, setEndDate] = useState(dayjs(new Date()))
     const [allDataCheck, setAllDataCheck] = useState(false)
-    const { enqueueSnackbar } = useSnackbar(); 
     const [isLoad, setIsLoad] = useState(false)
-    async function getAllPdoka() {
-        try {
-          if (!allTime){
-            setIsLoad(true)
-            
-            const response = await fetch(`http://${SERVER_ADDRESS}:${SERVER_PORT}/allpdoka`);
-            if (!response.ok) {
-              enqueueSnackbar(`Ошибка при запросе к серверу.`, { variant: 'error' });
-              throw new Error('Ошибка получения всех данных таблицы Дока НАСТД');
-            }
-            const data = await response.json();            
-            setAllPdoka(data); // Сохраняем данные в состоянии
-            setAllTime(true)
-            setIsLoad(false)
-          } else {
-            setAllTime(false)
-            setIsLoad(false)
-            setAllPdoka([])
-          }
-            
-        } catch (error) {
-            enqueueSnackbar(`Ошибка при запросе к серверу.`, { variant: 'error' });
-            console.error('Ошибка запроса на сервер для получение всех данных Дока НАСТД', error);
-        }
-    }
     
-    const getTreeData = (items) => {
-        return items.reduce((acc, item) => {
-            const date = dayjs(item.data_prikaza);
-            const year = date.format("YYYY");
-            const month = date.format("MMMM");
-            const day = date.format("DD MMMM");
-      
-            if (!acc[year]) {
-                acc[year] = {};
-            }
-            if (!acc[year][month]) {
-                acc[year][month] = {};
-            }
-            if (!acc[year][month][day]) {
-                acc[year][month][day] = [];
-            }
-            acc[year][month][day].push(item);
-            return acc;
-        }, {});
-    };
-    const TreeViewComponent = ({ data }) => {
-        const treeData = useMemo(() => getTreeData(data), [data]);
-      
-        return (
-          <SimpleTreeView aria-label="Дерево записей">
-            {Object.entries(treeData).map(([year, months]) => (
-              <TreeItem itemId={year} label={year} key={year}>
-                {Object.entries(months).map(([month, days]) => (
-                  <TreeItem itemId={`${year}-${month}`} label={month} key={month}>
-                    {Object.entries(days).map(([day, items]) => (
-                      <TreeItem itemId={`${year}-${month}-${day}`} label={day} key={day}>
-                        {items.map((item) => (
-                          <TreeItem
-                            itemId={item._id}
-                            key={item._id}
-                            label={
-                              <Box sx={{display:'flex'}}>
-                                (<Typography color='aqua'>{item._pto.name}</Typography>)|<Typography color={item.type === 'Предоставить' ? 'lightGreen' : '#ed5353b0'}> {item.type} </Typography>| <strong> {item._sotr.fio} </strong> (<Typography color='aqua'>{item.lnp}</Typography>) - {item.obosnovanie} - <Typography color='lightBlue'>{item._who_do.name}</Typography>
-                              </Box>
-                            }
-                          />
-                        ))}
-                      </TreeItem>
-                    ))}
-                  </TreeItem>
-                ))}
-              </TreeItem>
-            ))}
-          </SimpleTreeView>
-        );
-    }
-
-    useEffect(() => {
-      if (Pdoka.length > 0) {
-        const filteredDocuments = Pdoka.filter(doc => {
-          return dayjs(doc.data_prikaza).isBefore(dayjs().subtract(2, 'day')) && doc.obosnovanie === 'ДЗ по GW';
-        });
-        // Если просроченных документов нет, сбрасываем фильтр
-        if (filteredDocuments.length === 0) {
-          setFilter(false);
+    const getAllPdoka = useCallback(async () => {
+        if (allTimeSelected) {
+            setAllTimeSelected(false);
+            setAllPdoka([]);
+            return;
         }
-        setOverdueRows(filteredDocuments);
-      } else {
-        setOverdueRows([]);
-      }
-    }, [Pdoka]);
+        try {
+            setIsLoad(true);
+            const response = await api.get(`http://${SERVER_ADDRESS}:${SERVER_PORT}/allpdoka`);
+            
+            if (response.statusText !== 'OK') {
+                throw new Error('Ошибка получения всех данных таблицы Дока НАСТД');
+            }
 
-    // вызываем кастомный хук для даления строки из БД
-    const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
+            const data = await response.data;
+            setAllPdoka(data);
+            setAllTimeSelected(true);
+        } catch (error) {
+            enqueueSnackbar('Ошибка при запросе к серверу.', { variant: 'error' });
+            console.error('Ошибка запроса на сервер для получение всех данных Дока НАСТД:', error);
+        } finally {
+            setIsLoad(false);
+        }
+    }, [allTimeSelected, setAllPdoka, setAllTimeSelected, setIsLoad, enqueueSnackbar]);
+    
+    // условие на проверку просроченных документов
+    const isOverdueDocument = useCallback((doc) => 
+      dayjs(doc.data_prikaza).isBefore(dayjs().subtract(2, 'day')) && 
+      doc.obosnovanie === 'ДЗ по GW',
+    []);
   
-    const columnsSotrudniki = useMemo(()=>
+    // фильтрация просроченных документов
+    const filteredDocuments = useMemo(() => 
+      Pdoka.filter(isOverdueDocument),
+    [Pdoka, isOverdueDocument]);
+
+    // постоянная проверка просроченных документов
+    useEffect(() => {
+      if (filteredDocuments.length === 0) {
+        setFilter(false);
+      }
+      setOverdueRowsCount(filteredDocuments.length);
+    }, [filteredDocuments]);
+
+    const columnsPDoka = useMemo(()=>
         [
             { field: '_id', headerName: 'ID', width: 150, flex:0.3, hide:true },
             
@@ -144,7 +97,7 @@ const Doka = React.memo(function Doka() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -157,7 +110,7 @@ const Doka = React.memo(function Doka() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                 },
                 renderCell: (params) => {
                     return dayjs(params.value).format('DD.MM.YYYY HH:mm');
@@ -173,39 +126,44 @@ const Doka = React.memo(function Doka() {
         ],[]
     ) 
     
-    function checkLoadAllData() {
-      setAllDataCheck(prev=>{
-        if (!prev){
-          setStartDate(null);
-          setEndDate(null);
-          return !prev
-        }
-        if (prev) {
-          setStartDate(dayjs(new Date()));
-          setEndDate(dayjs(new Date()));
-          return !prev
-        }
-      })
-    }
+    // установка и снятие флага для загрузки в эксель всего периода
+    const checkLoadAllData = useCallback(() => {
+      setAllDataCheck(prev => {
+        const newValue = !prev;
+        setStartDate(newValue ? null : dayjs());
+        setEndDate(newValue ? null : dayjs());
+        return newValue;
+      });
+    }, []);
 
+    //фильтр просроченных документов
+    const filteredPdoka = useMemo(()=>{
+      if (filter){  
+        return Pdoka.filter(doc => {
+          return dayjs(doc.data_prikaza).isBefore(dayjs().subtract(2, 'day')) && doc.obosnovanie === 'ДЗ по GW';
+        }).sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
+      }
+      return Pdoka.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
+    },[Pdoka, filter])
+    
     return (
         <div className='animated-element' style={{flex:`1`, textAlign:`start`}}>
           <Box sx={{display:`flex`, alignItems:`center`, gap:1}}>
               <Typography variant="h5">Просроченные</Typography>
-              <Badge badgeContent={overdueRows.length} color="secondary" max={99}>
+              <Badge badgeContent={overdueRowsCount} color="secondary" max={99}>
                   <IconButton title='Права которым не прописали приказ больше 2-х дней назад'
                   sx={{}}
                     onClick={()=>{
-                        if (overdueRows.length>0){
+                        if (overdueRowsCount>0){
                             setFilter((prev)=>!prev) 
                         }
                     }}
                   >
-                  <ReportGmailerrorredIcon sx={{color:overdueRows.length>0 ?`#e03d3d` : `green`, bgcolor:filter && 'lightGray' || '', borderRadius:'8px'}}/>
+                  <ReportGmailerrorredIcon sx={{color:overdueRowsCount>0 ?`#e03d3d` : `green`, bgcolor:filter && 'lightGray' || '', borderRadius:'8px'}}/>
                   </IconButton>
               </Badge>
 
-              <Button sx={{}} variant={allTime ? 'contained' : 'outlined'} onClick={getAllPdoka} 
+              <Button variant={allTimeSelected ? 'contained' : 'outlined'} onClick={getAllPdoka} 
                 title='Получить список за все время отсортированный сразу по годам, месяцам, дням (дата выполнения).'
                 >за все время {isLoad && <CircularProgress sx={{margin:'0 5px'}} color='black' size='20px'/>}</Button>
              
@@ -224,35 +182,31 @@ const Doka = React.memo(function Doka() {
                       value={endDate} 
                       onChange={(newValue) => {setEndDate(newValue)}} 
                     />
+
                     <Box sx={{display:'flex', alignItems:'center', border:'1px solid gray', borderRadius:'8px'}}>
-
                       <Checkbox title='За все время' checked={allDataCheck} onChange={checkLoadAllData}></Checkbox>
-                      
                       <ExportExcel startDate={startDate} endDate={endDate}></ExportExcel>
-
                       <IconButton onClick={()=>setFadeReporCheck(false)} size='large' color='error' title='Отменить'>
                           <CloseIcon></CloseIcon>
                       </IconButton>
-
                     </Box>
+
                   </Box>
                 </Fade>
                 <Button 
+                loading
                   variant={fadeReporCheck && 'contained' || 'outlined'} 
                   title='Выгрузить в excel права за опр. период' 
                   onClick={()=>{setFadeReporCheck(prev=>!prev)}}
-                  
                 >excel</Button>
               </Box>
 
           </Box>
             
-          {!allTime ?
+          {!allTimeSelected ?
             <MDataGrid 
-                columns={columnsSotrudniki} 
-                tableData={!filter && Pdoka || Pdoka.filter(doc => {
-                    return dayjs(doc.data_prikaza).isBefore(dayjs().subtract(2, 'day')) && doc.obosnovanie === 'ДЗ по GW';
-                  }).sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                columns={columnsPDoka} 
+                tableData={filteredPdoka}
                 collectionName={`Pdoka`} 
                 actionEdit={async (id,oldData,collectionName)=> handleEditRow(id,oldData,collectionName,DialogDoka)}
                 actionDelete={handleDeleteRowBD}

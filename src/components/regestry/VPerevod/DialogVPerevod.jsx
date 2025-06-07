@@ -4,11 +4,12 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { useState, useEffect } from 'react';
+import { useEffect, useReducer, useCallback } from 'react';
 import { TextField, Box, FormControl, Autocomplete } from '@mui/material';
 import { useSotrudnik, useUsers, useOtdel } from '../../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
-
+import getWhoId from '../../users/GetWhoID.jsx';
+import CAutoCompleate from '../../utils/CAutoCompleate.jsx';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
@@ -17,35 +18,65 @@ export default function DialogVPerevod({ payload, open, onClose }) {
   const Sotrudnik = useSotrudnik()
   const Users = useUsers()  
   const Otdel = useOtdel()
-
-  const [sotrudnik, setSotrudnik] = useState('');
-  const [oldOtdel, setOldOtdel] = useState('');
-  const [newOtdel, setNewOtdel] = useState('');
-  const [prikaz, setPrikaz] = useState('');
-  const [datePrikaz, setDatePrikaz] = useState(dayjs(new Date())); 
-  const [dateN, setDateN] = useState(dayjs(new Date())); 
-  const [dateK, setDateK] = useState(dayjs(new Date())); 
-  const [dataDob, setDataDob] = useState(dayjs(new Date()))
-  const [type, setType] = useState('');
-  const [descrip, setDescrip] = useState('');
-
   const dialogs = useDialogs();
 
+  const initialState = {
+    sotrudnik: '',
+    oldOtdel: '',
+    newOtdel: '',
+    prikaz: '',
+    datePrikaz: dayjs(new Date()),
+    dateN: dayjs(new Date()),
+    dateK: dayjs(new Date()),
+    dataDob: dayjs(new Date()),
+    type: '',
+    descrip: ''
+  };
+
+  function reducer(state, action) {
+    switch (action.type) {
+        case 'SET_FIELD':
+            return { ...state, [action.field]: action.value };
+        case 'INIT_FROM_PAYLOAD':
+            const p = action.payload || {};
+            return {
+                sotrudnik: p._sotr?._id || '',
+                oldOtdel: p._otkyda?._id || '',
+                newOtdel: p._kyda?._id || '',
+                prikaz: p.prikaz || '',
+                datePrikaz: dayjs(new Date(p.data_prikaza)) || dayjs(new Date()),
+                dateN: dayjs(new Date(p.data_n)) || dayjs(new Date()),
+                dateK: dayjs(new Date(p.data_k)) || dayjs(new Date()),
+                dataDob: dayjs(new Date(p.data_dob)) || dayjs(new Date()),
+                type: p.type || '',
+                descrip: p.descrip || ''
+            };
+        case 'RESET':
+            return initialState;
+        default:
+            return state;
+    }
+  }
+  const [state, dispatch] = useReducer(reducer, initialState);
   // Заполняем начальные данные при открытии окна
   useEffect(() => {
-    if (payload) {        
-        setSotrudnik(payload._sotr._id || '');
-        setDescrip(payload.descrip || '');
-        setType(payload.type || '');
-        setPrikaz(payload.prikaz || '');
-        setDatePrikaz(dayjs(new Date(payload.data_prikaza)) || dayjs(new Date()));
-        setDateN(dayjs(new Date(payload.data_n)) || dayjs(new Date()));
-        setDateK(dayjs(new Date(payload.data_k)) || dayjs(new Date()));
-        setDataDob(dayjs(new Date(payload.data_dob)) || dayjs(new Date()));
-        setOldOtdel(payload._otkyda._id || '');
-        setNewOtdel(payload._kyda._id || '');
-    }
+    if (payload) {  
+        dispatch({type:'INIT_FROM_PAYLOAD', payload})      
+    } 
   }, [payload]);
+
+  const handleChangeSotrudnik = useCallback((newValue) => {
+    dispatch({type:'SET_FIELD', field:'sotrudnik', value:newValue ? newValue._id : ''})
+    dispatch({type:'SET_FIELD', field:'oldOtdel', value:newValue ? newValue._otdel._id : ``})
+  }, []);
+
+  const handleChangeOldOtdel = useCallback((newValue) => {
+    dispatch({type:'SET_FIELD', field:'oldOtdel', value:newValue ? newValue._id : ''})
+  }, []);
+  
+  const handleChangeNewOtdel = useCallback((newValue) => {
+    dispatch({type:'SET_FIELD', field:'newOtdel', value:newValue ? newValue._id : ''})
+  }, []);
 
   return (
     <Dialog fullWidth open={open} onClose={() => onClose()}>
@@ -55,117 +86,52 @@ export default function DialogVPerevod({ payload, open, onClose }) {
 
             {/* Поле для ввода ФИО */}
             <Box sx={{display:`flex`,gap:1}}>
-                <FormControl fullWidth={true}> 
-                    <Autocomplete
-                        id="sotrudnik"
-                        value={Sotrudnik.find(o => o._id === sotrudnik) || null}
-                        onChange={(event, newValue) => {
-                            setSotrudnik(newValue ? newValue._id : '')
-                            setOldOtdel(newValue ? newValue._otdel._id : ``) 
-                        }}
-                        onInputChange={(event, value) => {
-                            // Фильтруем варианты по введенному значению
-                            const filteredOptions = Sotrudnik.filter(option => option.fio.toLowerCase().includes(value.toLowerCase()));
-                            // Если после фильтрации остался только один вариант, автоматически выбираем его
-                            if (filteredOptions.length === 1) {
-                                setSotrudnik(filteredOptions[0]._id);
-                                setOldOtdel(filteredOptions[0] ? filteredOptions[0]._otdel._id : ``)
-                                event?.target?.blur();
-                            }                            
-                        }}
-                        options={Sotrudnik}
-                        getOptionLabel={(option) => option.fio}
-                        isOptionEqualToValue={(option, value) => option._id === value?._id}
-                        title='Выбор сотрудника'
-                        renderInput={(params) => (
-                            <TextField
-                            {...params}
-                            label="Сотрудник*"
-                            variant="outlined"
-                            size='large'
-                            />
-                        )}
-                    />
-                </FormControl>
+                <CAutoCompleate
+                    idComp={`sotrudnik`}
+                    label={`Сотрудник*`}
+                    memoizedData={Sotrudnik}
+                    elementToSelect={state.sotrudnik}
+                    onChangeElement={handleChangeSotrudnik}
+                />
             </Box>
 
             <Box sx={{display:`flex`, gap:1}}>
-                <FormControl sx={{flex:`1`}}>
-                    <Autocomplete
-                        id="old-otdel"
-                        fullWidth
-                        value={Otdel.find(o => o._id === oldOtdel) || null}
-                        onChange={(event, newValue) => {
-                            setOldOtdel(newValue ? newValue._id : '');
-                        }}
-                        onInputChange={(event, value) => {
-                            const filteredOptions = Otdel.filter(option => option.name.toLowerCase().includes(value.toLowerCase()));
-                            if (filteredOptions.length === 1) {
-                                setOldOtdel(filteredOptions[0]._id);
-                                event?.target?.blur();
-                            }
-                        }}
-                        options={Otdel}
-                        getOptionLabel={(option) => option.name}
-                        isOptionEqualToValue={(option, value) => option._id === value?._id}
-                        title='Выбор отдела'
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Старый отдел"
-                                variant="outlined"
-                            />
-                        )}
-                    />
-                </FormControl>
-                <FormControl sx={{flex:`1`}}>
-                    <Autocomplete
-                        id="new-otdel"
-                        fullWidth
-                        value={Otdel.find(o => o._id === newOtdel) || null}
-                        onChange={(event, newValue) => {
-                            setNewOtdel(newValue ? newValue._id : '');
-                        }}
-                        onInputChange={(event, value) => {
-                            const filteredOptions = Otdel.filter(option => option.name.toLowerCase().includes(value.toLowerCase()));
-                            if (filteredOptions.length === 1) {
-                                setNewOtdel(filteredOptions[0]._id);
-                                event?.target?.blur();
-                            }
-                        }}
-                        options={Otdel}
-                        getOptionLabel={(option) => option.name}
-                        isOptionEqualToValue={(option, value) => option._id === value?._id}
-                        title='Выбор отдела'
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Новый отдел*"
-                                variant="outlined"
-                            />
-                        )}
-                    />
-                </FormControl>
+                <CAutoCompleate
+                    idComp={`old-otdel`}
+                    label={`Старый отдел*`}
+                    memoizedData={Otdel}
+                    elementToSelect={state.oldOtdel}
+                    onChangeElement={handleChangeOldOtdel}
+                    optionLabel='name'
+                />
+                <CAutoCompleate
+                    idComp={`new-otdel`}
+                    label={`Новый отдел*`}
+                    memoizedData={Otdel}
+                    elementToSelect={state.newOtdel}
+                    onChangeElement={handleChangeNewOtdel}
+                    optionLabel='name'
+                />
             </Box>
 
             <Box sx={{display:`flex`, gap:1, justifyContent:'space-between'}}>
                 <DatePicker 
                     label="Дата С*"
-                    value={dateN} 
-                    onChange={(newValue) => {setDateN(newValue)}} 
+                    value={state.dateN} 
+                    onChange={(newValue) => {dispatch({type:'SET_FIELD', field:'dateN', value:newValue})}} 
                 />
                 <hr />
                 <DatePicker 
                     label="Дата ПО*"
-                    value={dateK} 
-                    onChange={(newValue) => {setDateK(newValue)}} 
+                    value={state.dateK} 
+                    onChange={(newValue) => {dispatch({type:'SET_FIELD', field:'dateK', value:newValue})}} 
                 />
             </Box>
             <FormControl sx={{flex:`1`}}>
                 <Autocomplete
-                    value={type}
+                    value={state.type}
                     onChange={(event, newValue) => {
-                        setType(newValue);
+                        dispatch({type:'SET_FIELD', field:'type', value:newValue})
                     }}
                     id="selet-type-vperevod"
                     options={[`Командировка`,`Временное перемещение`]}
@@ -175,17 +141,17 @@ export default function DialogVPerevod({ payload, open, onClose }) {
             {/* прика3 и его дата */}
             <Box sx={{display:`flex`, gap:1}}>
                 <TextField
-                    title='Приказ(д/з) переводе*'
+                    title='Приказ(д/з) о переводе*'
                     id="prikaz"
                     label="Приказ*"
                     fullWidth
-                    value={prikaz}
-                    onChange={(event) => setPrikaz(event.target.value)}
+                    value={state.prikaz}
+                    onChange={(event) => dispatch({type:'SET_FIELD', field:'prikaz', value:event.target.value})}
                 />
                 <DatePicker 
                     label="Дата приказа*"
-                    value={datePrikaz} 
-                    onChange={(newValue) => {setDatePrikaz(newValue)}} 
+                    value={state.datePrikaz} 
+                    onChange={(newValue) => {dispatch({type:'SET_FIELD', field:'datePrikaz', value:newValue})}} 
                 />
             </Box>
 
@@ -193,8 +159,8 @@ export default function DialogVPerevod({ payload, open, onClose }) {
                 id="descrip"
                 label="Описание"
                 fullWidth
-                value={descrip}
-                onChange={(event) => setDescrip(event.target.value)}
+                value={state.descrip}
+                onChange={(event) => dispatch({type:'SET_FIELD', field:'descrip', value:event.target.value})}
             />
 
         </Box>
@@ -204,21 +170,22 @@ export default function DialogVPerevod({ payload, open, onClose }) {
         <Button onClick={() => onClose()}>Отмена</Button>
         <Button
           title="Отправить запрос на сервер"
+          disabled={!state.prikaz || !state.sotrudnik || !state.newOtdel || !state.oldOtdel || !state.dateN || !state.dateK || !state.datePrikaz}
           onClick={async () => {
             const res = { 
-              _sotr:sotrudnik, 
-              prikaz, 
-              data_prikaza:datePrikaz, 
-              data_n:dateN, 
-              data_k:dateK, 
-              _otkyda: oldOtdel,
-              _kyda: newOtdel,
-              type,
-              descrip, 
-              _who:(payload?._who && payload?._who?._id) || Users.find(el=>el.address === localStorage.getItem(`clientIp`))._id,
-              data_dob:dataDob
+              _sotr:state.sotrudnik, 
+              prikaz:state.prikaz, 
+              data_prikaza:state.datePrikaz, 
+              data_n:state.dateN, 
+              data_k:state.dateK, 
+              _otkyda: state.oldOtdel,
+              _kyda: state.newOtdel,
+              type:state.type,
+              descrip:state.descrip, 
+              _who:getWhoId(payload,Users),
+              data_dob:state.dataDob
             };
-            if ([prikaz, sotrudnik, newOtdel].every(value => value.length > 0) && dateN!=null) {
+            if ([state.prikaz, state.sotrudnik, state.newOtdel, state.oldOtdel, state.dateN, state.dateK, state.datePrikaz].every(Boolean)) {
                 onClose(res);
             }
             else {

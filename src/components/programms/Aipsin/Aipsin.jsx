@@ -23,7 +23,7 @@ export default function Aipsin() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
+                    return date.isValid() ? date.toDate() : '--';
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -39,11 +39,15 @@ export default function Aipsin() {
         ],[]
     ) 
 
+    const filteredAipsin = useMemo(()=>{
+        return Aipsin.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
+    },[Aipsin])
+
     return (
         <div className='animated-element'>
             <MDataGrid 
                 columns={columnsAipsin} 
-                tableData={Aipsin.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                tableData={filteredAipsin}
                 collectionName={`Aipsin`} 
                 actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogAipsin)}
                 actionDelete={handleDeleteRowBD}
