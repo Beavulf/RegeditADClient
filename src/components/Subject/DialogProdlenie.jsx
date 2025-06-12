@@ -8,6 +8,7 @@ import { TextField, Box } from '@mui/material';
 import { useUsers, useWebSocketContext } from '../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import getWhoId from '../users/GetWhoID.jsx'
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -98,7 +99,7 @@ export default function DialogProdlenie({ payload, open, onClose }) {
               prikaz, 
               _contr:contract, 
               descrip,
-              _who:(payload?._who && payload?._who?._id) || Users.find(el=>el.address === localStorage.getItem(`clientIp`))._id,
+              _who:getWhoId(payload, Users),
               data_dob:dataDob
             };
             if (prikaz.length > 0 && (dateContr != null || dateDover != null)) {    

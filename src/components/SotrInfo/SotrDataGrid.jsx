@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { DataGrid, GridToolbar } from '@mui/x-data-grid';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
 
-export default function SotrInfoDataGrid({columns, data, loading}) {
+function SotrInfoDataGrid({columns, data, loading}) {
     const [rows, setRows] = useState([])
-
+    
     // переписывание строк для указания уникального значения id вместо _id
     useEffect(() => {        
         const newRows = data.map(row => ({
@@ -45,3 +45,5 @@ export default function SotrInfoDataGrid({columns, data, loading}) {
         />
     )
 }
+
+export default memo(SotrInfoDataGrid)

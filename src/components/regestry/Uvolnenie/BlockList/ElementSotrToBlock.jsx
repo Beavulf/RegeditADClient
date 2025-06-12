@@ -1,11 +1,10 @@
 import { memo } from 'react';
-import { Box, useTheme } from '@mui/material';
+import { Box } from '@mui/material';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
 
 const ElementSotrToBlock = ({uvolnenie, handleNavigate}) => {
-    const theme = useTheme()
     return (
         <Box 
             key={uvolnenie._id} 
@@ -16,7 +15,7 @@ const ElementSotrToBlock = ({uvolnenie, handleNavigate}) => {
                 transition: 'all 0.2s ease',
                 border: '1px solid',
                 borderColor: 'divider',
-                background: theme.palette.listToBlock.gradient,
+                background: 'listToBlock.gradient',
                 '&:hover': {
                     opacity: 0.9,
                     transform: 'translateY(-2px)',

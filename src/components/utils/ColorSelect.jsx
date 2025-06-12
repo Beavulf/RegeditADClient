@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { HexColorPicker } from 'react-colorful';
 import { IconButton, Box } from '@mui/material';
 import ColorLensIcon from '@mui/icons-material/ColorLens';
@@ -91,4 +91,4 @@ const ColorPicker = ({ initialColor = '#9c92921d', onColorChange }) => {
   );
 };
 
-export default ColorPicker;
+export default memo(ColorPicker);

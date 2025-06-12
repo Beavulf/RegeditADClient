@@ -1,5 +1,6 @@
 import { useDialogs } from '@toolpad/core/useDialogs';
 import { useWebSocketContext } from './WebSocketContext.jsx';
+import { useCallback } from 'react';
 
 export function useTableActions() {
   const dialogs = useDialogs();
@@ -58,8 +59,8 @@ const handleAddInTable = async (collectionName, dialog, ddata=null) => {
     const newData = await dialogs.open(dialog, oldData);
     try {
       if (collectionName === `Pdoka`) {
-        if (newData) {    
-              
+        if (newData) {
+          
           const message = {
             type: 'updateInCollection',
             data: {
@@ -79,27 +80,29 @@ const handleAddInTable = async (collectionName, dialog, ddata=null) => {
           },
         };
         sendJsonMessage(message);
+        
       } 
     }
     catch(e){
       console.error('Error in edit action', e)
+      handleSetBlockedRow(id, false, collectionName);
     }
     finally {
       handleSetBlockedRow(id, false, collectionName);
     }
   };
 
-  async function handleSetBlockedRow(id,type, collectionName) {
+  const handleSetBlockedRow = useCallback((id,locked, collectionName) => {
     const message = {
         type: 'updateInCollection',
         data: {
             collection: collectionName,
             filter: {_id: id},
-            value: {is_locked:type}
+            value: {is_locked:locked}
         }
     }
     sendJsonMessage(message);
-  }
+  },[])
   
   return {
     handleDeleteRowBD,

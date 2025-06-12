@@ -1,4 +1,3 @@
-import React from "react";
 const SERVER_ADDRESS = import.meta.env.VITE_SERVER_ADDRESS
 const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
 function PdfViewer({ fileUrl }) {

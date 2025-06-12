@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { StaticTimePicker } from '@mui/x-date-pickers/StaticTimePicker';
 import dayjs from 'dayjs';
 
-export function CurrentTimeDisplay() {
+function CurrentTimeDisplay() {
     const [currentTime, setCurrentTime] = useState(dayjs());
 
     useEffect(() => {
@@ -32,3 +32,5 @@ export function CurrentTimeDisplay() {
         />
     );
 }
+
+export default memo(CurrentTimeDisplay);

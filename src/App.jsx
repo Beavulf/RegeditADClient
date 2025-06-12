@@ -1,3 +1,29 @@
+/**
+ * Главный компонент приложения RegeditAD
+ * 
+ * Основные функции:
+ * - Управление авторизацией пользователей
+ * - Маршрутизация между компонентами
+ * - Настройка темы оформления
+ * - Инициализация WebSocket соединения
+ * - Управление курсорами
+ * 
+ * Компоненты:
+ * - Login - страница авторизации
+ * - Main - основной интерфейс приложения
+ * - LogoutComponent - компонент для выхода из системы
+ * 
+ * Маршруты:
+ * - /login - страница входа
+ * - / - редирект на /login или /dashboard
+ * - /* - все остальные маршруты обрабатываются в Main
+ * 
+ * Настройки:
+ * - Темная тема по умолчанию
+ * - Кастомные курсоры
+ * - WebSocket для real-time обновлений
+ */
+
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/login/Login.jsx';
@@ -8,6 +34,9 @@ import Main from './components/Main/Main.jsx';
 import {  useSnackbar } from 'notistack';
 import { WebSocketProvider } from './websocket/WebSocketContext.jsx';
 import Settings from './Settings.jsx';
+
+const SERVER_ADDRESS = import.meta.env.VITE_SERVER_ADDRESS
+const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
 
 // Компонент для выполнения логаута
 const LogoutComponent = ({ onLogout }) => {
@@ -25,15 +54,12 @@ const darkTheme = createTheme({
   },
 });
 
-const SERVER_ADDRESS = import.meta.env.VITE_SERVER_ADDRESS
-const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
-
 function App() {
   const [auth, setAuth] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
   //проверка наличия параметров курсоров если нет то установка по умолчанию
-  const checkCurosr = () => {
+  const checkCursor = () => {
     if (localStorage.getItem('defaultCursor')) {
       return;
     }
@@ -45,23 +71,26 @@ function App() {
 
   // инициация параметров для смены курсоров normsl u.cur  - link 700.cur
   const injectCursorStyles = () => {
-    const style = document.createElement('style')
+    let style = document.getElementById('custom-cursor-style');
+    if (style) style.remove();
+    style = document.createElement('style');
+    style.id = 'custom-cursor-style';
     style.textContent = `
       :root {
         --cursor-default: url('http://${SERVER_ADDRESS}:${SERVER_PORT}/static/cursors/${localStorage.getItem('defaultCursor')}'), auto;
         --cursor-pointer: url('http://${SERVER_ADDRESS}:${SERVER_PORT}/static/cursors/${localStorage.getItem('pointerCursor')}'), pointer;
       }
-    `
-    document.head.appendChild(style)
+    `;
+    document.head.appendChild(style);
   }
   useEffect(()=>{
-    checkCurosr()
+    checkCursor()
     injectCursorStyles()
     if (!auth) {
       localStorage.removeItem('userRole')
       localStorage.removeItem('clientIp')
     }
-  },[])
+  },[auth])
 
   // атворизация пользователя после получение токена
   function handleAuthUser(tokenAndRole) {
@@ -79,20 +108,21 @@ function App() {
 
   const handleLogout = () => {
     setAuth(false);
-    localStorage.setItem('userRole', 'manager');
+    localStorage.removeItem('userRole', 'manager');
     localStorage.removeItem('clientIp');
     localStorage.removeItem('sessionStart');
   }
 
   return (
     <ThemeProvider theme={darkTheme}>
+      <>
       <CssBaseline />
       <Routes>
         {/* Маршрут для страницы входа */}
         <Route
           path="/login"
           element={
-            auth ? <Navigate to="/dashboard" /> : (<Login onLogin={handleAuthUser} />)
+            auth ? <Navigate to="/dashboard/*" /> : (<Login onLogin={handleAuthUser} />)
           }
         />
 
@@ -117,8 +147,8 @@ function App() {
         />
 
         {/* Редирект с корневого пути */}
-        <Route path="/" element={<Navigate to="/login" />} />
-      </Routes>
+        <Route path="/*" element={<Navigate to="/login" />} />
+      </Routes></>
     </ThemeProvider>
   );
 }

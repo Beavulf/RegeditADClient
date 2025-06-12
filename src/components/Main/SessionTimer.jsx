@@ -50,7 +50,7 @@ const SessionTimer = () => {
   };
 
   return (
-    <Typography>
+    <Typography sx={{bgcolor:timeLeft<=300 ? 'orange' : '', p:1, borderRadius:'8px'}}>
       Сессия: {formatTime(timeLeft)}
     </Typography>
   );

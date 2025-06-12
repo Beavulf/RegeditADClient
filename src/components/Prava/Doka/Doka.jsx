@@ -1,5 +1,5 @@
 import { usePdoka } from '../../../websocket/WebSocketContext.jsx'
-import { Typography, Box, IconButton, Badge, Button, Checkbox, CircularProgress } from '@mui/material'
+import { Typography, Box, IconButton, Badge, Button, Checkbox } from '@mui/material'
 import React, { useState, useMemo, useEffect, memo, useCallback } from 'react';
 import MDataGrid from '../../DataGrid/MDataGrid.jsx';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
@@ -12,7 +12,7 @@ import ExportExcel from './Report.jsx'
 import { useSnackbar } from 'notistack';
 import api from '../../../apiAxios/Api.jsx';
 import TreeViewComponent from './TreeView/TreeViewComponent.jsx';
-
+import SimCardDownloadIcon from '@mui/icons-material/SimCardDownload';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -97,7 +97,7 @@ const Doka = React.memo(function Doka() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : '--';
+                    return date.isValid() ? date.toDate() : null;
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -110,7 +110,7 @@ const Doka = React.memo(function Doka() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : '--';
+                    return date.isValid() ? date.toDate() : null;
                 },
                 renderCell: (params) => {
                     return dayjs(params.value).format('DD.MM.YYYY HH:mm');
@@ -163,9 +163,9 @@ const Doka = React.memo(function Doka() {
                   </IconButton>
               </Badge>
 
-              <Button variant={allTimeSelected ? 'contained' : 'outlined'} onClick={getAllPdoka} 
+              <Button loading={isLoad} variant={allTimeSelected ? 'contained' : 'outlined'} onClick={getAllPdoka} 
                 title='Получить список за все время отсортированный сразу по годам, месяцам, дням (дата выполнения).'
-                >за все время {isLoad && <CircularProgress sx={{margin:'0 5px'}} color='black' size='20px'/>}</Button>
+              >за все время</Button>
              
               <Box sx={{marginLeft:'auto', display:'flex', gap:1}}>
                 <Fade in={fadeReporCheck}> 
@@ -194,11 +194,10 @@ const Doka = React.memo(function Doka() {
                   </Box>
                 </Fade>
                 <Button 
-                loading
                   variant={fadeReporCheck && 'contained' || 'outlined'} 
                   title='Выгрузить в excel права за опр. период' 
                   onClick={()=>{setFadeReporCheck(prev=>!prev)}}
-                >excel</Button>
+                ><SimCardDownloadIcon/>excel</Button>
               </Box>
 
           </Box>

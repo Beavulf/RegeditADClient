@@ -1,9 +1,20 @@
 import { Tabs, Tab } from '@mui/material'
-import { useState, useMemo } from 'react';
-import { DialogEditOtdelOrDoljnost } from '../Dialog/CustomDialog.jsx';
+import { useState } from 'react';
+import { DialogEditOtdelOrDoljnost } from './DialogEditOtdelOrDoljnost.jsx';
 import MDataGrid from '../DataGrid/MDataGrid.jsx';
 import { useTableActions } from '../../websocket/LayoutMessage.jsx';
 import { useOtdel, useDoljnost } from '../../websocket/WebSocketContext.jsx'
+
+const columnsOtdel = [
+    // { field: 'is_locked', headerName: 'Locked', width: 150, },
+    { field: 'name', headerName: 'Наименование', width: 200 },
+    { field: 'descrip', headerName: 'Описание', flex: 1 }
+]
+const columnsDoljnost = [
+    // { field: 'is_locked', headerName: 'Locked', width: 150, },
+    { field: 'name', headerName: 'Наименование', flex: 0.6 },
+    { field: 'descrip', headerName: 'Описание', flex: 0.6 }
+]
 
 export default function Otdels() {
     const [tabIndex, setTabIndex] = useState(0); // Состояние для вкладок
@@ -12,19 +23,9 @@ export default function Otdels() {
     // вызываем кастомный хук для удаления строки из БД
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
 
-    const columnsOtdel = useMemo(()=>[
-        { field: 'is_locked', headerName: 'Locked', width: 150, },
-        { field: 'name', headerName: 'Наименование', width: 200 },
-        { field: 'descrip', headerName: 'Описание', flex: 1 }
-    ],[])
-    const columnsDoljnost = useMemo(()=>[
-        { field: 'is_locked', headerName: 'Locked', width: 150, },
-        { field: 'name', headerName: 'Наименование', flex: 0.6 },
-        { field: 'descrip', headerName: 'Описание', flex: 0.6 }
-    ],[])
-
+    // переключение вкладок
     const handleTabChange = (event, newIndex) => {
-        setTabIndex(newIndex); // Переключаем вкладку
+        setTabIndex(newIndex); 
     }
 
     return (

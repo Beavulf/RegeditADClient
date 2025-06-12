@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useMemo, useEffect, useCallback } from 'react'
 import Box from '@mui/material/Box';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -37,41 +37,41 @@ import Stajirovka from '../regestry/Stajirovka/Stajirovka.jsx';
 import SotrInfo from '../SotrInfo/SotrInfo.jsx'
 import ZaprosSPrava from '../regestry/ZaprosSPrava/ZaprosSPrava.jsx'
 import SessionTimer from './SessionTimer';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 import { createNavigation } from './NAVIGATION.jsx'
 import { useReadyState, useLastMessage, useAccess } from '../../websocket/WebSocketContext.jsx'
 import styles from './Main.module.css'
 import demoTheme from '../../theme/theme';
-import dayjs from 'dayjs';
 
-// const storedRole =  || 'NONE';
+const LAST_UPDATE = import.meta.env.VITE_DATE_UPDATE
 
 //во3врат главного компонента (страницы)
-function MainLayout(props) {
-  const lastUpdate = import.meta.env.VITE_DATE_UPDATE
+const  MainLayout = ()=> {
   const router = useDemoRouter('/dashboard');  
   const AccessDB = useAccess()
   const readyState = useReadyState();
   const lastJsonMessage = useLastMessage();
   const { enqueueSnackbar } = useSnackbar(); 
   const navigate = useNavigate()
+  const resNavigation = createNavigation(AccessDB)
   
   // установка флага NEW если есть новое обновление
   useEffect(()=>{
     const localLastUpdate = localStorage.getItem('lastUpdate');
     if (localLastUpdate) {
-      if (localLastUpdate !== lastUpdate) {
+      if (localLastUpdate !== LAST_UPDATE) {
         localStorage.setItem('checkUpdate', false)
-        localStorage.setItem('lastUpdate', lastUpdate)
+        localStorage.setItem('lastUpdate', LAST_UPDATE)
       }
     } else {
       localStorage.setItem('checkUpdate', false)
-      localStorage.setItem('lastUpdate', lastUpdate)   
+      localStorage.setItem('lastUpdate', LAST_UPDATE)   
     }
   },[])
 
   // фильтруем меню навигаци в соответствию с ролью
-  function filterNavigationByRole(navigation, userRole) {
+  const  filterNavigationByRole = useCallback((navigation, userRole) => {
     return navigation
       .filter((item) => {
         // Элемент доступен, если поле `roles` отсутствует или содержит текущую роль
@@ -84,9 +84,12 @@ function MainLayout(props) {
         }
         return false;
       });
-  }
-  const resNavigation = createNavigation(AccessDB)
-  const filteredNAVIGATION = filterNavigationByRole(resNavigation,localStorage.getItem('userRole'))
+  },[])
+
+  const filteredNAVIGATION = useMemo(() => {
+      return filterNavigationByRole(resNavigation,localStorage.getItem('userRole'))
+  },[resNavigation])
+
 
   //пока3 уведомленией
   const showNotif = useCallback((lastJsonMessage) => {
@@ -101,7 +104,7 @@ function MainLayout(props) {
           break;
         case `quit`:
           alert('Вас отключил администратор')
-          navigate('/logout'); // Это эквивалент window.location.reload()
+          navigate('/logout');
           break;
         default:
           break;
@@ -126,7 +129,7 @@ function MainLayout(props) {
       if (storedRole !== 'admin') {
         router.navigate('/dashboard');
       }
-    }, [router]);
+    }, [router,storedRole]);
   
     return storedRole === 'admin' ? children : null;
   };
@@ -150,7 +153,8 @@ function MainLayout(props) {
   },[]);
   
   // нижняя часть бокового меню для кнопок настройки
-  const SidebarFooter = ()=> {
+  const SidebarFooter = () => {
+    const clientIp = localStorage.getItem('clientIp');
     return (
       <Box>
         <Box>
@@ -166,7 +170,9 @@ function MainLayout(props) {
         </Box>
         <Box sx={{ display: 'flex', justifyContent:`space-between`, alignItems:`center`, padding:`0 15px` }}>
           <Typography>Вы: </Typography>
-          <Typography style={{color:`#ff4081`}}>{localStorage.getItem('clientIp').split('::')[1]}</Typography>
+          <Typography style={{color:`#ff4081`}}>
+            {clientIp ? clientIp.split('::')[1] : '—'}
+          </Typography>
           <div>
             <IconButton
               size="large"
@@ -187,38 +193,43 @@ function MainLayout(props) {
     );
   }
 
+  const routes = [
+    { path: '/users', element: <ProtectedRoute><Users /></ProtectedRoute> },
+    { path: '/otdel', element: <ProtectedRoute><Otdel /></ProtectedRoute> },
+    { path: '/sotrudniki', element: <Sotrudniki tath={router.pathname}/> },
+    { path: '/pdoka', element: <Doka tath={router.pathname}/> },
+    { path: '/dashboard', element: <Dashboard tath={router.pathname} router={router}/> },
+    { path: '/priem', element: <Priem /> },
+    { path: '/sbrosad', element: <SbrosAD /> },
+    { path: '/subject', element: <Subject /> },
+    { path: '/access', element: <ProtectedRoute><Access /></ProtectedRoute> },
+    { path: '/feedback', element: <Feedback /> },
+    { path: '/naznachenie', element: <Naznachenie /> },
+    { path: '/perevod', element: <Perevod /> },
+    { path: '/vperevod', element: <VPerevod /> },
+    { path: '/familia', element: <Familia /> },
+    { path: '/uvolnenie', element: <Uvolnenie router={router} /> },
+    { path: '/info', element: <Info /> },
+    { path: '/updates', element: <Updates />},
+    { path: '/zapros', element: <Zapros /> },
+    { path: '/svodka', element: <Svodka /> },
+    { path: '/revizor', element: <Revizor /> },
+    { path: '/chdti', element: <Chdti /> },
+    { path: '/aipsin', element: <Aipsin /> },
+    { path: '/adtool', element: <ADTool /> },
+    { path: '/stajirovka', element: <Stajirovka /> },
+    { path: '/sotrinfo', element: <SotrInfo /> },
+    { path: '/zaprsprava', element: <ZaprosSPrava /> },
+  ]
+  
   const renderRoutes = useMemo(() => (
     <>
-      {router.pathname.includes(`/users`) && <ProtectedRoute><Users /></ProtectedRoute>}
-      {router.pathname.includes(`/otdel`) && <ProtectedRoute><Otdel /></ProtectedRoute>}
-      {router.pathname.includes(`/sotrudniki`) && <Sotrudniki tath={router.pathname}/>}
-      {router.pathname.includes(`/pdoka`) && <Doka tath={router.pathname}/>}
-      {router.pathname.includes(`/dashboard`) && <Dashboard tath={router.pathname} router={router}/>}
-      {router.pathname.includes(`/priem`) && <Priem />}
-      {router.pathname.includes(`/sbrosad`) && <SbrosAD />}
-      {router.pathname.includes(`/subject`) && <Subject />}
-      {router.pathname.includes(`/access`) && <ProtectedRoute><Access /></ProtectedRoute>}
-      {router.pathname.includes(`/feedback`) && <Feedback />}
-      {router.pathname.includes(`/naznachenie`) && <Naznachenie />}
-      {router.pathname.includes(`/perevod`) && <Perevod />}
-      {router.pathname.includes(`/vperevod`) && <VPerevod />}
-      {router.pathname.includes(`/familia`) && <Familia />}
-      {router.pathname.includes(`/uvolnenie`) && <Uvolnenie router={router} />}
-      {router.pathname.includes(`/info`) && <Info />}
-      {router.pathname.includes(`/updates`) && <Updates />}
-      {router.pathname.includes(`/zapros`) && <Zapros />}
-      {router.pathname.includes(`/svodka`) && <Svodka />}
-      {router.pathname.includes(`/revizor`) && <Revizor />} 
-      {router.pathname.includes(`/chdti`) && <Chdti />}
-      {router.pathname.includes(`/aipsin`) && <Aipsin />}
-      {router.pathname.includes(`/adtool`) && <ADTool />}
-      {router.pathname.includes(`/stajirovka`) && <Stajirovka />}
-      {router.pathname.includes(`/sotrinfo`) && <SotrInfo />}
-      {router.pathname.includes(`/zaprsprava`) && <ZaprosSPrava />}
-
+      {routes.map(({ path, element }) =>
+        router.pathname.includes(path) ? <div key={path}>{element}</div> : null
+      )}
     </>
   ), [router.pathname]);
-  
+
   return (
     <AppProvider
       navigation={filteredNAVIGATION}
@@ -230,7 +241,7 @@ function MainLayout(props) {
           toolbarActions: ()=>toolbarActions(readyState),
           sidebarFooter: SidebarFooter,
         }}>   
-          <PageContainer maxWidth={false} className=''>
+          <PageContainer maxWidth={false}>
               {renderRoutes}
           </PageContainer>
         </DashboardLayout>

@@ -1,30 +1,22 @@
 import ExcelJS from 'exceljs';
-import { useState, useMemo, useEffect } from 'react';
-
 import { saveAs } from 'file-saver';
-import SimCardDownloadIcon from '@mui/icons-material/SimCardDownload';
-import { Button, IconButton } from '@mui/material'
-import { useSnackbar } from 'notistack';//
-import Grow from '@mui/material/Grow';
-import { useDialogs } from '@toolpad/core/useDialogs';
-import DialogExcel from './DialogExcel.jsx';
+import { useSnackbar } from 'notistack';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
 
-const ExportExcel = ({ data, tableName }) => {
+const ExportExcel = () => {
   const { enqueueSnackbar } = useSnackbar(); 
-  const dialogs = useDialogs();
 
-  const exportToExcel = async () => {
+  const exportToExcel = async (dataToExport, nameOfTable) => {
     // Создаем новую книгу и рабочий лист
     const workbook = new ExcelJS.Workbook();
-    const worksheet =workbook.addWorksheet(`${tableName}`); ;    
+    const worksheet = workbook.addWorksheet(`${nameOfTable}`); ;    
 
-    if (data && data.length > 0) {
+    if (dataToExport && dataToExport.length > 0) {
 
-      const colData = Object.keys(data[0])
+      const colData = Object.keys(dataToExport[0])
       .filter(el => !['_id', '__v', 'is_locked'].includes(el))
       .map(el => {
         let type = undefined;
@@ -37,7 +29,7 @@ const ExportExcel = ({ data, tableName }) => {
       worksheet.columns = colData;
 
       // форматируем строку под нужный удобный вид
-      data.forEach(item => {
+      dataToExport.forEach(item => {
         const resItem = {};
         for (const key in item) {
           if (key.startsWith('data_') || key.startsWith('date_')) {
@@ -106,37 +98,12 @@ const ExportExcel = ({ data, tableName }) => {
       });
       // Генерируем Excel-файл и запускаем его загрузку
       const buffer = await workbook.xlsx.writeBuffer();
-      saveAs(new Blob([buffer]), `${tableName} от ${dayjs(new Date()).format('DD.MM.YYYY')}.xlsx`);
-      enqueueSnackbar(`Файл успешно загружен (${tableName}_Archive_${dayjs(new Date()).format('DD.MM.YYYY')}.xlsx).`, { variant: `success` });
+      saveAs(new Blob([buffer]), `${nameOfTable} от ${dayjs(new Date()).format('DD.MM.YYYY')}.xlsx`);
+      enqueueSnackbar(`Файл успешно загружен (${nameOfTable}_Archive_${dayjs(new Date()).format('DD.MM.YYYY')}.xlsx).`, { variant: `success` });
     } else {enqueueSnackbar(`Попытка загрузить пустые данные`, { variant: `warning` });}
   };
-  // const stableData = useMemo(() => memDatam, [memDatam]);
-  // функция вызова окна для выбора дат и столбцов
-  // const handleOpenDialog = async () => {
-  //   await dialogs.open(DialogExcel, {
-  //     data: stableData,
-  //     tableName,
-  //     onExport: exportToExcel,
-  //     onClose: () => dialogs.close() // просто закрываем
-  //   });
-  // };
-  return (
-    <Grow in={true} timeout={800}>
-      <IconButton 
-        title='Загрузить файл' 
-        color='info' 
-        onClick={exportToExcel}
-        sx={{
-            color:'primary.main', 
-            '&:focus' : {
-                outline: 'none'
-            },
-        }}
-    >
-        <SimCardDownloadIcon/>
-    </IconButton> 
-    </Grow>
-  );
+
+  return exportToExcel;
 };
 
 export default ExportExcel;

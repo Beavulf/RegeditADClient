@@ -18,7 +18,6 @@ export default function DialogReport({ open, onClose }) {
     const Contract = useContract()
     const Prodlenie = useProdlenie()
     const Company = useCompany()
-    const dialogs = useDialogs();
     const { enqueueSnackbar } = useSnackbar(); 
 
     const [dateS, setDateS] = useState(dayjs(new Date()));
@@ -241,8 +240,8 @@ export default function DialogReport({ open, onClose }) {
         <DialogActions>
             <Button onClick={() => onClose()}>Отмена</Button>
             <Button
-            title="Загрузить Excel файл"
-            onClick={async () => { handleGetReadyReport() }}
+                title="Загрузить Excel файл"
+                onClick={async () => { handleGetReadyReport() }}
             >
             Загрузить
             </Button>

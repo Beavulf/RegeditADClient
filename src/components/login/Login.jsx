@@ -1,11 +1,11 @@
 import {Box, Button, Typography, TextField} from '@mui/material'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 import LoginIcon from '@mui/icons-material/Login';
 import { useSnackbar } from 'notistack';
 import KeyIcon from '@mui/icons-material/Key';
 import AlertDialog from './AlertDialog';
-// import IMG from '../../../public/LogoRegeditAD.png'
 import api from '../../apiAxios/Api';
+
 
 const SERVER_ADDRESS = import.meta.env.VITE_SERVER_ADDRESS
 const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
@@ -21,13 +21,15 @@ async function authenticateUser(address) {
     console.error('ОШИБКА:', error.response?.data.error || error.message);
     throw error.response?.data.error || error.message; // Пробрасываем ошибку для обработки в вызывающем коде
   }
+
 }
 
-export default function Login({onLogin}) {
+function Login({onLogin}) {
   const { enqueueSnackbar } = useSnackbar(); 
   const [clientIp, setClientIp] = useState(`Сервер недоступен`)
   const [dialog, setDialog] = useState(false)
   const [login, setLogin] = useState(``)
+
 
     // атворизация на сервере и получение роли
     async function authAndGetRole(){
@@ -78,8 +80,7 @@ export default function Login({onLogin}) {
 
     return (
         <>
-            <Box sx={{display:'flex', justifyContent:'center',}}>
-
+            <Box sx={{display:'flex', justifyContent:'center'}}>
               <Box sx={{m:'auto',p:1}}>
                 <Typography variant="h4" gutterBottom>
                   <strong style={{color: `#ccc`}}>RegeditAD</strong>
@@ -93,9 +94,7 @@ export default function Login({onLogin}) {
                   onClick={async ()=>await authAndGetRole()}
                   >ВОЙТИ
                 </Button> 
-
                 <br />
-
                 <Button  
                   variant="text"
                   sx={{color:`#cccc`, marginTop: `20px`}}
@@ -140,3 +139,5 @@ export default function Login({onLogin}) {
         </>
     )
 }
+
+export default memo(Login)

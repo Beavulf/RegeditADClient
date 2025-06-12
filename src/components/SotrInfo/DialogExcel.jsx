@@ -11,8 +11,10 @@ import {
     MenuItem,
     Box
 } from '@mui/material';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { useSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 
 const DialogExcel = ({ onClose, data, tableName, onExport, open }) => {
@@ -20,9 +22,14 @@ const DialogExcel = ({ onClose, data, tableName, onExport, open }) => {
     const [endDate, setEndDate] = useState(null);
     const [dateColumns, setDateColumns] = useState([]);
     const [dateColumn, setDateColumn] = useState('');
-    
+    const { enqueueSnackbar } = useSnackbar();
+
+
     // Получаем список столбцов с датами
     useEffect(() => {
+        setStartDate(null);
+        setEndDate(null);
+        setDateColumn('');
         if (data && data.length > 0) {
             const cols = Object.keys(data[0]).filter(key =>
                 key.startsWith('data_') || key.startsWith('date_')
@@ -31,24 +38,17 @@ const DialogExcel = ({ onClose, data, tableName, onExport, open }) => {
         }
     }, [data]);
 
-    useEffect(() => {
-        console.log('Дата-столбцы:', dateColumns);
-    }, [dateColumns]);
-
     const handleExport = () => {
         // Проверяем, выбраны ли даты и столбец
-        if (!startDate || !endDate) {
-            alert('Пожалуйста, выберите даты и столбец для фильтрации.');
+        if (!startDate || !endDate || !dateColumn) {
+            enqueueSnackbar('Пожалуйста, выберите даты, а также Столбец с датой для фильтрации.', { variant: `warning` });
             return;
         }
-        console.log(data);
-        
         // Фильтруем данные
         const filteredData = data.filter(item => {
             const itemDate = dayjs(item[dateColumn]);
             return itemDate.isBetween(startDate, endDate, 'day', '[]');
         });
-
         // Вызываем функцию экспорта с отфильтрованными данными
         onExport(filteredData);
         onClose(); // Закрываем диалоговое окно
@@ -56,7 +56,7 @@ const DialogExcel = ({ onClose, data, tableName, onExport, open }) => {
 
     return (
         <Dialog open={open} onClose={onClose}>
-            <DialogTitle>Экспорт в Excel</DialogTitle>
+            <DialogTitle>Экспорт в Excel {tableName ? ` - ${tableName}` : ''}</DialogTitle>
             <DialogContent>
                 <p>Выберите диапазон дат и столбец для фильтрации:</p>
                 <Box sx={{display:'flex', gap:1}}>
@@ -96,6 +96,14 @@ const DialogExcel = ({ onClose, data, tableName, onExport, open }) => {
             </DialogActions>
         </Dialog>
     );
+};
+
+DialogExcel.propTypes = {
+    onClose: PropTypes.func.isRequired,
+    data: PropTypes.array.isRequired,
+    tableName: PropTypes.string,
+    onExport: PropTypes.func.isRequired,
+    open: PropTypes.bool.isRequired,
 };
 
 export default DialogExcel;

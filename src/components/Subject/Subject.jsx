@@ -2,30 +2,24 @@ import { useSubject, useCompany, useContract } from '../../websocket/WebSocketCo
 import {
     Button, 
     Typography, 
-    TextField, 
     Box, 
-    InputAdornment, 
     Paper, 
-    IconButton,
     AccordionSummary, 
     AccordionDetails, 
     Accordion,
-    CircularProgress,
-    Fade
 } from '@mui/material'
-import { useState, useMemo, useEffect, memo, useCallback } from 'react';
+import { useState, useMemo, memo, useCallback } from 'react';
 import MDataGrid from '../DataGrid/MDataGrid.jsx';
 import { useTableActions } from '../../websocket/LayoutMessage.jsx';
-import CloseIcon from '@mui/icons-material/Close';
 import { useDialogs } from '@toolpad/core/useDialogs';
-import DialogSubjectEdit from './DialogSubjectEdit.jsx';
 import DialogCompany from './DialogCompany.jsx';
 import DialogContract from './DialogContract.jsx';
 import DialogFullAdd from './DialogFullAdd.jsx';
 import DialogReport from './DialogReport.jsx';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DownloadIcon from '@mui/icons-material/Download';
-import { useSetFocusAndText } from '../hooks/SetFocusAndText.jsx';
+import SubjectListMenu from './SubjectUtils/SubjectListMenu.jsx';
+import SearchSubjectInput from './SubjectUtils/SearchSubjectInput.jsx'; 
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -42,30 +36,13 @@ const Subject = memo(function Subject() {
 
     const [openDialog, setOpenDialog] = useState(false)
 
-    const [searchSubj, setSearchSubj] = useState(``) //поле ввода фио textfield
     const [selectSubject, setSelectSubject] = useState(null) //обьект выбранное субьекта
-    const [isSearching, setIsSearching] = useState(false) // состояние для отслеживания процесса поиска
-    const [debouncedSearchSubj, setDebouncedSearchSubj] = useState('') // значение после задержки
-    const [showAnull, setShowAnull] = useState(false) // состояние для отслеживания процесса поиска
+    const [debouncedSearchSubj, setDebouncedSearchSubj] = useState('') // новое состояние для дебаунснутого значения
+    const [showAnull, setShowAnull] = useState(false)
 
-    useSetFocusAndText(setSearchSubj, 'isearchSubj')
-    
-    // Эффект для debounce поискового запроса
-    useEffect(() => {
-        // Показываем индикатор загрузки, если длина поискового запроса >= 3
-        if (searchSubj.length >= 2) {
-            setIsSearching(true);
-        }
-        const timer = setTimeout(() => {
-            setDebouncedSearchSubj(searchSubj);
-            setIsSearching(false); // Скрываем индикатор после завершения debounce
-        }, 500);
-        
-        return () => {
-            clearTimeout(timer);
-        };
-    }, [searchSubj]);
-
+    const handleDebouncedSearchChange = useCallback((value) => {
+        setDebouncedSearchSubj(value);
+    }, []);
 
     const filteredSubjects = useMemo(() => {
         if (!debouncedSearchSubj || debouncedSearchSubj.length < 3) return [];
@@ -74,7 +51,6 @@ const Subject = memo(function Subject() {
         );
     }, [Subjects, debouncedSearchSubj]);
 
-    // скрытие окна субьектов при открытии диалогового окна редактирования контрактов
     async function openEditRowDialog(id,oldData,collectionName) {
         setOpenDialog(true)
         try {
@@ -86,28 +62,21 @@ const Subject = memo(function Subject() {
         }
     }
 
-    // скрытие окна субьектов при открытии диалогового окна редактирования контрактов
     async function openAddRowDialog() {
         if (!selectSubject) {dialogs.alert(`Выберите человека для добавления контракта`); return}
         setOpenDialog(true)
         await handleAddInTable(`Contract`,DialogContract, selectSubject)
         setOpenDialog(false)
     }
-    const handleFilterSubjects = useCallback((value) => {
-        setSearchSubj(value);
-    }, []);
 
-    // очистка фильтра
-    function handleClearFilter(){
-        setSearchSubj('');
+    const handleClearFilter = () => {
+        setDebouncedSearchSubj('');
         setSelectSubject(null)
     }
 
-    // получение списка контрактов выбранного субьекта
     const getSubjectContracts = useCallback((sbj) => {
         setSelectSubject(sbj);
     }, []);
-
 
     const columnsContract = useMemo(()=>
         [
@@ -221,7 +190,10 @@ const Subject = memo(function Subject() {
         ],[]
     ) 
 
-    // сортировка контрактов по времени изменения и по выбранному человеку
+    const companySorted = useMemo(() => {
+        return Company.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf());
+    }, [Company]);
+
     const filteredContracts = useMemo(() => {
         const contractsToFilter = showAnull ? Contract.filter(el=>el.anull) : Contract;
         if (selectSubject?._id) {
@@ -231,9 +203,8 @@ const Subject = memo(function Subject() {
         }
         // Если субъект не выбран, показываем все, отсортированные по time_edit по убыванию
         return contractsToFilter.sort((a, b) => dayjs(b.time_edit).valueOf() - dayjs(a.time_edit).valueOf());
-    }, [Contract, selectSubject?._id, showAnull]);
+    }, [Contract, selectSubject, showAnull]);
 
-    // слот в ДатаГрид для отображение информации
     const colorInfoSlot = (
         <>
             <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:`center`, gap:1, mr:1}}>
@@ -249,44 +220,15 @@ const Subject = memo(function Subject() {
 
     return (
         <div className='animated-element' style={{height:`100%`, maxWidth:`100vw`, width:`100%`, overflow:'hidden', position:'relative'}}>
-            {/* меню управления */}
             {!openDialog &&  
             <>
             <Box sx={{display:`flex`, alignItems:`center`, gap:1, margin:`5px 0`}}>
-               <Box sx={{width:`270px`,display:`flex`, alignItems:`center`, gap:1}}>
-                <TextField
-                        id="isearchSubj"
-                        label="ФИО"
-                        size='small'
-                        value={searchSubj}
-                        onKeyDown={(event)=>{
-                            if (event.key === 'Escape') {
-                                handleClearFilter();
-                            }}
-                        }
-                        onChange={(event)=>{handleFilterSubjects(event.target.value)}}
-                        slotProps={{
-                            input: {
-                                endAdornment: (
-                                <InputAdornment position="end">
-                                    {isSearching ? (
-                                        <CircularProgress size={20} />
-                                    ) : searchSubj ? (
-                                        <IconButton onClick={()=>handleClearFilter()}>
-                                            <CloseIcon/>
-                                        </IconButton>
-                                    ) : null}
-                                </InputAdornment>
-                                ),
-                            },
-                        }}
-                    />
-                    <Button 
-                        variant='contained' 
-                        title='Редактировать список субъектов' 
-                        onClick={async ()=>await dialogs.open(DialogSubjectEdit)}
-                    >доб.</Button>
-               </Box>
+               <SearchSubjectInput 
+                    onDebouncedSearchChange={handleDebouncedSearchChange}
+                    initialSearchValue={debouncedSearchSubj}
+                    handleClearFilter={handleClearFilter}
+               />
+               
                <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:`center`, flex:`1`}}>
                     <Box sx={{display:`flex`}}>Контракты<Typography color='primary.main'>: {selectSubject && selectSubject.name}</Typography></Box>
                     <Box sx={{display:`flex`,alignItems:`center`, gap:1}}>
@@ -303,42 +245,13 @@ const Subject = memo(function Subject() {
             </Box>
 
             <Box sx={{display:`flex`, gap:1}}>
-                {/* столбец с субьектами */}
-                <Paper variant='elevation' elevation={1} 
-                    sx={{
-                        width:`270px`, 
-                        display:`flex`, 
-                        flexDirection:`column`, 
-                        padding:`4px`, gap:1, 
-                        maxHeight:`700px`,
-                        overflowY:`auto`,
-                    }}>
-                    {filteredSubjects.map(sbj=>{
-                        return (
-                            <Fade 
-                                key={sbj._id} 
-                                in={true} 
-                                timeout={300} 
-                                style={{ transitionDelay: `300ms` }}
-                            >
-                            <Box key={sbj._id} sx={{display:`flex`, flexDirection:`column`}}>
-                                <Button  variant={selectSubject && sbj._id === selectSubject._id ? `contained` : `outlined`} sx={{display:`flex`, flexDirection:`column`, fontSize:`11px`}} onClick={()=>getSubjectContracts(sbj)}>
-                                    {sbj.name}
-                                    <Box color={`GrayText`} sx={{display:`flex`, justifyContent:`space-between`, padding:`0 3px`}}>
-                                        <Typography variant='caption'>{dayjs(new Date(sbj.data_dob)).format(`DD.MM.YYYY`)}-</Typography>
-                                        <Typography variant='caption'>{sbj._who.name}</Typography>
-                                    </Box>
-                                </Button>                          
-                            </Box>
-                            </Fade>
-                        )
-                    })}
-                    {searchSubj.length < 1 ? <Typography color='gray' 
-                    sx={{justifyContent:'center', margin:'auto 0', textShadow: '10px 10px 10px rgb(10, 9, 9)'}}>
-                        Просто начните вводить ФИО <br /> для поиска...</Typography> : undefined}
-                </Paper>
+                <SubjectListMenu 
+                    selectSubject={selectSubject}
+                    getSubjectContracts={getSubjectContracts}
+                    filteredSubjects={filteredSubjects}
+                    searchSubj={debouncedSearchSubj}
+                />
 
-                {/* столбец с данными таблицы контрактов и компаний*/}
                 <Box sx={{flex:1, display:`flex`, flexDirection:`column`, gap:1}}>
                     <Paper variant='elevation' elevation={1} sx={{ overflow:`hidden`, height:'100%', maxWidth:'1270px'}}>
                         <MDataGrid 
@@ -352,7 +265,6 @@ const Subject = memo(function Subject() {
                             topSlot={colorInfoSlot}
                         />
                     </Paper>
-                    {/* список компаний */}
                     <Accordion>
                         <AccordionSummary
                             expandIcon={<ExpandMoreIcon />}
@@ -366,7 +278,7 @@ const Subject = memo(function Subject() {
                             <Paper variant='elevation' elevation={1} sx={{minHeight:`361px`}}>
                                 <MDataGrid 
                                     conf={conf}
-                                    tableData={Company.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())}
+                                    tableData={companySorted}
                                     columns={columnsCompany} 
                                     collectionName={`Company`} 
                                     actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogCompany)}

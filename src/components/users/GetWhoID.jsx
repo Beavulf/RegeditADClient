@@ -1,4 +1,4 @@
-const getWhoId = (payload, Users) => {
+const getWhoId = (payload={}, Users) => {
     if (!Users) {
         alert('Не найдены пользователи при попытке сохранить документ (Users).');
         return; 

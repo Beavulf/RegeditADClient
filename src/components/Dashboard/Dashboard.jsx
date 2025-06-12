@@ -23,7 +23,7 @@ import PersonPinIcon from '@mui/icons-material/PersonPin';
 import WebIcon from '@mui/icons-material/Web';
 import LastPageIcon from '@mui/icons-material/LastPage';
 import Settings from '../../Settings.jsx'
-import {CurrentTimeDisplay} from './DateTImeCalendar.jsx'
+import CurrentTimeDisplay from './DateTImeCalendar.jsx'
 import ColorSelect from '../../components/utils/ColorSelect.jsx'
 import SotrToBlockList from '../regestry/Uvolnenie/BlockList/SotrToBlockList.jsx';
 import Divider from '@mui/material/Divider';
@@ -32,6 +32,23 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
  
+const allFastBtn = [
+  {name:`Дока и НАСТД`,path:`/prava/pdoka`},
+  {name:`Сотрудники`,path:`/sotrudniki`},
+  {name:`Отделы и должности`,path:`/admin-edit-table/otdel`},
+  {name:`Пользователи`,path:`/admin-edit-table/users`},
+  {name:`Прием на работу`,path:`/registry/priem`},
+  {name:`Сброс пароля AD`,path:`/prava/sbrosad`},     
+  {name:`Назначение`,path:`/registry/naznachenie`},
+  {name:`Перевод`,path:`/registry/perevod`},
+  {name:`Временный перевод`,path:`/registry/vperevod`},
+  {name:`Стажировка`,path:`/stajirovka`},
+  {name:`Изменение фамилии`,path:`/registry/familia`},
+  {name:`Увольнение`,path:`/registry/uvolnenie`},
+  {name:`Данные из ADTool`,path:`/registry/adtool`},
+  {name:`Зарос права Сотр.`,path:`/programm/zaprsprava`},
+]
+
 export default function Dashboard({router}){
     //получение данных с вебсокета
     const { loading } = useWebSocketContext()
@@ -81,16 +98,14 @@ export default function Dashboard({router}){
     );
 
     // смена типа кнопок
-    const handleChangeSwitchCheckedBtn = (event) => {
-      setCheckedSwitchBtn(event.target.checked);
-      if (event.target.checked) {
-        setVisual('elevation')
-        updateSettings('btnStyle', 'elevation');
-      } else {
-        setVisual('outlined')
-        updateSettings('btnStyle', 'outlined');
-      }            
-    }
+    const handleChangeSwitchCheckedBtn = useCallback((event) => {
+      const isChecked = event.target.checked;
+      const newStyle = isChecked ? 'elevation' : 'outlined';
+      
+      setCheckedSwitchBtn(isChecked);
+      setVisual(newStyle);
+      updateSettings('btnStyle', newStyle);
+    }, [updateSettings]);
 
     // установка курсора
     useEffect(() => {
@@ -178,23 +193,7 @@ export default function Dashboard({router}){
         [handleCheckboxChange, settings.fastTravelBtn, updateSettings]
       );
 
-    const allFastBtn = [
-        {name:`Дока и НАСТД`,path:`/prava/pdoka`},
-        {name:`Сотрудники`,path:`/sotrudniki`},
-        {name:`Отделы и должности`,path:`/admin-edit-table/otdel`},
-        {name:`Пользователи`,path:`/admin-edit-table/users`},
-        {name:`Прием на работу`,path:`/registry/priem`},
-        {name:`Сброс пароля AD`,path:`/prava/sbrosad`},     
-        {name:`Назначение`,path:`/registry/naznachenie`},
-        {name:`Перевод`,path:`/registry/perevod`},
-        {name:`Временный перевод`,path:`/registry/vperevod`},
-        // {name:`Обучение`,path:`/obychenie`},
-        {name:`Стажировка`,path:`/stajirovka`},
-        {name:`Изменение фамилии`,path:`/registry/familia`},
-        {name:`Увольнение`,path:`/registry/uvolnenie`},
-        {name:`Данные из ADTool`,path:`/registry/adtool`},
-        {name:`Зарос права Сотр.`,path:`/programm/zaprsprava`},
-    ]
+    
     
     return (
         <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:loading===true?`center`: ``, gap:2}}>

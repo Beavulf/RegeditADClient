@@ -4,13 +4,16 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { useState, useEffect, memo, useCallback } from 'react';
-import { TextField, Box, MenuItem, Select, FormControl, Autocomplete, Typography, Table, TableBody, TableCell, TableHead, TableRow, useTheme } from '@mui/material';
+import { TextField, Box, MenuItem, Select, Typography, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import { useUsers, useSotrudnik, useOtdel, usePdoka } from '../../../websocket/WebSocketContext.jsx'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useDialogs } from '@toolpad/core/useDialogs';
 import { useTableActions } from '../../../websocket/LayoutMessage.jsx';
 import getWhoId from '../../users/GetWhoID.jsx'
 import { useSetFocusAndText } from '../../hooks/SetFocusAndText.jsx';
+import CAutoCompleate from '../../utils/CAutoCompleate.jsx';
+import { useSnackbar } from 'notistack';
+
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
@@ -22,7 +25,7 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
   const Pdoka = usePdoka()
   const {handleSetBlockedRow } = useTableActions();
   const dialogs = useDialogs();
-  const theme = useTheme();
+  const { enqueueSnackbar } = useSnackbar();
 
   const [dataDob, setDataDob] = useState(dayjs(new Date()))
   const [datePrikaz, setDatePrikaz] = useState(dayjs(new Date())); //дата прика3а
@@ -33,20 +36,20 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
   const [user, setUser] = useState(''); //кто выполнял
   const [sotrudnik, setSotrudnik] = useState(''); //выбранный сотрудник в автоподстановке
   const [formatedRows,setFormatedRows] = useState([]) //группа строк по совпадению даты и обоснования
+
   useSetFocusAndText(setSotrudnik, 'sotrudnik', true)
   
   const [error, setError] = useState({
     obosnovanie:false,
     user: false,
     pto: false,
-    who: false,
     data: false
   })  
 
   //получение  группы строк по дате и тому кто добавил, для редактирования
   const getAddedGroup = useCallback(() => {
-    const filterDataDob = payload.data_dob || '';  // дата, по которой фильтруем
-    const filterWhoId = payload._who._id || '';    // id пользователя, по которому фильтруем
+    const filterDataDob = payload?.data_dob || ''; 
+    const filterWhoId = payload?._who?._id || '';    
     
     // Фильтруем массив
     const filteredItems = Pdoka.filter(item => {
@@ -56,10 +59,10 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
     });    
     const formattedItems = filteredItems.map(item => ({
         _pdoka: item._id,
-        _id: item._sotr._id,       // ID сотрудника
-        fio: item._sotr.fio,       // ФИО сотрудника (предположим, что оно есть в _who)
-        lnp: item.lnp,            // ЛНП
-        action: item.type      // Действие (например, добавление или редактирование)
+        _id: item._sotr._id,   
+        fio: item._sotr.fio,
+        lnp: item.lnp,         
+        action: item.type      
     }));
     return formattedItems;
   }, [Pdoka, payload]);
@@ -85,10 +88,14 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
   // добавление сотрудника в список
   const handleAddEmployee = useCallback(() => {
     const selected = Sotrudnik.find((o) => o._id === sotrudnik);
-    if (selected && !selectedSotrudniki.some((item) => item._id === selected._id)) {
+    if (selected && !selectedSotrudniki.some((item) => item._id === selected._id) && selected.lnp) {
       setSelectedSotrudniki([...selectedSotrudniki, { ...selected, action: 'Предоставить' }]);
+      setSotrudnik(null)
+      return;
     }
     setSotrudnik(null)
+    enqueueSnackbar('Сотрудник уже в списке, либо без ЛНП.', { variant: 'warning' });
+    return;
   }, [Sotrudnik, sotrudnik, selectedSotrudniki]);
 
   // удаление сотрудника из списка
@@ -108,7 +115,7 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
   // возвращает данные для отправки на сервер
   const returnData = useCallback(()=>{
     let resData = []
-    selectedSotrudniki.forEach((sotr)=>{
+    selectedSotrudniki.map((sotr)=>{
         const resSotr ={
             _pdoka:sotr._pdoka,
             _pto:pto,
@@ -128,6 +135,75 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
     return resData
   }, [selectedSotrudniki, pto, obosnovanie, datePrikaz, dataDob, user, descrip, payload, Users]);
 
+  const handleChangePto = useCallback((newValue) => {
+    setPto(newValue ? newValue._id : '');
+    if (newValue) {
+        setError({...error, pto: false });
+    } else {
+        setError({...error, pto: true });
+    }
+  }, [error])
+
+  const handleChangeSotrudnik = useCallback((newValue) => {
+    setSotrudnik(newValue ? newValue._id : '');
+    if (newValue) {
+        setError({...error, sotrudnik: false });
+    } else {
+        setError({...error, sotrudnik: true });
+    }
+  }, [error])
+
+  const handleChangeUser = useCallback((newValue) => {
+    setUser(newValue ? newValue._id : '');
+    if (newValue) {
+        setError({...error, user: false });
+    } else {
+        setError({...error, user: true });
+    }
+  }, [error])
+
+
+  const renderEmployeeRow = useCallback((sotr) => {
+    return (
+        <TableRow  key={sotr._id} sx={{animation: 'fadeIn 0.5s ease-in', '@keyframes fadeIn': {
+            '0%': {
+                opacity: 0,
+                transform: 'translateY(-10px)'
+            },
+            '100%': {
+                opacity: 1,
+                transform: 'translateY(0)'
+            }
+        }}}>
+        <TableCell>{sotr.fio}</TableCell>
+        <TableCell>{sotr.lnp}</TableCell>
+        <TableCell>
+            <Select
+                value={sotr.action}
+                onChange={(event) =>
+                    handleActionChange(sotr._id, event.target.value)
+                }
+                fullWidth={true}
+                size='small'
+            >
+            <MenuItem value="Предоставить">Предоставить</MenuItem>
+            <MenuItem value="Лишить">Лишить</MenuItem>
+            </Select>
+        </TableCell>
+        <TableCell>
+            <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => handleRemoveEmployee(sotr._id)}
+                title='Удалить из списка'
+            >
+                Убрать
+            </Button>
+        </TableCell>
+        </TableRow>
+    )
+  }, [handleRemoveEmployee, handleActionChange])
+
   return (
     <Dialog maxWidth="80vw" open={open} onClose={() => onClose()}
     onKeyDown={(event) => {
@@ -136,61 +212,25 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
             handleAddEmployee();
         }
     }}>
-      <DialogTitle>Выдача прав:<Typography color="secondary">{payload && "ГРУППА"}</Typography></DialogTitle>
+      <DialogTitle>Выдача прав:<Typography color="secondary">{payload && `ГРУППА - ${payload?._pto?.name}`}</Typography></DialogTitle>
       <DialogContent sx={{width:`700px`}}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: `20px`, padding:`20px 0` }}>
             <Box sx={{display:`flex`, gap:`20px`, justifyContent:`space-between`}}>
                 {/* Поле для ввода ПТО */}
-                <FormControl fullWidth>
-                    <Autocomplete
-                        id="pto"
-                        value={Otdel.find(o => o._id === pto) || null}
-                        onChange={(event, newValue) => {
-                            setPto(newValue ? newValue._id : '');
-                            if (newValue) {
-                                setError({...error, pto: false });
-                            } else {
-                                setError({...error, pto: true });
-                            }
-                        }}
-                        onInputChange={(event, value) => {
-                            // Фильтруем варианты по введенному значению
-                            const filteredOptions = Otdel.filter(option => option.name.toLowerCase().includes(value.toLowerCase()));
-
-                            // Если после фильтрации остался только один вариант, автоматически выбираем его
-                            if (filteredOptions.length === 1) {
-                                setPto(filteredOptions[0]._id);
-                                setError({...error, pto: false });
-                                event?.target?.blur();
-                            }
-                        }}
-                        options={Otdel}
-                        getOptionLabel={(option) => option.name}
-                        isOptionEqualToValue={(option, value) => option._id === value?._id}
-                        title='Выбор ПТО'
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                error={error.pto}
-                                helperText={error.pto ? "Выберите ПТО" : ``}
-                                label="ПТО"
-                                variant="outlined"
-                            />
-                        )}
-                    />
-                </FormControl>
-
+                <CAutoCompleate
+                    idComp='pto'
+                    label='ПТО*'
+                    memoizedData={Otdel}
+                    elementToSelect={pto}
+                    onChangeElement={handleChangePto}
+                    optionLabel='name'
+                />
                 <DatePicker 
                     label="Дата выполнения"
                     value={datePrikaz} 
-                    slotProps={{
-                        textField: {
-                            error: error.data,
-                            helperText: error.data ? "Некорректный ввод даты" : "",
-                        },
-                    }}
-                    onChange={(newValue) => {setDatePrikaz(newValue);
+                    onChange={(newValue) => {
                         if (newValue) {
+                            setDatePrikaz(newValue);
                             setError({...error, data: false });
                         } else {
                             setError({...error, data: true });
@@ -201,49 +241,23 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
 
             <Box sx={{display:`flex`, flexDirection:`column`}}>
                 <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:`center`, gap:`10px`}}>
-                    <Typography>Список сотрудников:</Typography>
-                    <FormControl sx={{width:`400px`}}>
-                        <Autocomplete
-                            id="sotrudnik"
-                            value={Sotrudnik.find(o => o._id === sotrudnik) || null}
-                            onChange={(event, newValue) => setSotrudnik(newValue ? newValue._id : '')}
-                            onInputChange={(event, value) => {
-                                // Фильтруем варианты по введенному значению
-                                const filteredOptions = Sotrudnik.filter(option => 
-                                    option.fio.toLowerCase().includes(value.toLowerCase()) ||
-                                    String(option.lnp).includes(value)
-                                );
-    
-                                // Если после фильтрации остался только один вариант, автоматически выбираем его
-                                if (filteredOptions.length === 1) {
-                                    setSotrudnik(filteredOptions[0]._id);
-                                    setError({...error, pto: false });
-                                    event?.target?.blur();
-                                }
-                            }}
-                            options={Sotrudnik}
-                            getOptionLabel={(option) => `${option.fio} (${option.lnp})`}
-                            isOptionEqualToValue={(option, value) => option._id === value?._id}
-                            title='Выбор сотрудника'
-                            renderInput={(params) => (
-                                <TextField
-                                    {...params}
-                                    label="Сотрудники"
-                                    variant="outlined"
-                                    size='small'
-                                />
-                            )}
-                            
-                        />
-                    </FormControl>
+                    <Typography>Сотрудники:</Typography>
+                    <CAutoCompleate
+                        idComp='sotrudnik'
+                        label='Сотрудник*'
+                        memoizedData={Sotrudnik}
+                        elementToSelect={sotrudnik}
+                        onChangeElement={handleChangeSotrudnik}
+                        getNewOptionLabel={(option) => `${option.fio} (${option.lnp})`} 
+                        newSize='small'
+                    />
                     <Button
                         disabled={payload && true}
                         variant="contained"
                         color="primary"
                         onClick={handleAddEmployee}
-                        sx={{height:`100%`}}
                         title='Добавить сотрудника в список'
-                        >
+                    >
                         Добавить
                     </Button>
                 </Box>
@@ -255,111 +269,57 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
                     }}
                 >         
                     {/* Таблица выбранных сотрудников */}
-                    <Table sx={{ width: '100%', height:`300px`, bgcolor:theme.palette.primary.secondary, borderRadius:`8px` }}>
+                    <Table sx={{ width: '100%', height:`300px`, borderRadius:`8px`, mt:'5px' }}>
                         <TableHead>
                             <TableRow>
                                 <TableCell sx={{width:`250px`, textAlign:'center'}}>ФИО</TableCell>
                                 <TableCell sx={{width:`50px`, textAlign:'center'}}>ЛНП</TableCell>
                                 <TableCell sx={{width:`200px`, textAlign:'center'}}>Действие</TableCell>
                                 <TableCell sx={{width:`100px`, textAlign:'center'}}> 
-                                    <Button title='Удалить весь список' size='small' onClick={()=>setSelectedSotrudniki([])}>Удалить</Button> 
+                                    <Button title='Удалить весь список' size='small' onClick={()=>setSelectedSotrudniki([])}>Очистить</Button> 
                                 </TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody >
-                        {selectedSotrudniki.map((sotr) => (
-                            <TableRow  key={sotr._id}>
-                            <TableCell>{sotr.fio}</TableCell>
-                            <TableCell>{sotr.lnp}</TableCell>
-                            <TableCell>
-                                <Select
-                                    value={sotr.action}
-                                    onChange={(event) =>
-                                        handleActionChange(sotr._id, event.target.value)
-                                    }
-                                    fullWidth={true}
-                                    size='small'
-                                >
-                                <MenuItem value="Предоставить">Предоставить</MenuItem>
-                                <MenuItem value="Лишить">Лишить</MenuItem>
-                                </Select>
+                        {selectedSotrudniki.length > 0 && selectedSotrudniki.map((sotr) => (
+                            renderEmployeeRow(sotr)
+                        )) || 
+                        <TableRow>
+                            <TableCell colSpan={4} sx={{textAlign: 'center'}}>
+                                <Typography color="gray">Список пуст... <br/>(добавить можно выше)</Typography>
                             </TableCell>
-                            <TableCell>
-                                <Button
-                                    variant="contained"
-                                    color="secondary"
-                                    onClick={() => handleRemoveEmployee(sotr._id)}
-                                    title='Удалить из списка'
-                                >
-                                    Убрать
-                                </Button>
-                            </TableCell>
-                            </TableRow>
-                        ))}
+                        </TableRow>
+                        }
                         </TableBody>
                     </Table>
                 </Box>
                 <Box sx={{display:`flex`, gap:`20px`, marginTop:1}}>
                     <TextField
                         id="obosnovanie"
-                        error={error.obosnovanie}
-                        helperText={error.obosnovanie ? 'Больше 2-х символов.' : null}
+                        error={obosnovanie.trim().length <=2}
+                        helperText={obosnovanie.trim().length <=2 ? 'Больше 2-х символов.' : null}
                         label="Обоснование"
-                        fullWidth
+                        sx={{flex:1}}
                         value={obosnovanie}
                         title='Вписать обоснование выдачи, если таково имеется'
-                        onChange={(event)=>{
-                            setObosnovanie(event.target.value); 
-                            if (event.target.value.trim().length <= 2){
-                                setError((prev)=>({...prev, obosnovanie:true}))
-                            } else { setError((prev)=>({...prev, obosnovanie:false})) }
-                        }}
+                        onChange={(event)=>{ setObosnovanie(event.target.value); }}
                         size='small'
                     />
-                    <FormControl sx={{width:`400px`}}>
-                        <Autocomplete
-                            id="user"
-                            value={Users.find(o => o._id === user) || null}
-                            onChange={(event, newValue) => {
-                                setUser(newValue ? newValue._id : '');
-                                if (newValue) {
-                                    setError({...error, who: false });
-                                } else {
-                                    setError({...error, who: true });
-                                }
-                            }}
-                            options={Users}
-                            onInputChange={(event, value) => {
-                                // Фильтруем варианты по введенному значению
-                                const filteredOptions = Users.filter(option => option.name.toLowerCase().includes(value.toLowerCase()));
-    
-                                // Если после фильтрации остался только один вариант, автоматически выбираем его
-                                if (filteredOptions.length === 1) {
-                                    setUser(filteredOptions[0]._id);
-                                    setError({...error, pto: false });
-                                    event?.target?.blur();
-                                }
-                            }}
-                            getOptionLabel={(option) => option.name}
-                            isOptionEqualToValue={(option, value) => option._id === value?._id}
-                            renderInput={(params) => (
-                                <TextField
-                                {...params}
-                                error={error.who}
-                                helperText={error.who? "Выберите выполняющего" : ""}
-                                label="Кто выполнял"
-                                variant="outlined"
-                                size='small'
-                                title='Выбрать того кто раздавал права'
-                                />
-                            )}
-                        />
-                    </FormControl>
+                    <CAutoCompleate
+                        idComp='user'
+                        label='Кто выполнял*'
+                        memoizedData={Users}
+                        elementToSelect={user}
+                        onChangeElement={handleChangeUser}
+                        optionLabel='name'
+                        newSize='small'
+                        flex={0.5}
+                    />
                 </Box>
                 <TextField
                     sx={{marginTop:2}}
                     id="descrip"
-                    label="Описание"
+                    label="Описание..."
                     fullWidth
                     value={descrip}
                     onChange={(event)=>setDescrip(event.target.value)}
@@ -376,16 +336,15 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
                 handleSetBlockedRow(item._pdoka,false,`Pdoka`)
             })  
             onClose()
-            }}>Отмена</Button>
+            }}
+        >Отмена</Button>
         <Button
           title="Отправить запрос на сервер"
           onClick={async () => {    
-            const hasErr = Object.values(error).some((value) => value === true);
-            if (hasErr || selectedSotrudniki.length === 0 || pto.length === 0 || obosnovanie.length === 0 || user.length === 0) {
+            if ([selectedSotrudniki, pto, obosnovanie, user].some((value) => value.length === 0)) {
                 await dialogs.alert(`Корректно заполните все поля.`)
                 return;
             }
-                        
             const res = await returnData()                     
             onClose(res);
           }}

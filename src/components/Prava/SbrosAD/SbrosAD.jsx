@@ -25,7 +25,7 @@ export default function SbrosAD() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : '--';
+                    return date.isValid() ? date.toDate() : null;
                   },
                   renderCell: (params) => {
                     if (params.value) {
@@ -41,7 +41,7 @@ export default function SbrosAD() {
                 type: 'date',
                 valueGetter: (params) => {
                     const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : '--';
+                    return date.isValid() ? date.toDate() : null;
                   },
                   renderCell: (params) => {
                     if (params.value) {

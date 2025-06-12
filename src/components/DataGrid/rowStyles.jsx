@@ -3,38 +3,30 @@ import React from 'react';
 export const getRowStyles = (theme) => ({
     // заблокированная строка другим сотрудником
     selected: {
-        backgroundColor: theme.palette.mode === 'dark' 
-            ? theme.palette.selectedRow.main 
-            : theme.palette.selectedRow.main,
+        backgroundColor: 'selectedRow.main',
     },
     // строка с ДЗ по GW в ДокаНАСТД
     dzgw: {
-        backgroundColor: theme.palette.mode === 'dark'
-            ? theme.palette.dzgw.main
-            : theme.palette.dzgw.main,
+        backgroundColor: 'dzgw.main',
         color: 'white',
         '&:hover': {
-            backgroundColor: theme.palette.dzgw.light,
+            backgroundColor: 'dzgw.light',
         },
     },
     // строка с просроченным сертификатом
     certEnd: {
-        backgroundColor: theme.palette.mode === 'dark'
-            ? theme.palette.subjectCertEnd.main
-            : theme.palette.subjectCertEnd.main,
+        backgroundColor: 'subjectCertEnd.main',
         color: 'white',
         '&:hover': {
-            backgroundColor: theme.palette.subjectCertEnd.light,
+            backgroundColor: 'subjectCertEnd.light',
         },
     },
     // строка с ануллированным сертификатом
     anull: {
-        backgroundColor: theme.palette.mode === 'dark'
-            ? theme.palette.subjectAnull.main
-            : theme.palette.subjectAnull.main,
+        backgroundColor: 'subjectAnull.main',
         color: 'white',
         '&:hover': {
-            backgroundColor: theme.palette.subjectAnull.light,
+            backgroundColor: 'subjectAnull.light',
         },
     }
 });

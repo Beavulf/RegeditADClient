@@ -6,6 +6,7 @@ import {
     FormControl, 
     Autocomplete,
     Button,
+    IconButton
 } from '@mui/material';
 import { 
     useSotrudnik, 
@@ -45,17 +46,31 @@ import {
     colStajirovka,
     colADTool,
     colChdti
-
 } from './TableColumns.jsx';
-
+import api from '../../apiAxios/Api.jsx';
+import { useDialogs } from '@toolpad/core';
+import DialogExcel from './DialogExcel.jsx';
+import SimCardDownloadIcon from '@mui/icons-material/SimCardDownload';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 import isBetween from 'dayjs/plugin/isBetween'
 dayjs.locale('ru');
 dayjs.extend(isBetween);
+
 const SERVER_ADDRESS = import.meta.env.VITE_SERVER_ADDRESS
 const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
+
+// списоу кнопок выбора данных ADTool
+const BTN_LIST_ADTOOL = [
+    'Отпуск',
+    'Учеба',
+    'Стажировка',
+    'Командировка',
+    'Соц. отпуск',
+    'Декрет',
+    'Продление отп.',
+]
 
 export default function SotrInfo() {
     const Sotrudnik = useSotrudnik()
@@ -73,15 +88,21 @@ export default function SotrInfo() {
     const Stajirovka = useStajirovka()
     const Naznachenie = useNaznachenie()
     const ADTool = useAdtool()
+    const dialogs = useDialogs();
+
+    // Получаем функцию экспорта из LoadToExcel
+    const exportToExcel = ExportExcel();
 
     const [pdokaData, setPdokaData] = useState([]) //для хранения всех записей из таблицы ДокаНАСТД
-    const [selectedSotrudnik, setSelectedSotrudnik] = useState('') // выбранный сотрудник
+    const [selectedSotrudnik, setSelectedSotrudnik] = useState({}) // выбранный сотрудник
     const [selectedTable, setSelectedTable] = useState(null) // выбранная таблица, содержит данные и столбцы
     const [activeBtn, setActiveBtn] = useState(null) //активная кнопка таблицы после клика
     const [columnsSelectedTable, setColumnsSelectedTable] = useState([]) // столбцы выбранной таблицы
     const [activeFromADToolBtn, setActiveFromADToolBtn] = useState(null) // активная кнопка из ADTool
     const [currentAction, setCurrentAction] = useState('') // текущее состояние сотрудника
     const [isLoading, setIsLoading] = useState(false) // идет ли загрузка данных
+    const [openExcelDialog, setOpenExcelDialog] = useState(false); // Состояние для открытия/закрытия диалога Excel
+    const [excelExportData, setExcelExportData] = useState({ data: [], tableName: '' }); // Данные для экспорта в Excel
 
     // список основных кнопки правого меню, с привязанными к ним данными и столбцами
     const listTableBtn = useMemo(() => ({
@@ -101,16 +122,7 @@ export default function SotrInfo() {
         'Дока НАСТД' : {data: pdokaData, columns: colPdoka},
         'Данные из ADTool' : {data: ADTool, columns: colADTool},
     }), [pdokaData, Priem, Uvolnenie, Naznachenie, SbrosAD, Perevod, VPerevod, Familia, Zapros, Svodka, Revizor, Chdti, Aipsin, Stajirovka, ADTool])
-    // списоу кнопок выбора данных ADTool
-    const listADToolBtn = [
-        'Отпуск',
-        'Учеба',
-        'Стажировка',
-        'Командировка',
-        'Соц. отпуск',
-        'Декрет',
-        'Продление отп.',
-    ]
+    
 
     // мемомизация фильтрация таблицы
     const filteredData = useMemo(() => {   
@@ -118,9 +130,9 @@ export default function SotrInfo() {
         let filtered = [];
         if (activeBtn === 'Данные из ADTool') {
             if (activeFromADToolBtn) {
-                filtered = selectedTable.filter(el => (el.fio === selectedSotrudnik.fio) && (el.descriptions === activeFromADToolBtn));
+                filtered = selectedTable.filter(el => (el.fio === selectedSotrudnik.fio) && (el.descriptions === activeFromADToolBtn)).sort((a, b) => new Date(b.date_z) - new Date(a.date_z));
             } else {
-                filtered = selectedTable.filter(el => el.fio === selectedSotrudnik.fio);
+                filtered = selectedTable.filter(el => el.fio === selectedSotrudnik.fio).sort((a, b) => new Date(b.date_z) - new Date(a.date_z));
             }
         } else {
             filtered = selectedTable.filter(el => el._sotr?._id === selectedSotrudnik._id);
@@ -171,7 +183,7 @@ export default function SotrInfo() {
         borderBottomLeftRadius: '0px',
     }
 
-    //получение самого последнего значения списка по выбранной дате
+    //получение самого последнего значения из таблицы по выбранной дате
     function getMostRecent (data, sotrId, dataKey) {
         return data
         .filter(el => el._sotr && el._sotr._id === sotrId)
@@ -237,15 +249,15 @@ export default function SotrInfo() {
     // функция получения всех записей таблтицы прав Доки и НАСТД через запрос сервера
     const getAllPdokaData = async () => {
         try {
-            const response = await fetch(`http://${SERVER_ADDRESS}:${SERVER_PORT}/allpdoka`)
-            if (!response.ok) {
+            const response = await api.get(`http://${SERVER_ADDRESS}:${SERVER_PORT}/allpdoka`)
+            if (response.status !== 200) {
                 const errorText = await response.text();
                 console.error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-                alert(`Ошибка запроса данных у сервера: ${response.status} - ${errorText}`);
+                dialogs.alert(`Ошибка запроса данных у сервера: ${response.status} - ${errorText}`);
                 return null;
             }
-
-            const data = await response.json();
+ 
+            const data = await response.data;
 
             if (!data || data.length === 0) {
                 console.warn("Получен пустой ответ от сервера");
@@ -254,10 +266,26 @@ export default function SotrInfo() {
 
             return data;   
         } catch (error) {
-            alert(`Ошибка запросе данных у сервера: ${error.message}`);
+            dialogs.alert(`Ошибка запросе данных у сервера: ${error.message}`);
         }
     }
     
+    // функция обработки экспорта
+    const handleExportExcel = (filteredData) => {
+        exportToExcel(filteredData, excelExportData.tableName); // Вызываем функцию экспорта
+        handleCloseExcelDialog();
+    };
+
+    // функция открытия диалога Excel
+    const handleOpenExcelDialog = (data, tableName) => {
+        setExcelExportData({ data, tableName });
+        setOpenExcelDialog(true);
+    };
+
+    const handleCloseExcelDialog = () => {
+        setOpenExcelDialog(false);
+    };
+
     return (
         <Box sx={{display:'flex', flexDirection:'column', height:'80vh', overflow:'hidden'}}>
 
@@ -310,7 +338,7 @@ export default function SotrInfo() {
                             <Box color='gray'>{selectedSotrudnik?.lnp || 'нет'} - {selectedSotrudnik?._otdel?.name}</Box> |
                         </Typography>
                         <Typography variant='h6' sx={{display:'flex', gap:1, ml:1}}>
-                            <Box color='lightBlue'>{currentAction}</Box> |
+                            <Box color='primary.main'>{currentAction}</Box> |
                         </Typography>
                         <Typography variant='h6' sx={{display:'flex', gap:1, ml:1}}>
                             <Box color='darkGray'>{selectedSotrudnik.descrip}</Box>
@@ -321,20 +349,18 @@ export default function SotrInfo() {
 
             {/* сборник таблиц */}
             <Box sx={{mt:2, display:'flex', flexDirection:'row', overflow:'hidden', flexGrow:1,}}>
-                
                 {/* отображение таблицы */}
                 <SotrInfoDataGrid 
                     columns={columnsSelectedTable} 
                     data={filteredData}
                     loading={isLoading}
                 />
-
                 {/* кнопки выбора данных из ADTool */}
                 <Collapse orientation="horizontal" in={activeBtn === 'Данные из ADTool'}>
                     <Box 
                         sx={{display:'flex', flexDirection:'column', width:'200px', height:'100%', borderTop:'3px solid', borderColor:'primary.main', }}
                     >
-                        {listADToolBtn.map(btn=>
+                        {BTN_LIST_ADTOOL.map(btn=>
                             (<Button 
                                 key={btn} 
                                 variant={activeFromADToolBtn === btn ? 'contained' : 'text'}
@@ -345,7 +371,19 @@ export default function SotrInfo() {
                         {/* загрузка в эксель данных из ADTool, выбранных */}
                         <Typography sx={{mt:2, color:'gray'}}>
                             {activeFromADToolBtn || 'Всё'}
-                            <ExportExcel data={filteredData} tableName={'Данные из ADTool'}/>
+                            <IconButton 
+                                title='Загрузить файл' 
+                                color='info' 
+                                onClick={() => handleOpenExcelDialog(filteredData, 'Данные из ADTool')}
+                                sx={{
+                                    color:'primary.main', 
+                                    '&:focus' : {
+                                        outline: 'none'
+                                    },
+                                }}
+                            >
+                                <SimCardDownloadIcon/>
+                            </IconButton>
                         </Typography>
                         <Button sx={{...styleADToolBtn, marginTop:'auto'}} onClick={handleBackToMainBtn}>- Назад -</Button>
                     </Box>
@@ -397,14 +435,32 @@ export default function SotrInfo() {
                                 }}  
                             >{tableName}</Button>
                             {tableName === activeBtn ? (
-                                <ExportExcel data={filteredData} tableName={tableName}/>
+                                <IconButton 
+                                    title='Загрузить файл' 
+                                    color='info' 
+                                    onClick={() => handleOpenExcelDialog(filteredData, tableName)}
+                                    sx={{
+                                        color:'primary.main', 
+                                        '&:focus' : {
+                                            outline: 'none'
+                                        },
+                                    }}
+                                >
+                                    <SimCardDownloadIcon/>
+                                </IconButton>
                             ) : null}
                             
                         </Box>
                     ))}
                 </Box>
             </Box>
-            
+            <DialogExcel
+                open={openExcelDialog}
+                onClose={handleCloseExcelDialog}
+                data={excelExportData.data}
+                tableName={excelExportData.tableName}
+                onExport={handleExportExcel}
+            />
         </Box>
     )
 }

@@ -1,9 +1,10 @@
-import React, { useMemo, useCallback, useState  } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import DialogAddSotrudnik from './DialogSotrudnik.jsx';
 import MDataGrid from '../DataGrid/MDataGrid.jsx';
 import { useTableActions } from '../../websocket/LayoutMessage.jsx';
 import { useSotrudnik  } from '../../websocket/WebSocketContext.jsx'
 import { Typography } from '@mui/material'
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -31,12 +32,16 @@ const Sotrudniki = React.memo(function Sotrudniki() {
 
     const memoizedHandleEditRow = useCallback((id, oldData, collectionName) => {
         handleEditRow(id, oldData, collectionName, DialogAddSotrudnik);
-     }, [handleEditRow]);
-    
+    }, [handleEditRow]);
 
     return (
         <div className='animated-element'>
             <MDataGrid 
+                topSlot={
+                    <Typography variant='body2' sx={{bgcolor:'rgba(88, 86, 86, 0.39)', borderRadius:'8px', p:1, display:'flex', alignItems:'center', gap:1}} color='gray'>
+                        <ErrorOutlineIcon color='warning'/>приудалении сотрудника, удаляются все данные связанный с ним.
+                    </Typography>
+                }
                 columns={columnsSotrudniki} 
                 tableData={Sotrudnik}
                 collectionName={`Sotrudnik`} 
@@ -44,9 +49,7 @@ const Sotrudniki = React.memo(function Sotrudniki() {
                 actionDelete={handleDeleteRowBD}
                 actionAdd={()=>handleAddInTable(`Sotrudnik`,DialogAddSotrudnik)}
             />
-            <Typography variant='body2' color='gray'>* приудалении сотрудника, удаляются все данные связанный с ним.</Typography>
         </div>
     )
 })
-Sotrudniki.displayName = 'Sotrudniki'
 export default React.memo(Sotrudniki)

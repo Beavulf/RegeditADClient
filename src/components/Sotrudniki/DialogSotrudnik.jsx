@@ -4,14 +4,16 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { useState, useEffect } from 'react';
-import { TextField, Box, FormControl, Autocomplete } from '@mui/material';
+import { TextField, Box } from '@mui/material';
 import { useDoljnost, useOtdel } from '../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
-
+import CAutoCompleate from '../utils/CAutoCompleate.jsx';
 
 export default function DialogAddSotrudnik({ payload, open, onClose }) {
   const Doljnost = useDoljnost()
   const Otdel = useOtdel()
+  const dialogs = useDialogs();
+
   const [disabled, setDisabled] = useState(false);
   const [descrip, setDescrip] = useState('');
   const [phone, setPhone] = useState('');
@@ -21,7 +23,6 @@ export default function DialogAddSotrudnik({ payload, open, onClose }) {
   const [otdel, setOtdel] = useState('');
   const [lnp, setLnp] = useState(0);
   const [textFieldError, setTextFieldError] = useState(false);
-  const dialogs = useDialogs();
 
   // Обработчик изменения ФИО
   function handleNameChange(event) {
@@ -48,6 +49,14 @@ export default function DialogAddSotrudnik({ payload, open, onClose }) {
     }
   }, [payload]);
 
+  const handleChangeDoljnost = (newValue) => {
+    setDoljnost(newValue ? newValue._id : '')
+  };
+
+  const handleChangeOtdel = (newValue) => {
+    setOtdel(newValue ? newValue._id : '')
+  };
+
   return (
     <Dialog fullWidth open={open} onClose={() => onClose()}>
       <DialogTitle>Редактирование данных:</DialogTitle>
@@ -56,14 +65,14 @@ export default function DialogAddSotrudnik({ payload, open, onClose }) {
           <Box sx={{ display: 'flex', gap: `20px` }}>
               {/* Поле для ввода ФИО */}
               <TextField
-              id="name"
-              error={textFieldError}
-              helperText={textFieldError ? 'Больше 2-х символов.' : null}
-              label="ФИО"
-              fullWidth
-              value={fio}
-              onChange={handleNameChange}
-            />
+                id="name"
+                error={textFieldError}
+                helperText={textFieldError ? 'Больше 2-х символов.' : null}
+                label="ФИО"
+                fullWidth
+                value={fio}
+                onChange={handleNameChange}
+              />
 
             {/* Поле для ввода описания */}
             <TextField
@@ -75,50 +84,31 @@ export default function DialogAddSotrudnik({ payload, open, onClose }) {
           </Box>
 
           {/* Выпадающий список для выбора должности */}
-          <FormControl fullWidth>
-            <Autocomplete
-              id="doljnost"
-              value={Doljnost.find(o => o._id === doljnost) || null}
-              onChange={(event, newValue) => setDoljnost(newValue ? newValue._id : '')}
-              options={Doljnost}
-              getOptionLabel={(option) => option.name}
-              isOptionEqualToValue={(option, value) => option._id === value?._id}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Должность*"
-                  variant="outlined"
-                />
-              )}
-            />
-          </FormControl>
+          <CAutoCompleate
+              idComp='doljnost'
+              label='Должность*'
+              memoizedData={Doljnost}
+              elementToSelect={doljnost}
+              onChangeElement={handleChangeDoljnost}
+              optionLabel='name'
+          />
           {/* Выпадающий список для выбора отдела */}
-          <FormControl fullWidth>
-            <Autocomplete
-              id="otdel"
-              value={Otdel.find(o => o._id === otdel) || null}
-              onChange={(event, newValue) => setOtdel(newValue ? newValue._id : '')}
-              options={Otdel}
-              getOptionLabel={(option) => option.name}
-              isOptionEqualToValue={(option, value) => option._id === value?._id}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Отдел*"
-                  variant="outlined"
-                />
-              )}
-            />
-          </FormControl>
-            {/* Поле для ввода телефона */}
-            <TextField
+          <CAutoCompleate
+              idComp='otdel'
+              label='Отдел*'
+              memoizedData={Otdel}
+              elementToSelect={otdel}
+              onChangeElement={handleChangeOtdel}
+              optionLabel='name'
+          />
+          {/* Поле для ввода телефона */}
+          <TextField
             id="phone"
             label="Телефон"
             fullWidth
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
           />
-
           {/* Поле для ввода логина */}
           <TextField
             id="dns"
@@ -151,8 +141,13 @@ export default function DialogAddSotrudnik({ payload, open, onClose }) {
               dialogs.alert('Необходимо указать логин AD')
               return;
             }
-            const res = { fio, descrip, _doljnost: doljnost, _otdel: otdel, phone: phone, login:login,lnp:lnp};
-            onClose(fio.length > 2 ? res : null);
+            const res = { fio, descrip, _doljnost: doljnost, _otdel: otdel, phone: phone, login:login, lnp:lnp };
+            if ([fio, doljnost, otdel, login].some(el=>el.length < 2)) {
+              dialogs.alert('Корректно заполните все поля.')
+              return;
+            } else {
+              onClose(fio.length > 2 ? res : null);
+            }
           }}
         >
           Отправить

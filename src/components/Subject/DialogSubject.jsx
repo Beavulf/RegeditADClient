@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { TextField, Box } from '@mui/material';
 import { useUsers } from '../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
+import getWhoId from '../users/GetWhoID.jsx';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -14,11 +15,9 @@ dayjs.locale('ru');
 
 export default function DialogSubject({ payload, open, onClose }) {
   const Users = useUsers()
-  
   const dialogs = useDialogs();
 
   const [name, setName] = useState('');
-
   const [dataDob, setDataDob] = useState(dayjs(new Date()))
   const [descrip, setDescrip] = useState('');
 
@@ -33,7 +32,7 @@ export default function DialogSubject({ payload, open, onClose }) {
 
   return (
     <Dialog fullWidth open={open} onClose={() => onClose()}>
-      <DialogTitle>Редактирование компаний:</DialogTitle>
+      <DialogTitle>Редактирование людей:</DialogTitle>
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, padding:1}}>
 
@@ -65,7 +64,7 @@ export default function DialogSubject({ payload, open, onClose }) {
             const res = { 
                 name,
                 descrip,
-                _who:(payload?._who && payload?._who?._id) || Users.find(el=>el.address === localStorage.getItem(`clientIp`))._id,
+                _who:getWhoId(payload, Users),
                 data_dob:dataDob
             };
             if (name.length > 0) {               

@@ -14,6 +14,7 @@ import { useDialogs } from '@toolpad/core/useDialogs';
 import { useTableActions } from '../../websocket/LayoutMessage.jsx';
 import DialogProdlenie from './DialogProdlenie.jsx';
 import KeyboardDoubleArrowLeftIcon from '@mui/icons-material/KeyboardDoubleArrowLeft';
+import getWhoId from '../users/GetWhoID.jsx';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -417,7 +418,7 @@ export default function DialogContract({ payload, open, onClose,  }) {
                 prikaz,
                 descrip, 
                 //при добавлении новой записи вставляем , если изменяем запись не трогаем
-                _who:(payload?._who && payload?._who?._id) || Users.find(el=>el.address === localStorage.getItem(`clientIp`))._id, 
+                _who:getWhoId(payload, Users), 
                 data_dob:dataDob
             };
             //итоговая отправка новых данных
