@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { TextField, Box } from '@mui/material';
 import { useUsers } from '../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
+import getWhoId from '../users/GetWhoID.jsx';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -76,7 +77,7 @@ export default function DialogCompany({ payload, open, onClose }) {
                 name,
                 unp,
                 descrip,
-                _who:(payload?._who && payload?._who?._id) || Users.find(el=>el.address === localStorage.getItem(`clientIp`))._id,
+                _who:getWhoId(payload, Users),
                 data_dob:dataDob
             };
             if (name.length > 0 && unp.toString().length > 0) {               

@@ -22,8 +22,8 @@ const SubjectListMenu = ({ selectSubject, getSubjectContracts, filteredSubjects=
                 onClick={()=>getSubjectContracts(sbj)}>
                     {sbj.name}
                     <Box color={`GrayText`} sx={{display:`flex`, justifyContent:`space-between`, padding:`0 3px`}}>
-                        <Typography variant='caption'>{dayjs(new Date(sbj.data_dob)).format(`DD.MM.YYYY`)}-</Typography>
-                        <Typography variant='caption'>{sbj._who.name}</Typography>
+                        <Typography variant='body'>{dayjs(new Date(sbj.data_dob)).format(`DD.MM.YYYY`)}-</Typography>
+                        <Typography variant='body'>{sbj._who.name}</Typography>
                     </Box>
                 </Button>                          
             </Box>

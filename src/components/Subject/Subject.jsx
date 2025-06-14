@@ -1,25 +1,21 @@
-import { useSubject, useCompany, useContract } from '../../websocket/WebSocketContext.jsx'
+import { useSubject, useContract } from '../../websocket/WebSocketContext.jsx'
 import {
     Button, 
     Typography, 
     Box, 
     Paper, 
-    AccordionSummary, 
-    AccordionDetails, 
-    Accordion,
 } from '@mui/material'
 import { useState, useMemo, memo, useCallback } from 'react';
 import MDataGrid from '../DataGrid/MDataGrid.jsx';
 import { useTableActions } from '../../websocket/LayoutMessage.jsx';
 import { useDialogs } from '@toolpad/core/useDialogs';
-import DialogCompany from './DialogCompany.jsx';
 import DialogContract from './DialogContract.jsx';
 import DialogFullAdd from './DialogFullAdd.jsx';
 import DialogReport from './DialogReport.jsx';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DownloadIcon from '@mui/icons-material/Download';
 import SubjectListMenu from './SubjectUtils/SubjectListMenu.jsx';
 import SearchSubjectInput from './SubjectUtils/SearchSubjectInput.jsx'; 
+import CompanyAccordion from './SubjectUtils/CompanyAccordion.jsx';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -29,9 +25,7 @@ const Subject = memo(function Subject() {
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const dialogs = useDialogs();
     const Subjects = useSubject()
-    const Company = useCompany();
     const Contract = useContract();
-    const conf = useMemo(() => ({ density: 'compact'}), []);
     const confContr = useMemo(() => ({density: 'compact', }), []);
 
     const [openDialog, setOpenDialog] = useState(false)
@@ -165,35 +159,6 @@ const Subject = memo(function Subject() {
         ],[]
     ) 
 
-    const columnsCompany = useMemo(()=>
-        [
-            { field: 'name', headerName: 'Наименование',flex:0.7},
-            { field: 'unp', headerName: 'УНП',flex:0.2},
-            { field: 'data_dob', headerName: 'Дата доб.',flex:0.25,
-                type: 'date',
-                valueGetter: (params) => {
-                    if (!params) return null;
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-                    }
-                    return null;
-                  },
-            }, 
-            { field: '_who', headerName: 'Кто доб.',  flex:0.2,
-                valueGetter: (params) => params?.name || ''
-            }, 
-            { field: 'descrip', headerName: 'Описание', width: 150, flex:0.12, },
-        ],[]
-    ) 
-
-    const companySorted = useMemo(() => {
-        return Company.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf());
-    }, [Company]);
-
     const filteredContracts = useMemo(() => {
         const contractsToFilter = showAnull ? Contract.filter(el=>el.anull) : Contract;
         if (selectSubject?._id) {
@@ -228,7 +193,6 @@ const Subject = memo(function Subject() {
                     initialSearchValue={debouncedSearchSubj}
                     handleClearFilter={handleClearFilter}
                />
-               
                <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:`center`, flex:`1`}}>
                     <Box sx={{display:`flex`}}>Контракты<Typography color='primary.main'>: {selectSubject && selectSubject.name}</Typography></Box>
                     <Box sx={{display:`flex`,alignItems:`center`, gap:1}}>
@@ -244,14 +208,13 @@ const Subject = memo(function Subject() {
                </Box>
             </Box>
 
-            <Box sx={{display:`flex`, gap:1}}>
+            <Box sx={{display:`flex`, gap:1, mb:1}}>
                 <SubjectListMenu 
                     selectSubject={selectSubject}
                     getSubjectContracts={getSubjectContracts}
                     filteredSubjects={filteredSubjects}
                     searchSubj={debouncedSearchSubj}
                 />
-
                 <Box sx={{flex:1, display:`flex`, flexDirection:`column`, gap:1}}>
                     <Paper variant='elevation' elevation={1} sx={{ overflow:`hidden`, height:'100%', maxWidth:'1270px'}}>
                         <MDataGrid 
@@ -265,31 +228,9 @@ const Subject = memo(function Subject() {
                             topSlot={colorInfoSlot}
                         />
                     </Paper>
-                    <Accordion>
-                        <AccordionSummary
-                            expandIcon={<ExpandMoreIcon />}
-                            aria-controls="panel1-content"
-                            id="com-accordion"
-                            sx={{backgroundColor:'#9c92921d'}}
-                        >
-                            <Typography color='primary.main' component="span">Список компаний (редактирование, добавление)</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails sx={{ overflow: 'auto', display: 'block', minHeight:`520px` }}>
-                            <Paper variant='elevation' elevation={1} sx={{minHeight:`361px`}}>
-                                <MDataGrid 
-                                    conf={conf}
-                                    tableData={companySorted}
-                                    columns={columnsCompany} 
-                                    collectionName={`Company`} 
-                                    actionEdit={(id,oldData,collectionName)=>handleEditRow(id,oldData,collectionName,DialogCompany)}
-                                    actionDelete={handleDeleteRowBD}
-                                    actionAdd={()=>handleAddInTable(`Company`,DialogCompany)}
-                                />
-                            </Paper>
-                        </AccordionDetails>
-                    </Accordion>
                 </Box>
             </Box>
+            <CompanyAccordion/>
             </>}
         </div>
     )

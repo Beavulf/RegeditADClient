@@ -4,9 +4,10 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { TextField, Box, Typography } from '@mui/material';
 import { useDialogs } from '@toolpad/core/useDialogs';
+import getWhoId from '../users/GetWhoID.jsx';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -89,14 +90,14 @@ export default function DialogFullAdd({ payload, open, onClose }) {
             const resSubj = { 
                 name,
                 descrip,
-                _who:(payload?._who && payload?._who?._id) || Users.find(el=>el.address === localStorage.getItem(`clientIp`))._id,
+                _who:getWhoId(payload, Users),
                 data_dob:dataDob
             };
             const resCom = { 
                 name:nameCom,
                 unp,
                 descrip:descripCom,
-                _who:(payload?._who && payload?._who?._id) || Users.find(el=>el.address === localStorage.getItem(`clientIp`))._id,
+                _who:getWhoId(payload, Users),
                 data_dob:dataDob
             };
             
@@ -105,14 +106,14 @@ export default function DialogFullAdd({ payload, open, onClose }) {
                     type: 'insertInToCollection',
                     data: {
                       collection: `Subject`,
-                      body: { ...resSubj, is_locked: false }, // Добавляем is_locked ко всем элементам
+                      body: { ...resSubj, is_locked: false },
                     },
                 };
                 const messageCom = {
                     type: 'insertInToCollection',
                     data: {
                       collection: `Company`,
-                      body: { ...resCom, is_locked: false }, // Добавляем is_locked ко всем элементам
+                      body: { ...resCom, is_locked: false }, 
                     },
                 };
                 sendJsonMessage(message);

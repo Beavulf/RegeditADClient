@@ -111,12 +111,15 @@ const  MainLayout = ()=> {
       }
     }
     if (lastJsonMessage.error) {
-      console.log(lastJsonMessage.error);
+      console.log(lastJsonMessage);
       enqueueSnackbar(`Ошибка при работе с БД: ${lastJsonMessage.error}`, { variant: `error` });
       if (lastJsonMessage.cmd === 'logout') {
         alert(`Время вашей сессии истекло. Авторизуйтесь снова.`);
         navigate('/logout');
       }
+    }
+    if (lastJsonMessage.warning) {
+      enqueueSnackbar(`Внимание: ${lastJsonMessage.warning}`, { variant: `warning` });
     }
   }, [navigate, enqueueSnackbar]);
 

@@ -51,7 +51,8 @@ const CAutoCompleate = ({
     const onElementInputChange = useCallback((event, newValue) => {
         const filteredOptions = memoizedData.filter(option => 
             option[optionLabel].toLowerCase().includes(newValue.toLowerCase()) ||
-            String(option?.lnp).includes(newValue)
+            String(option?.lnp).includes(newValue) ||
+            String(option?.unp).includes(newValue)
         );
         if (filteredOptions.length === 1) {
             onChangeElement(filteredOptions[0]);

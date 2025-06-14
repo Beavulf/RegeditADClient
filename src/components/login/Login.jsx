@@ -79,31 +79,40 @@ function Login({onLogin}) {
     }
 
     return (
-        <>
-            <Box sx={{display:'flex', justifyContent:'center'}}>
-              <Box sx={{m:'auto',p:1}}>
-                <Typography variant="h4" gutterBottom>
-                  <strong style={{color: `#ccc`}}>RegeditAD</strong>
-                </Typography>
-                <h1>Авторизация</h1>
-                <h2 style={{color:`#ccc`}}>{clientIp}</h2>
-                <Button 
-                  size='large'
-                  variant="outlined" 
-                  endIcon={<LoginIcon/>}
-                  onClick={async ()=>await authAndGetRole()}
-                  >ВОЙТИ
-                </Button> 
-                <br />
-                <Button  
-                  variant="text"
-                  sx={{color:`#cccc`, marginTop: `20px`}}
-                  size='small'
-                  endIcon={<KeyIcon/>}
-                  onClick={()=>setDialog(true)}
-                  >Запросить доступ
-                </Button>
-              </Box>
+        <Box sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh',
+            width: '100vw',
+            position: 'relative',
+            overflow: 'hidden',
+            // backgroundImage: 'url("/public/BGVideo/Home BG.jpg")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+        }}>
+            <Box sx={{m:'auto',p:1}}>
+              <Typography variant="h4" gutterBottom>
+                <strong style={{color: `#ccc`}}>RegeditAD</strong>
+              </Typography>
+              <h1>Авторизация</h1>
+              <h2 style={{color:`#ccc`}}>{clientIp}</h2>
+              <Button 
+                size='large'
+                variant="outlined" 
+                endIcon={<LoginIcon/>}
+                onClick={async ()=>await authAndGetRole()}
+                >ВОЙТИ
+              </Button> 
+              <br />
+              <Button  
+                variant="text"
+                sx={{color:`#cccc`, marginTop: `20px`}}
+                size='small'
+                endIcon={<KeyIcon/>}
+                onClick={()=>setDialog(true)}
+                >Запросить доступ
+              </Button>
             </Box>
 
             
@@ -136,7 +145,7 @@ function Login({onLogin}) {
               }
             /> 
               
-        </>
+        </Box>
     )
 }
 
