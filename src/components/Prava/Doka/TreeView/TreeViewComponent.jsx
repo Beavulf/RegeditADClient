@@ -45,8 +45,12 @@ const TreeViewComponent = ({ data }) => {
                         itemId={item._id}
                         key={item._id}
                         label={
-                          <Box sx={{display:'flex'}}>
-                            (<Typography color='aqua'>{item._pto.name}</Typography>)|<Typography color={item.type === 'Предоставить' ? 'lightGreen' : '#ed5353b0'}> {item.type} </Typography>| <strong> {item._sotr.fio} </strong> (<Typography color='aqua'>{item.lnp}</Typography>) - {item.obosnovanie} - <Typography color='lightBlue'>{item._who_do.name}</Typography>
+                          <Box sx={{display:'flex', gap:1}}>
+                            (<Typography color='primary.main'>{item._pto.name}</Typography>) 
+                            |<Typography color={item.type === 'Предоставить' ? 'success' : '#ed5353b0'}> {item.type} </Typography>
+                            | <strong> {item._sotr.fio} </strong> 
+                            (<Typography color='primary.main'>{item.lnp}</Typography>) - {item.obosnovanie} - 
+                            <Typography color='primary.dark'>{item._who_do.name}</Typography>
                           </Box>
                         }
                       />
