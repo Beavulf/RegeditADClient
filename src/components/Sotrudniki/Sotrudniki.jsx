@@ -38,7 +38,7 @@ const Sotrudniki = React.memo(function Sotrudniki() {
         <div className='animated-element'>
             <MDataGrid 
                 topSlot={
-                    <Typography variant='body2' sx={{bgcolor:'rgba(88, 86, 86, 0.39)', borderRadius:'8px', p:1, display:'flex', alignItems:'center', gap:1}} color='gray'>
+                    <Typography variant='body2' sx={{bgcolor:'listToBlock.main', borderRadius:'8px', p:1, display:'flex', alignItems:'center', gap:1}} color='gray'>
                         <ErrorOutlineIcon color='warning'/>приудалении сотрудника, удаляются все данные связанный с ним.
                     </Typography>
                 }

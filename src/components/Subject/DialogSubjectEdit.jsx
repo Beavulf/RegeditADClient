@@ -43,7 +43,7 @@ export default function DialogSubjectEdit({ open, onClose }) {
         <DialogContent sx={{margin:'0', padding:'0 10px'}}>       
             <MDataGrid 
                 topSlot={
-                    <Typography variant='b2' color='gray' sx={{bgcolor:'rgba(88, 86, 86, 0.39)', borderRadius:'8px', p:1, display:'flex', alignItems:'center', gap:1}}>
+                    <Typography variant='b2' color='gray' sx={{bgcolor:'listToBlock.main', borderRadius:'8px', p:1, display:'flex', alignItems:'center', gap:1}}>
                         <ErrorOutlineIcon color='warning'/>при удалени СУБЪЕКТА, удалятся все связанные с ним контракты и продления.
                     </Typography>
                 }

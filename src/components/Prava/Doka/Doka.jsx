@@ -171,6 +171,8 @@ const Doka = React.memo(function Doka() {
             <MenuItem value={25}>25</MenuItem>
             <MenuItem value={50}>50</MenuItem>
             <MenuItem value={100}>100</MenuItem>
+            <MenuItem value={-1}>Все</MenuItem>
+
           </Select>
         </Box>
       )
