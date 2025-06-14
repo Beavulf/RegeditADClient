@@ -22,7 +22,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import PersonPinIcon from '@mui/icons-material/PersonPin';
 import WebIcon from '@mui/icons-material/Web';
 import LastPageIcon from '@mui/icons-material/LastPage';
-import Settings from '../../Settings.jsx'
+import { useSettings } from '../SettingsContext/SettingsContext.jsx'
+import { defaultSettings } from '../SettingsContext/DefaultSettings.js'
 import CurrentTimeDisplay from './DateTImeCalendar.jsx'
 import ColorSelect from '../../components/utils/ColorSelect.jsx'
 import SotrToBlockList from '../regestry/Uvolnenie/BlockList/SotrToBlockList.jsx';
@@ -55,7 +56,7 @@ export default function Dashboard({router}){
     const Users = useUsers()
     const Clients = useClients()
     const {sendJsonMessage} = useWebSocketContext()
-    const [settings, setSettings] = useState(Settings())
+    const { settings, setSettings } = useSettings();
     const [visual, setVisual] = useState(settings.btnStyle)
     const [checkedSwitchBtn, setCheckedSwitchBtn] = useState(settings.btnStyle === 'elevation' ? true : false)
     const [useCustomCursors, setUseCustomCursors] = useState(() => {
@@ -81,10 +82,8 @@ export default function Dashboard({router}){
 
     // обновление настроек
     const updateSettings = useCallback((key, value) => {
-        const newSettings = { ...settings, [key]: value };
-        localStorage.setItem('settings', JSON.stringify(newSettings));
-        setSettings(newSettings);   
-    }, [settings]);
+        setSettings(prev => ({ ...prev, [key]: value }));
+    }, [setSettings]);
 
     // галочка для добавления на окно кнопки быстрого перехода
     const handleCheckboxChange = useCallback(
@@ -230,7 +229,7 @@ export default function Dashboard({router}){
                                 <Button 
                                   color='error' 
                                   title='Сбросить настройки кнопок к дефолтным' 
-                                  onClick={()=>{localStorage.removeItem('settings'); window.location.reload();}}
+                                  onClick={()=>setSettings(defaultSettings)}
                                   sx={{marginLeft:'auto'}}
                                 >сброс</Button>
                               </Box>

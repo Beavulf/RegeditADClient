@@ -33,7 +33,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Main from './components/Main/Main.jsx';
 import {  useSnackbar } from 'notistack';
 import { WebSocketProvider } from './websocket/WebSocketContext.jsx';
-import Settings from './Settings.jsx';
+import { SettingsProvider } from './components/SettingsContext/SettingsContext.jsx';
 
 const SERVER_ADDRESS = import.meta.env.VITE_SERVER_ADDRESS
 const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
@@ -98,7 +98,6 @@ function App() {
       localStorage.removeItem('sessionStart');
       localStorage.setItem('userRole', tokenAndRole.role);
       setAuth(true);
-      Settings()
       enqueueSnackbar('Успешная авторизация', { variant: 'success' });
     } else {
       setAuth(false);
@@ -115,40 +114,41 @@ function App() {
 
   return (
     <ThemeProvider theme={darkTheme}>
-      <>
-      <CssBaseline />
-      <Routes>
-        {/* Маршрут для страницы входа */}
-        <Route
-          path="/login"
-          element={
-            auth ? <Navigate to="/dashboard/*" /> : (<Login onLogin={handleAuthUser} />)
-          }
-        />
+      <SettingsProvider>
+        <CssBaseline />
+        <Routes>
+          {/* Маршрут для страницы входа */}
+          <Route
+            path="/login"
+            element={
+              auth ? <Navigate to="/dashboard/*" /> : (<Login onLogin={handleAuthUser} />)
+            }
+          />
 
-        {/* Маршрут для главной (авторизованной) части */}
-        <Route
-          path="/dashboard/*"
-          element={
-            auth ? (
-              <WebSocketProvider>
-                <Main/>
-              </WebSocketProvider>
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
+          {/* Маршрут для главной (авторизованной) части */}
+          <Route
+            path="/dashboard/*"
+            element={
+              auth ? (
+                <WebSocketProvider>
+                  <Main/>
+                </WebSocketProvider>
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
 
-        {/* Маршрут для выхода из системы */}
-        <Route 
-          path="/logout" 
-          element={<LogoutComponent onLogout={handleLogout} />}
-        />
+          {/* Маршрут для выхода из системы */}
+          <Route 
+            path="/logout" 
+            element={<LogoutComponent onLogout={handleLogout} />}
+          />
 
-        {/* Редирект с корневого пути */}
-        <Route path="/*" element={<Navigate to="/login" />} />
-      </Routes></>
+          {/* Редирект с корневого пути */}
+          <Route path="/*" element={<Navigate to="/login" />} />
+        </Routes>
+      </SettingsProvider>
     </ThemeProvider>
   );
 }

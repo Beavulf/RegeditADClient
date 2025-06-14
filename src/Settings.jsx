@@ -24,6 +24,7 @@ export default function getSettings () {
         {id:3,path:`/admin-edit-table/otdel`,name:`Отделы и Должности`, bgColor:`#9c92921d`},
         {id:4,path:`/admin-edit-table/users`,name:`Пользователи`, bgColor:`#9c92921d`}
       ],
+      pageSizeDokaNASTD : 10,
     };
   
     localStorage.setItem('settings', JSON.stringify(defaultSettings));

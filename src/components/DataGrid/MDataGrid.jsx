@@ -20,7 +20,7 @@ dayjs.locale('ru');
 
 const storedRole = localStorage.getItem('userRole');
 
-const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionDelete, actionAdd, conf, topSlot }) => {
+const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionDelete, actionAdd, conf, topSlot, customPageSize }) => {
     const {handleSetBlockedRow } = useTableActions();
     const [rows, setRows] = useState([]);
     const [selectionModel, setSelectionModel] = useState([]);
@@ -155,7 +155,6 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
     //добавление к передаваемым столбцам столбец с кнопками
     const columnsExtands = useMemo(() => [...columns, actionsColumn], [columns, actionsColumn]);
     const memoizedRows = useMemo(() => rows, [rows]);
-    
     return (
         <div style={{ width: '100%',overflow: 'hidden', display:'flex', flexDirection:'column',}} className='animated-element'>
             <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:`center`}}>
@@ -174,8 +173,8 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
                 {...conf}
                 disableVirtualization={false}
                 initialState={{
-                    pagination: { paginationModel: { pageSize: 10 } },
-                }}              
+                    pagination: { paginationModel: { pageSize: customPageSize || 10 } },
+                }} 
                 pageSizeOptions={[5, 10, 25, 50, 100, { value: -1, label: 'Все' }]}
                 rows={memoizedRows} 
                 columns={columnsExtands} 

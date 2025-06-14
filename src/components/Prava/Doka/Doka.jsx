@@ -1,5 +1,5 @@
 import { usePdoka } from '../../../websocket/WebSocketContext.jsx'
-import { Typography, Box, IconButton, Badge, Button, Checkbox } from '@mui/material'
+import { Typography, Box, IconButton, Badge, Button, Checkbox, Select, MenuItem } from '@mui/material'
 import React, { useState, useMemo, useEffect, memo, useCallback } from 'react';
 import MDataGrid from '../../DataGrid/MDataGrid.jsx';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
@@ -13,6 +13,7 @@ import { useSnackbar } from 'notistack';
 import api from '../../../apiAxios/Api.jsx';
 import TreeViewComponent from './TreeView/TreeViewComponent.jsx';
 import SimCardDownloadIcon from '@mui/icons-material/SimCardDownload';
+import { useSettings } from '../../SettingsContext/SettingsContext.jsx';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -26,6 +27,8 @@ const Doka = React.memo(function Doka() {
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const Pdoka = usePdoka()
     const { enqueueSnackbar } = useSnackbar(); 
+    const { settings, setSettings } = useSettings();
+    const [pageSize, setPageSize] = useState(settings.pageSizeDokaNASTD || 10);
 
     const [filter, setFilter] = useState(false);
     const [overdueRowsCount, setOverdueRowsCount] = useState([]);  
@@ -144,7 +147,34 @@ const Doka = React.memo(function Doka() {
         }).sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
       }
       return Pdoka.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
-    },[Pdoka, filter])
+    },[Pdoka, filter, pageSize])
+
+    //установка размера страницы по умолчанию
+    const defaultPageSize = useMemo(() => {
+      return (
+        <Box sx={{display:`flex`, alignItems:`center`, gap:1,}}>
+          <Typography variant="body">Размер страницы по умолчанию</Typography>
+          <Select
+            size='small'
+            value={pageSize}
+            onChange={(e) => {
+              setAllTimeSelected(true)
+              setPageSize(e.target.value)
+              setSettings(prev => ({ ...prev, pageSizeDokaNASTD: e.target.value }));
+              setTimeout(() => {
+                setAllTimeSelected(false)
+              }, 10)
+            }}
+          >
+            <MenuItem value={5}>5</MenuItem>
+            <MenuItem value={10}>10</MenuItem>
+            <MenuItem value={25}>25</MenuItem>
+            <MenuItem value={50}>50</MenuItem>
+            <MenuItem value={100}>100</MenuItem>
+          </Select>
+        </Box>
+      )
+    },[pageSize, setSettings])
     
     return (
         <div className='animated-element' style={{flex:`1`, textAlign:`start`}}>
@@ -204,6 +234,8 @@ const Doka = React.memo(function Doka() {
             
           {!allTimeSelected ?
             <MDataGrid 
+                topSlot={defaultPageSize}
+                customPageSize={pageSize}
                 columns={columnsPDoka} 
                 tableData={filteredPdoka}
                 collectionName={`Pdoka`} 
