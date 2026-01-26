@@ -31,6 +31,7 @@ import Divider from '@mui/material/Divider';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
+import { enqueueSnackbar } from 'notistack';
 dayjs.locale('ru');
  
 const allFastBtn = [
@@ -66,6 +67,11 @@ export default function Dashboard({router}){
 
     // отключение пользователя
     async function quitClient(ip){
+      const userName = Users.find(us=>us.address === ip).name;
+      if (userName==='ADMIN') {
+        enqueueSnackbar(`Вот это вот зря.`, { variant: 'error' });
+        return;
+      }
       const message = {
         type: 'quitClientConnect',
         data: {
@@ -288,12 +294,14 @@ export default function Dashboard({router}){
                           key={index}
                           sx={{ alignItems: 'center', gap: 2, bgcolor: '#9c92921d', margin:'5px 0', borderRadius:'8px' }}
                         >
-                        <PersonPinIcon />
-                        <Typography>{Users.find(us=>us.address === client).name}</Typography>
-                        {localStorage.getItem('userRole')==='admin' ? <IconButton size='small' onClick={()=>quitClient(client)} sx={{margin:'0 0 0 auto'}} title='Отключить пользователя'>
-                          <LogoutIcon/>
-                        </IconButton> : null
-                        }
+                          <PersonPinIcon />
+                          <Typography>{Users.find(us=>us.address === client).name}</Typography>
+                          {localStorage.getItem('userRole')==='admin' 
+                            ? <IconButton size='small' onClick={()=>quitClient(client)} sx={{margin:'0 0 0 auto'}} title='Отключить пользователя'>
+                              <LogoutIcon/>
+                            </IconButton> 
+                            : null
+                          }
                         </ListItem>
                     ))}
                     </List>

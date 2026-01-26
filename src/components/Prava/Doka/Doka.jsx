@@ -149,7 +149,7 @@ const Doka = React.memo(function Doka() {
       return Pdoka.sort((a, b) => dayjs(b.data_dob).valueOf() - dayjs(a.data_dob).valueOf())
     },[Pdoka, filter, pageSize])
 
-    //установка размера страницы по умолчанию
+    //установка размера строк в таблице по умолчанию
     const defaultPageSize = useMemo(() => {
       return (
         <Box sx={{display:`flex`, alignItems:`center`, gap:1,}}>
@@ -178,6 +178,8 @@ const Doka = React.memo(function Doka() {
       )
     },[pageSize, setSettings])
     
+    const memoizedAllPDoka = useMemo(() => allPdoka,[allPdoka]);
+
     return (
         <div className='animated-element' style={{flex:`1`, textAlign:`start`}}>
           <Box sx={{display:`flex`, alignItems:`center`, gap:1}}>
@@ -241,11 +243,11 @@ const Doka = React.memo(function Doka() {
                 columns={columnsPDoka} 
                 tableData={filteredPdoka}
                 collectionName={`Pdoka`} 
-                actionEdit={async (id,oldData,collectionName)=> handleEditRow(id,oldData,collectionName,DialogDoka)}
+                actionEdit={(id,oldData,collectionName)=> handleEditRow(id,oldData,collectionName,DialogDoka)}
                 actionDelete={handleDeleteRowBD}
                 actionAdd={()=>handleAddInTable(`Pdoka`,DialogDoka)}
             /> :
-            <TreeViewComponent data={allPdoka} />
+            <TreeViewComponent data={memoizedAllPDoka} />
           }
             
         </div>

@@ -139,7 +139,7 @@ const Feedback = () => {
             {/* верхнее меню заголовк и автор */}
             <Box sx={{display:'flex',marginBottom: '10px', justifyContent:'space-between', width:'100%'}}>
                 <Typography 
-                    color='lightBlue' 
+                    color='primary.main' 
                     variant='h5' 
                 >
                     {feedback.title}

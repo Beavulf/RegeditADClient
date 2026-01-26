@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTableActions } from '../../../websocket/LayoutMessage.jsx';
 import MDataGrid from '../../DataGrid/MDataGrid.jsx';
-import { useZaprosSPrava } from '../../../websocket/WebSocketContext.jsx'
+import { useZaprosSPrava, useSotrudnik, useOtdel } from '../../../websocket/WebSocketContext.jsx'
 import DialogZaprosSPrava from './DialogSPrava/DialogZaprosSPrava.jsx';
 import InfoIcon from '@mui/icons-material/Info';
 import PravaPopoverCell from './PravaPopoverCell.jsx';
@@ -23,12 +23,29 @@ dayjs.locale('ru');
 export default function ZaprosForm() {
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const ZaprosSPrava = useZaprosSPrava()
+    const sotrudniki = useSotrudnik()
+    const otdely = useOtdel()
 
     const [filteredData, setFilteredData] = useState([])
     const [pravaToSearch, setPravaToSearch] = useState('')
     const [openOtdInfo, setOpenOtdInfo] = useState(false);
 
     useSetFocusAndText(setPravaToSearch, 'pravaToSearch')
+
+    const peopleFrom06529 = useMemo(() => {
+      return ZaprosSPrava
+        .map(z => {
+          const sotr = sotrudniki.find(s => s._id === z._sotr._id);
+          if (!sotr) return 0;
+          const otdel = otdely.find(o => o.name === sotr._otdel.name);
+          if (!otdel) return 1;
+          if (otdel.name === "06505") {
+            return z.prava;
+          }
+          return null;
+        })
+        .filter(Boolean);
+    }, [ZaprosSPrava, sotrudniki, otdely]);
 
     // сортировка данных по дате добавления (используется как изначальные данные)
     const filteredDataOrigin = useMemo(()=>{

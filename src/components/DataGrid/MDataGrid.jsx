@@ -13,6 +13,8 @@ import getRowStyles from './rowStyles.jsx';
 import { useTheme } from '@mui/material/styles';
 import CustomPagination from './DataGridUtils/CustomPagination.jsx';
 import { useSnackbar } from 'notistack';
+import { useDialogs } from '@toolpad/core/useDialogs';
+import groupRows from './DataGridUtils/GroupedRows.js'
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -20,8 +22,17 @@ dayjs.locale('ru');
 
 const storedRole = localStorage.getItem('userRole');
 
+const PAGE_SIZE_OPTIONS = [5, 10, 25, 50, 100, { value: -1, label: 'Все' }];
+const COLUMN_VISIBILITY = { _id: false };
+const GRID_SLOTS = { toolbar: GridToolbar };
+const GRID_SLOT_PROPS = {
+  toolbar: { showQuickFilter: true },
+  pagination: { ActionsComponent: CustomPagination },
+};
+
 const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionDelete, actionAdd, conf, topSlot, customPageSize }) => {
     const {handleSetBlockedRow } = useTableActions();
+    const dialogs = useDialogs();
     const [rows, setRows] = useState([]);
     const [selectionModel, setSelectionModel] = useState([]);
 
@@ -85,26 +96,48 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
         }
     }, [rows, actionEdit, collectionName, enqueueSnackbar]);
 
-    // функция кнопки для удаления строки
+    // функция кнопки для удаления строки, для строк из Доки-множественное удаление
     const handleClickDeleteRow = useCallback(async (id) => {
-        const row = rows.find(row => row.id === id);
-        if (!row) return;
-        const isDeleted = row.name === 'Удаленный отдел' || row.name === 'Удаленная должность';
-        if (isDeleted) {
-            enqueueSnackbar('Нельзя.', { variant: 'warning' });
-            return;
-        }
-        handleSetBlockedRow(id, true, collectionName);
         try {
-            await actionDelete(id, collectionName, row);
+            const row = rows.find(row => row.id === id);
+            if (!row) return;
+            const isDeleted = row.name === 'Удаленный отдел' || row.name === 'Удаленная должность';
+            if (isDeleted) {
+                enqueueSnackbar('Нельзя.', { variant: 'warning' });
+                return;
+            }
+
+            handleSetBlockedRow(id, true, collectionName);      
+            if (collectionName !== `Pdoka`) {
+                actionDelete(id, collectionName, row);
+                return;
+            }
+
+            const groupedRows = groupRows({row,rows});
+            groupedRows.map((row)=>{
+                handleSetBlockedRow(row.id,true,`Pdoka`)
+            })
+
+            const confirmed = await dialogs.confirm(`Удалить выбранные строки (${groupedRows.length}) ?`, {
+                okText: 'Да',
+                cancelText: 'Нет',
+            });
+
+            await Promise.all(
+                groupedRows.map(async (row) => {
+                  return confirmed
+                    ? actionDelete(row.id, collectionName, row)
+                    : handleSetBlockedRow(row.id, false, `Pdoka`);
+                })
+            );
         } catch (error) {
-            console.error('Error in delete action:', error);
+            console.error('Ошибка при удалении строк:', error);
             handleSetBlockedRow(id, false, collectionName);
             enqueueSnackbar(`Ошибка при удалении - ${error}`, { variant: 'error' });
         }
     }, [rows, actionDelete, collectionName, handleSetBlockedRow, enqueueSnackbar]);
 
-    //доп столбец с кнопками управления
+    //доп столбец с кнопками управления: удалить, изменить, разблокировать
     const actionsColumn = useMemo(() => ({
         field: 'actions',
         headerName: 'Действия',
@@ -155,9 +188,21 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
     //добавление к передаваемым столбцам столбец с кнопками
     const columnsExtands = useMemo(() => [...columns, actionsColumn], [columns, actionsColumn]);
     const memoizedRows = useMemo(() => rows, [rows]);
+    const initialState = useMemo(() => ({
+        pagination: { paginationModel: { pageSize: customPageSize || 10 } },
+    }), [customPageSize]);
+      
+    const gridSx = useMemo(() => ({
+        minHeight: '200px',
+        '& .MuiDataGrid-row.selected': rowStyles.selected,
+        '& .MuiDataGrid-row.dzgw': rowStyles.dzgw,
+        '& .MuiDataGrid-row.certEnd': rowStyles.certEnd,
+        '& .MuiDataGrid-row.anull': rowStyles.anull,
+    }), [rowStyles]); 
+
     return (
         <div style={{ width: '100%',overflow: 'hidden', display:'flex', flexDirection:'column',}} className='animated-element'>
-            <Box sx={{display:`flex`, justifyContent:`space-between`, alignItems:`center`}}>
+            <Box gap={1} sx={{display:`flex`, justifyContent:`space-between`, alignItems:`center`}}>
                 <Box sx={{display:`flex`, alignItems:`center`, height:'100%', flex:1}}>
                     {topSlot}
                 </Box>
@@ -172,35 +217,21 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
             <DataGrid 
                 {...conf}
                 disableVirtualization={false}
-                initialState={{
-                    pagination: { paginationModel: { pageSize: customPageSize || 10 } },
-                }} 
-                pageSizeOptions={[5, 10, 25, 50, 100, { value: -1, label: 'Все' }]}
-                rows={memoizedRows} 
-                columns={columnsExtands} 
-                rowSelectionModel={selectionModel}  // список выделенных строк
+                initialState={initialState}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                rows={memoizedRows}
+                columns={columnsExtands}
+                rowSelectionModel={selectionModel}
                 isRowSelectable={isRowSelectable}
-                onRowSelectionModelChange={handleSelectionChange} //колбек при выборе строки
+                onRowSelectionModelChange={handleSelectionChange}
                 getRowClassName={getRowClassName}
-                columnVisibilityModel={{_id:false}}
-                slots={{ toolbar: GridToolbar }}
+                columnVisibilityModel={COLUMN_VISIBILITY}
+                slots={GRID_SLOTS}
                 pagination
-                sx={{
-                    minHeight: `200px`,
-                    '& .MuiDataGrid-row.selected': rowStyles.selected,
-                    '& .MuiDataGrid-row.dzgw': rowStyles.dzgw,
-                    '& .MuiDataGrid-row.certEnd': rowStyles.certEnd,
-                    '& .MuiDataGrid-row.anull': rowStyles.anull,
-                }}
-                slotProps={{
-                    toolbar: {
-                      showQuickFilter: true,
-                    },
-                    pagination: {ActionsComponent:CustomPagination}
-                }}
+                sx={gridSx}
+                slotProps={GRID_SLOT_PROPS}
             />
         </div>
     );
-})
-
+});
 export default memo(DynamicTable)

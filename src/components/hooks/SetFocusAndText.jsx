@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 // autocomplete еспользуется для пометки элемента автозаполнения - если используется элемент автозаполнения 
 // то не блокируем стандартное поведение и наооборот
-export function useSetFocusAndText(setSearchSubj, inputId, autocomplete = false) {
+export function useSetFocusAndText(setSearchSubj, inputId, autocomplete = false, sotrudnik) {
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (
@@ -20,7 +20,7 @@ export function useSetFocusAndText(setSearchSubj, inputId, autocomplete = false)
         return;
       }
       const searchField = document.getElementById(inputId);
-      if (searchField) {
+      if (searchField && sotrudnik.length<4) {
         autocomplete ? null : event.preventDefault();
         searchField.focus();
         setSearchSubj(event.key);
@@ -30,5 +30,5 @@ export function useSetFocusAndText(setSearchSubj, inputId, autocomplete = false)
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [setSearchSubj, inputId, autocomplete]);
+  }, [setSearchSubj, inputId, autocomplete, sotrudnik]);
 }

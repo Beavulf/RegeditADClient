@@ -33,11 +33,11 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
   const [obosnovanie, setObosnovanie] = useState('ДЗ по GW'); //обоснование
   const [descrip, setDescrip] = useState('');
   const [selectedSotrudniki, setSelectedSotrudniki] = useState([]); //список сотрудников
-  const [user, setUser] = useState(''); //кто выполнял
+  const [user, setUser] = useState(()=>getWhoId({}, Users)); //кто выполнял, по умолчанию авторизованный пользователь
   const [sotrudnik, setSotrudnik] = useState(''); //выбранный сотрудник в автоподстановке
   const [formatedRows,setFormatedRows] = useState([]) //группа строк по совпадению даты и обоснования
-
-  useSetFocusAndText(setSotrudnik, 'sotrudnik', true)
+  
+  useSetFocusAndText(setSotrudnik, 'sotrudnik', true, sotrudnik)
   
   const [error, setError] = useState({
     obosnovanie:false,
@@ -90,10 +90,10 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
     const selected = Sotrudnik.find((o) => o._id === sotrudnik);
     if (selected && !selectedSotrudniki.some((item) => item._id === selected._id) && selected.lnp) {
       setSelectedSotrudniki([...selectedSotrudniki, { ...selected, action: 'Предоставить' }]);
-      setSotrudnik(null)
+      setSotrudnik('')
       return;
     }
-    setSotrudnik(null)
+    setSotrudnik('')
     enqueueSnackbar('Сотрудник уже в списке, либо без ЛНП.', { variant: 'warning' });
     return;
   }, [Sotrudnik, sotrudnik, selectedSotrudniki]);
@@ -205,13 +205,19 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
   }, [handleRemoveEmployee, handleActionChange])
 
   return (
-    <Dialog maxWidth="80vw" open={open} onClose={() => onClose()}
-    onKeyDown={(event) => {
-        if (event.key === 'Enter' && sotrudnik) {
-            event.preventDefault(); 
-            handleAddEmployee();
-        }
-    }}>
+    <Dialog 
+        maxWidth="80vw" 
+        open={open} 
+        onClose={(event, reason) => {
+            if (reason !== "backdropClick") onClose();
+        }}
+        onKeyDown={(event) => {
+            if (event.key === 'Enter' && sotrudnik) {
+                event.preventDefault(); 
+                handleAddEmployee();
+            }
+        }}
+    >
       <DialogTitle>Выдача прав:<Typography color="secondary">{payload && `ГРУППА - ${payload?._pto?.name}`}</Typography></DialogTitle>
       <DialogContent sx={{width:`700px`}}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: `20px`, padding:`20px 0` }}>
@@ -252,7 +258,7 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
                         newSize='small'
                     />
                     <Button
-                        disabled={payload && true}
+                        // disabled={payload && true}
                         variant="contained"
                         color="primary"
                         onClick={handleAddEmployee}
@@ -331,11 +337,12 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
       </DialogContent>
 
       <DialogActions>
-        <Button title='Отмена' onClick={() => {
-            formatedRows.map(item=>{
-                handleSetBlockedRow(item._pdoka,false,`Pdoka`)
-            })  
-            onClose()
+        <Button title='Отмена' 
+            onClick={() => {
+                formatedRows.map(item=>{
+                    handleSetBlockedRow(item._pdoka,false,`Pdoka`)
+                })  
+                onClose()
             }}
         >Отмена</Button>
         <Button

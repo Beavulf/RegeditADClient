@@ -37,7 +37,6 @@ import Stajirovka from '../regestry/Stajirovka/Stajirovka.jsx';
 import SotrInfo from '../SotrInfo/SotrInfo.jsx'
 import ZaprosSPrava from '../regestry/ZaprosSPrava/ZaprosSPrava.jsx'
 import SessionTimer from './SessionTimer';
-import { Routes, Route, Navigate } from 'react-router-dom';
 
 import { createNavigation } from './NAVIGATION.jsx'
 import { useReadyState, useLastMessage, useAccess } from '../../websocket/WebSocketContext.jsx'

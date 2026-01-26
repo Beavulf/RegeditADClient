@@ -6,9 +6,33 @@ export function useTableActions() {
   const dialogs = useDialogs();
   const { sendJsonMessage } = useWebSocketContext();
 
+  // установка блокировки строки (блокировка или разблокировка)
+  const handleSetBlockedRow = useCallback((id,locked, collectionName) => {
+    const message = {
+        type: 'updateInCollection',
+        data: {
+            collection: collectionName,
+            filter: {_id: id},
+            value: {is_locked:locked}
+        }
+    }
+    sendJsonMessage(message);
+  },[sendJsonMessage])
+
   // Удаление строки
-  const handleDeleteRowBD = async (id, collectionName, row) => {
-    
+  const handleDeleteRowBD = useCallback (async (id, collectionName) => {
+    if (collectionName === 'Pdoka') {
+      const message = {
+        type: 'deleteFromCollection',
+        data: {
+          collection: collectionName,
+          filter: { _id: id },
+        }
+      };
+      sendJsonMessage(message);
+      return;
+    }
+
     const confirmed = await dialogs.confirm(`Удалить выбранную строку ?`, {
       okText: 'Да',
       cancelText: 'Нет',
@@ -24,10 +48,10 @@ export function useTableActions() {
     };
 
     sendJsonMessage(message);
-  };
+  },[sendJsonMessage, dialogs]);
 
 // Добавление одной или нескольких строк
-const handleAddInTable = async (collectionName, dialog, ddata=null) => {
+const handleAddInTable = useCallback(async (collectionName, dialog, ddata=null) => {
   let newData;
   if (ddata){
     newData = await dialogs.open(dialog, {addcontext:ddata});
@@ -50,17 +74,16 @@ const handleAddInTable = async (collectionName, dialog, ddata=null) => {
     return true
   }
   else return false
-};
+},[sendJsonMessage, dialogs]);
 
 
   // Редактирование строки
-  const handleEditRow = async (id, oldData, collectionName, dialog) => {
+  const handleEditRow = useCallback(async (id, oldData, collectionName, dialog) => {
     handleSetBlockedRow(id, true, collectionName) 
     const newData = await dialogs.open(dialog, oldData);
     try {
       if (collectionName === `Pdoka`) {
         if (newData) {
-          
           const message = {
             type: 'updateInCollection',
             data: {
@@ -80,34 +103,23 @@ const handleAddInTable = async (collectionName, dialog, ddata=null) => {
           },
         };
         sendJsonMessage(message);
-        
       } 
     }
     catch(e){
-      console.error('Error in edit action', e)
+      console.error('Ошибка при редактировании строки: ', e)
       handleSetBlockedRow(id, false, collectionName);
     }
     finally {
       handleSetBlockedRow(id, false, collectionName);
     }
-  };
+  },[sendJsonMessage, handleSetBlockedRow, dialogs]);
 
-  const handleSetBlockedRow = useCallback((id,locked, collectionName) => {
-    const message = {
-        type: 'updateInCollection',
-        data: {
-            collection: collectionName,
-            filter: {_id: id},
-            value: {is_locked:locked}
-        }
-    }
-    sendJsonMessage(message);
-  },[])
+  
   
   return {
+    handleSetBlockedRow,
     handleDeleteRowBD,
     handleAddInTable,
     handleEditRow,
-    handleSetBlockedRow,
   };
 }
