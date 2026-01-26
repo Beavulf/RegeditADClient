@@ -41,12 +41,16 @@ const CAutoCompleate = ({
     getNewOptionLabel, 
     newSize='medium'
 }) => {
-    // если есть выбранный элемент, то он будет выбран и в списке
+    // если есть выбранный элемент, то он будет выбран и в списке ПО ID
     const selectedElement = useMemo(() => 
         memoizedData.find(o => o._id === elementToSelect) || null,
         [memoizedData, elementToSelect]
     );
-    
+    // поиск элемента по name отдела
+    const selectedElementByNamme = useMemo(() => 
+        memoizedData.find(o => o.name === elementToSelect) || null,
+        [memoizedData, elementToSelect]
+    );
     // фильтруем варианты по введенному значению и выбираем единственный вариант который остался
     const onElementInputChange = useCallback((event, newValue) => {
         const filteredOptions = memoizedData.filter(option => 
@@ -64,7 +68,7 @@ const CAutoCompleate = ({
         <FormControl sx={{flex:flex}}> 
             <Autocomplete
                 id={idComp}
-                value={selectedElement || null}
+                value={selectedElement || selectedElementByNamme || null}
                 onChange={(event, newValue) => {
                     onChangeElement(newValue ? newValue : '')
                 }}

@@ -14,12 +14,15 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useDialogs } from '@toolpad/core/useDialogs';
 import Divider from '@mui/material/Divider';
 import getWhoId from '../../../users/GetWhoID.jsx';
-import PravoItem from './DialogElementPrava.jsx';
+import PravoItem from './PravoItem.jsx';
 import CAutoCompleate from '../../../utils/CAutoCompleate.jsx';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
+
+// кол-во прав в Запросе
+const COUNT_PRAVA = 20;
 
 export default function DialogZaprosSPrava({ payload, open, onClose }) {
     const Sotrudnik = useSotrudnik()
@@ -31,7 +34,7 @@ export default function DialogZaprosSPrava({ payload, open, onClose }) {
         prikaz: '',
         data_prikaza: dayjs(),
         data_dob: dayjs(),
-        prava: Array.from({ length: 19 }, (_, i) => ({
+        prava: Array.from({ length: COUNT_PRAVA }, (_, i) => ({
             id: i + 1,
             status: 0,
             note: '',
@@ -39,12 +42,14 @@ export default function DialogZaprosSPrava({ payload, open, onClose }) {
         descrip: '',
     }
     
+    // управление состоянием компонента с помощью редьюсера
     function reducer (state, action) {
+        const p = action.payload || {};
+        const { index, key, value } = action;
         switch (action.type) {
             case 'SET_FIELD':
                 return { ...state, [action.field]: action.value };
             case 'SET_PRAVA_FIELD':
-                const { index, key, value } = action;
                 return {
                     ...state,
                     prava: state.prava.map((item, i) =>
@@ -52,13 +57,12 @@ export default function DialogZaprosSPrava({ payload, open, onClose }) {
                     ),
                 };
             case 'INIT_FROM_PAYLOAD':
-                const p = action.payload || {};
                 return {
                     _sotr: p._sotr?._id || '',
                     prikaz: p.prikaz || '',
                     data_prikaza: dayjs(p.data_prikaza) || dayjs(),
                     data_dob: dayjs(p.data_dob) || dayjs(),
-                    prava: p.prava || Array.from({ length: 19 }, (_, i) => ({
+                    prava: p.prava || Array.from({ length: COUNT_PRAVA }, (_, i) => ({
                         id: i + 1,
                         status: 0,
                         note: '',
@@ -137,11 +141,12 @@ export default function DialogZaprosSPrava({ payload, open, onClose }) {
                 <Box sx={{ columnCount: 3, columnGap: 1 }}>
                     {state.prava.map((p, index) => (
                         <PravoItem 
-                        key={index} 
-                        p={p} 
-                        index={index}
-                        onChangeStatus={handleChangeStatus} 
-                        onChangeNote={handleChangeNote} />
+                            key={index} 
+                            p={p} 
+                            index={index}
+                            onChangeStatus={handleChangeStatus} 
+                            onChangeNote={handleChangeNote} 
+                        />
                     ))}
                 </Box>
                 </Box>

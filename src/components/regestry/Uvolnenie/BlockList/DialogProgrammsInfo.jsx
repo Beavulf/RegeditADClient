@@ -26,6 +26,9 @@ export default function DialogProgrammsInfo({ payload, open, onClose }) {
     <Dialog fullWidth maxWidth="sm" open={open} onClose={() => onClose()}>
       <DialogTitle>Информация о программах где упоминался сотрудник</DialogTitle>
       <DialogContent>
+        <Typography variant="subtitle2" sx={{color: 'gray', fontSize:'12px' }}>
+          *это не 100% список программ сотрудника, а всего лишь список тех программ, в которых упоминалися сотрудник в RegeditAD*
+        </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '20px 0' }}>
           {activePrograms.length > 0 && (
             <Box>

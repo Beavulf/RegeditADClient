@@ -18,12 +18,12 @@ const ElementSotrToBlock = ({uvolnenie, handleNavigate}) => {
         const message = {
             type: 'updateInCollection',
             data: {
-            collection: 'Uvolnenie',
-            filter: { _id: id },
-            value: {
-                ...newData,
-                is_locked: false
-            }
+                collection: 'Uvolnenie',
+                filter: { _id: id },
+                value: {
+                    ...newData,
+                    is_locked: false
+                }
             }
         };
         await sendJsonMessage(message);

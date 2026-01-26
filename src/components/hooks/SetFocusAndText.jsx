@@ -20,7 +20,7 @@ export function useSetFocusAndText(setSearchSubj, inputId, autocomplete = false,
         return;
       }
       const searchField = document.getElementById(inputId);
-      if (searchField && sotrudnik.length<4) {
+      if (searchField || sotrudnik?.length<4) {
         autocomplete ? null : event.preventDefault();
         searchField.focus();
         setSearchSubj(event.key);

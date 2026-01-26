@@ -96,7 +96,7 @@ function Login({onLogin}) {
                 <strong style={{color: `#ccc`}}>RegeditAD</strong>
               </Typography>
               <h1>Авторизация</h1>
-              <h2 style={{color:`#ccc`}}>{clientIp}</h2>
+              <h2 style={{color:`#ccc`}}>{clientIp.replace(/^.*:/, '')}</h2>
               <Button 
                 size='large'
                 variant="outlined" 

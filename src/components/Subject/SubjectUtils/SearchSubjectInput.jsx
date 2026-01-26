@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, memo } from 'react';
-import { TextField, Box, InputAdornment, IconButton, CircularProgress, Button } from '@mui/material';
+import { TextField, Box, InputAdornment, IconButton, CircularProgress, Button, Tooltip } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useSetFocusAndText } from '../../hooks/SetFocusAndText.jsx';
 import DialogSubjectEdit from '../DialogSubjectEdit.jsx';
@@ -65,11 +65,13 @@ const SearchSubjectInput = (({ onDebouncedSearchChange, initialSearchValue, hand
                     },
                 }}
             />
-            <Button 
-                variant='contained' 
-                title='Редактировать список субъектов' 
-                onClick={async ()=>await dialogs.open(DialogSubjectEdit)}
-            >доб.</Button>
+            <Tooltip title='Редактировать список субъектов' arrow placement='top' followCursor>
+                <Button 
+                    variant='contained' 
+                    onClick={async ()=>await dialogs.open(DialogSubjectEdit)}
+                >ред.</Button>
+            </Tooltip>
+            
         </Box>
     );
 });

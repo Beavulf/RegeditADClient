@@ -3,18 +3,23 @@ import { useTableActions } from '../../../websocket/LayoutMessage.jsx';
 import MDataGrid from '../../DataGrid/MDataGrid.jsx';
 import { useZaprosSPrava, useSotrudnik, useOtdel } from '../../../websocket/WebSocketContext.jsx'
 import DialogZaprosSPrava from './DialogSPrava/DialogZaprosSPrava.jsx';
+import DialogPravaFromOtdel from './DialogSPrava/DialogPravaFromOtdel.jsx';
 import InfoIcon from '@mui/icons-material/Info';
 import PravaPopoverCell from './PravaPopoverCell.jsx';
 import ListPravaOtdel from './PravaOtdel/ListPravaOtdel.jsx';
 import { useSetFocusAndText } from '../../hooks/SetFocusAndText.jsx';
+import CAutoCompleate from '../../utils/CAutoCompleate.jsx';
 import {
   IconButton,
   Box,
   Button,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   TextField,
   Typography
 } from '@mui/material';
-
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
@@ -22,30 +27,37 @@ dayjs.locale('ru');
 
 export default function ZaprosForm() {
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
-    const ZaprosSPrava = useZaprosSPrava()
-    const sotrudniki = useSotrudnik()
-    const otdely = useOtdel()
+    const ZaprosSPrava = useZaprosSPrava();
+    const Otdel = useOtdel();
+    const sotrudniki = useSotrudnik();
 
-    const [filteredData, setFilteredData] = useState([])
-    const [pravaToSearch, setPravaToSearch] = useState('')
+    const [filteredData, setFilteredData] = useState([]);
+    const [pravaToSearch, setPravaToSearch] = useState('');
     const [openOtdInfo, setOpenOtdInfo] = useState(false);
+    const [openPravaFromOtdel, setOpenPravaFromOtdel] = useState(false);
+    const [otdel, setOtdel] = useState('');
 
     useSetFocusAndText(setPravaToSearch, 'pravaToSearch')
 
-    const peopleFrom06529 = useMemo(() => {
+    // получения списка людей и их прав по выбранному отделу
+    const peopleFromOtdel = useCallback((otdelName) => {
+      if (!otdelName) return [];
+
       return ZaprosSPrava
-        .map(z => {
-          const sotr = sotrudniki.find(s => s._id === z._sotr._id);
-          if (!sotr) return 0;
-          const otdel = otdely.find(o => o.name === sotr._otdel.name);
-          if (!otdel) return 1;
-          if (otdel.name === "06505") {
-            return z.prava;
-          }
-          return null;
+        .map((z) => {
+          const sotr = sotrudniki.find((s) => s._id === z?._sotr?._id);
+          if (!sotr) return null;
+          const sotrOtdelName = sotr?._otdel?.name;
+          if (!sotrOtdelName) return null;
+          if (sotrOtdelName !== otdelName) return null;
+          return z;
         })
         .filter(Boolean);
-    }, [ZaprosSPrava, sotrudniki, otdely]);
+    }, [ZaprosSPrava, sotrudniki]);
+
+    const peopleFromSelectedOtdel = useMemo(() => {
+      return peopleFromOtdel(otdel);
+    }, [peopleFromOtdel, otdel]);
 
     // сортировка данных по дате добавления (используется как изначальные данные)
     const filteredDataOrigin = useMemo(()=>{
@@ -124,7 +136,36 @@ export default function ZaprosForm() {
       return;
     },[filteredDataOrigin,ZaprosSPrava])
 
-  
+    // фильтрация таблицы по имени отдела
+    const handleChangeOldOtdel = useCallback((newValue) => {
+      setOtdel(newValue ? newValue.name : '')
+    }, []);
+
+    // отображение подсказок для статусов
+    const helperStatusInfo = (
+      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center', flex:1 }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center',  flexWrap: 'wrap', flex:0.5 }}>
+          <CAutoCompleate
+              idComp={`old-otdel`}
+              label={`Отдел`}
+              memoizedData={Otdel}
+              elementToSelect={otdel}
+              onChangeElement={handleChangeOldOtdel}
+              optionLabel='name'
+              newSize='small'
+          /> 
+          <Button
+            variant="outlined"
+            // disabled={!selectedOtdelName}
+            onClick={() => setOpenPravaFromOtdel(true)}
+          >
+            Права отдела
+          </Button>
+        </Box>
+        <Typography variant='body' color='gray'>Статусы: ❌- 0 - не выдано, ✅ - 1 - выдано, ⚠️ - 2 - спец; S - spec</Typography>
+      </Box>
+    )
+
     return (
         <Box sx={{display:'flex', gap:1, overflow:'hidden', height: '80vh'}}>
 
@@ -136,7 +177,7 @@ export default function ZaprosForm() {
           {/* блок с таблицей прав и поиском */}
           <Box sx={{flex:1, height:'100%', display: 'flex', flexDirection: 'column'}}>
             {/* блок со строкой поиска и кнопкой поиска */}
-            <Box sx={{display:'flex', justifyContent:'center', alignItems:'center', gap:1}}>
+            <Box sx={{display:'flex', justifyContent:'center', alignItems:'center', gap:1, mb:1}}>
               <Button variant='outlined' onClick={()=>setOpenOtdInfo((prev)=>!prev)}>
                 Права отделов
               </Button> 
@@ -172,7 +213,7 @@ export default function ZaprosForm() {
             </Box>
 
             <MDataGrid 
-              topSlot={<Typography variant='body' color='gray'>Статусы: ❌- 0 - не выдано, ✅ - 1 - выдано, ⚠️ - 2 - спец; S - spec</Typography>}
+              topSlot={helperStatusInfo}
               columns={columnsZaprosSPrava} 
               tableData={filteredData}
               collectionName={`ZaprosSPrava`} 
@@ -181,6 +222,13 @@ export default function ZaprosForm() {
               actionAdd={()=>handleAddInTable(`ZaprosSPrava`,DialogZaprosSPrava)}
             />
           </Box>
+
+          <DialogPravaFromOtdel
+            open={openPravaFromOtdel}
+            onClose={() => setOpenPravaFromOtdel(false)}
+            otdelName={otdel}
+            people={peopleFromSelectedOtdel}
+          />
         </Box>
     );
 }

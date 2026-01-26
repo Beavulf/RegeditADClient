@@ -49,13 +49,15 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
   //получение  группы строк по дате и тому кто добавил, для редактирования
   const getAddedGroup = useCallback(() => {
     const filterDataDob = payload?.data_dob || ''; 
-    const filterWhoId = payload?._who?._id || '';    
+    const filterWhoId = payload?._who?._id || '';  
+    const filterOtdel = payload?._pto?._id || ''; 
     
     // Фильтруем массив
     const filteredItems = Pdoka.filter(item => {
         const matchesDate = item.data_dob === filterDataDob || !filterDataDob; // Если фильтр пустой, то пропускаем фильтрацию по дате
         const matchesWhoId = item._who._id === filterWhoId || !filterWhoId;    // Если фильтр пустой, то пропускаем фильтрацию по _who._id
-        return matchesDate && matchesWhoId;
+        const matchesOtdel = item._pto._id === filterOtdel || !filterOtdel;    
+        return matchesDate && matchesWhoId && matchesOtdel;
     });    
     const formattedItems = filteredItems.map(item => ({
         _pdoka: item._id,
@@ -258,7 +260,7 @@ const DialogAddSotrudnik = memo(function DialogAddSotrudnik({ payload, open, onC
                         newSize='small'
                     />
                     <Button
-                        // disabled={payload && true}
+                        disabled={payload && true}
                         variant="contained"
                         color="primary"
                         onClick={handleAddEmployee}
