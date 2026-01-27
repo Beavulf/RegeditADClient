@@ -144,7 +144,7 @@ export default function ZaprosForm() {
     // отображение подсказок для статусов
     const helperStatusInfo = (
       <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center', flex:1 }}>
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center',  flexWrap: 'wrap', flex:0.5 }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center',  flexWrap: 'wrap', flex:0.7 }}>
           <CAutoCompleate
               idComp={`old-otdel`}
               label={`Отдел`}

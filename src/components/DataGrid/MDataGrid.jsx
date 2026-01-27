@@ -230,6 +230,7 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
                 pagination
                 sx={gridSx}
                 slotProps={GRID_SLOT_PROPS}
+                onRowDoubleClick={(params)=>handleClickEditRow(params.id)}
             />
         </div>
     );

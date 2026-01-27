@@ -97,7 +97,7 @@ export default function ADTool() {
             console.error('Ошибка запроса получении времени интервала:', error);
         }
     }
-    getIntervalTime()
+    // getIntervalTime()
 
     // принудительная загрузка данных
     async function getDataNow() {
@@ -194,6 +194,13 @@ export default function ADTool() {
             console.error('Ошибка запроса получении времени интервала:', error);
         }   
     }
+
+    const infoBlock = (
+        <Box>
+            <Typography sx={{color:'red'}}>СЕЙЧАС ЗДЕСЬ ИНФОРМАЦИЯ ИЗ СТАРОЙ ВЕРСИИ БАЗЫ ДАННЫХ, ДО СЛЕДУЮЩЕГО ОБНОВЛЕНИЯ.</Typography>
+        </Box>
+    )
+
     return (
         <div className='animated-element'>
             <Box sx={{display:'flex', alignItems:'start', gap:'5px'}}>
@@ -220,10 +227,10 @@ export default function ADTool() {
                         />
                     <Collapse orientation='horizontal' in={intervalCheck}> 
                         <Box sx={{display:'flex', alignItems:'center'}}>
-                            <IconButton onClick={successUpdateInterval} color='success' title='Сохранить (отсчет интервала пойдет с момента сохранения)'>
+                            <IconButton color='success' title='Сохранить (отсчет интервала пойдет с момента сохранения)'>
                                 <CheckIcon></CheckIcon>
                             </IconButton>
-                            <IconButton onClick={cancelUpdateInterval} color='error' title='Отменить'>
+                            <IconButton color='error' title='Отменить'>
                                 <CloseIcon></CloseIcon>
                             </IconButton>
                         </Box>
@@ -261,6 +268,7 @@ export default function ADTool() {
             </Box>
 
             <MDataGrid 
+                topSlot={infoBlock}
                 columns={columnsADTool} 
                 tableData={sortADTool}
                 collectionName={`ADTool`} 

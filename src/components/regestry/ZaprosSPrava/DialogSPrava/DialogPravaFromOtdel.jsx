@@ -14,11 +14,7 @@ import {
   Stack,
   TextField,
   Typography,
-  IconButton, 
-  Tooltip,
 } from '@mui/material';
-import { useSnackbar } from 'notistack';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy'; // импорт иконки копирования
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
@@ -82,7 +78,6 @@ export default function DialogPravaFromOtdel({
   people = [],
 }) {
   const [query, setQuery] = useState('');
-  const { enqueueSnackbar } = useSnackbar();
 
   const filtered = useMemo(() => {
     const q = normalizeText(query);
@@ -130,60 +125,33 @@ export default function DialogPravaFromOtdel({
             </Typography>
           ) : filtered.length ? (
             <List dense disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {filtered.map((row, idx) => {
-                // Формируем строку для копирования в буфер обмена
-                const pravaListStr = (row?.prava || [])
-                  .filter((p) => p?.status === 1 || p?.status === 2)
-                  .map(
-                    (p) =>
-                      `${p.id}${p.status === 2 ? '-s' : ''}${p.note ? ` (${p.note})` : ''}`
-                  )
-                  .join(', ') || '—';
-
-                //копирование прав в буфер обмена
-                const handleCopy = async () => {
-                  try {
-                    await navigator.clipboard.writeText(pravaListStr);
-                    enqueueSnackbar('Права скопированы в буфер обмена', { variant: 'success' });
-                  } catch (e) {
-                    console.log('Ошибка при копировании в буфер обмена:', e);
-                    alert('Ошибка при копировании в буфер обмена.');                    
-                  }
-                };
-
-                return (
-                  <ListItem
-                    key={row?._id || `${row?._sotr?._id || 'row'}-${row?.prikaz || ''}-${idx}`}
-                    disableGutters
-                    sx={{
-                      p: 1.25,
-                      borderRadius: 1,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      bgcolor: 'background.paper',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                          {getRowFio(row)}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Приказ: {row?.prikaz || '—'} • Дата: {formatDate(row?.data_prikaza)}
-                        </Typography>
-                      </Box>
-
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <PravaChips prava={row?.prava} />
-                        <Tooltip title="Скопировать список прав" arrow placement='top' followCursor>
-                            <IconButton size="small" onClick={handleCopy}><ContentCopyIcon /></IconButton>
-                        </Tooltip>
-                      </Box>
+              {filtered.map((row, idx) => (
+                <ListItem
+                  key={row?._id || `${row?._sotr?._id || 'row'}-${row?.prikaz || ''}-${idx}`}
+                  disableGutters
+                  sx={{
+                    p: 1.25,
+                    borderRadius: 1,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    bgcolor: 'background.paper',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                        {getRowFio(row)}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Приказ: {row?.prikaz || '—'} • Дата: {formatDate(row?.data_prikaza)}
+                      </Typography>
                     </Box>
-                  </ListItem>
-                );
-              })}
+
+                    <PravaChips prava={row?.prava} />
+                  </Box>
+                </ListItem>
+              ))}
             </List>
           ) : (
             <Typography color="text.secondary">Данных нет.</Typography>

@@ -3,7 +3,7 @@ import DialogAddSotrudnik from './DialogSotrudnik.jsx';
 import MDataGrid from '../DataGrid/MDataGrid.jsx';
 import { useTableActions } from '../../websocket/LayoutMessage.jsx';
 import { useSotrudnik  } from '../../websocket/WebSocketContext.jsx'
-import { Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 import dayjs from 'dayjs';
@@ -13,7 +13,7 @@ dayjs.locale('ru');
 const Sotrudniki = React.memo(function Sotrudniki() {
     // вызываем кастомный хук для даления строки из БД
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
-    const Sotrudnik = useSotrudnik()
+    const Sotrudnik = useSotrudnik();
     const columnsSotrudniki = useMemo(()=>
         [
             { field: 'lnp', headerName: 'ЛНП',flex:0.15},
@@ -28,20 +28,24 @@ const Sotrudniki = React.memo(function Sotrudniki() {
             { field: 'login', headerName: 'DNS', width: 150, flex:0.3, },
             { field: 'descrip', headerName: 'Описание', width: 150, flex:0.3, },
         ],[]
-    ) 
+    );
 
     const memoizedHandleEditRow = useCallback((id, oldData, collectionName) => {
         handleEditRow(id, oldData, collectionName, DialogAddSotrudnik);
     }, [handleEditRow]);
 
+    const topInfoMenu = (
+        <Box flex={1} display='flex' flexDirection='row'>
+            <Typography variant='body2' sx={{bgcolor:'listToBlock.main', borderRadius:'8px', p:1, display:'flex', alignItems:'center', gap:1}} color='gray'>
+                <ErrorOutlineIcon color='warning'/>приудалении сотрудника, удаляются все данные связанный с ним.
+            </Typography>
+        </Box>
+    );
+
     return (
         <div className='animated-element'>
             <MDataGrid 
-                topSlot={
-                    <Typography variant='body2' sx={{bgcolor:'listToBlock.main', borderRadius:'8px', p:1, display:'flex', alignItems:'center', gap:1}} color='gray'>
-                        <ErrorOutlineIcon color='warning'/>приудалении сотрудника, удаляются все данные связанный с ним.
-                    </Typography>
-                }
+                topSlot={topInfoMenu}
                 columns={columnsSotrudniki} 
                 tableData={Sotrudnik}
                 collectionName={`Sotrudnik`} 

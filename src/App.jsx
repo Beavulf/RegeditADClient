@@ -25,6 +25,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { ApolloProvider } from '@apollo/client/react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/login/Login.jsx';
 import './App.css';
@@ -34,6 +35,7 @@ import Main from './components/Main/Main.jsx';
 import {  useSnackbar } from 'notistack';
 import { WebSocketProvider } from './websocket/WebSocketContext.jsx';
 import { SettingsProvider } from './components/SettingsContext/SettingsContext.jsx';
+import client from './api/apiApollo.js';
 
 const SERVER_ADDRESS = import.meta.env.VITE_SERVER_ADDRESS
 const SERVER_PORT = import.meta.env.VITE_SERVER_PORT
@@ -113,43 +115,45 @@ function App() {
   }
 
   return (
-    <ThemeProvider theme={darkTheme}>
-      <SettingsProvider>
-        <CssBaseline />
-        <Routes>
-          {/* Маршрут для страницы входа */}
-          <Route
-            path="/login"
-            element={
-              auth ? <Navigate to="/dashboard/*" /> : (<Login onLogin={handleAuthUser} />)
-            }
-          />
+    <ApolloProvider client={client}>
+      <ThemeProvider theme={darkTheme}>
+        <SettingsProvider>
+          <CssBaseline />
+          <Routes>
+            {/* Маршрут для страницы входа */}
+            <Route
+              path="/login"
+              element={
+                auth ? <Navigate to="/dashboard/*" /> : (<Login onLogin={handleAuthUser} />)
+              }
+            />
 
-          {/* Маршрут для главной (авторизованной) части */}
-          <Route
-            path="/dashboard/*"
-            element={
-              auth ? (
-                <WebSocketProvider>
-                  <Main/>
-                </WebSocketProvider>
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+            {/* Маршрут для главной (авторизованной) части */}
+            <Route
+              path="/dashboard/*"
+              element={
+                auth ? (
+                  <WebSocketProvider>
+                    <Main/>
+                  </WebSocketProvider>
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
 
-          {/* Маршрут для выхода из системы */}
-          <Route 
-            path="/logout" 
-            element={<LogoutComponent onLogout={handleLogout} />}
-          />
+            {/* Маршрут для выхода из системы */}
+            <Route
+              path="/logout"
+              element={<LogoutComponent onLogout={handleLogout} />}
+            />
 
-          {/* Редирект с корневого пути */}
-          <Route path="/*" element={<Navigate to="/login" />} />
-        </Routes>
-      </SettingsProvider>
-    </ThemeProvider>
+            {/* Редирект с корневого пути */}
+            <Route path="/*" element={<Navigate to="/login" />} />
+          </Routes>
+        </SettingsProvider>
+      </ThemeProvider>
+    </ApolloProvider>
   );
 }
 

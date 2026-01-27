@@ -1,21 +1,19 @@
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useState, useEffect, useCallback } from 'react';
-import { TextField, Box } from '@mui/material';
+import { TextField, Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip } from '@mui/material';
 import { useSotrudnik, useUsers } from '../../../websocket/WebSocketContext.jsx'
 import { useDialogs } from '@toolpad/core/useDialogs';
 import getWhoId from '../../users/GetWhoID.jsx';
 import CAutoCompleate from '../../utils/CAutoCompleate.jsx';
+import DialogAddSotrudnik from '../../Sotrudniki/DialogSotrudnik.jsx';
+import { useTableActions } from '../../../websocket/LayoutMessage.jsx';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 dayjs.locale('ru');
 
 export default function DialogPriem({ payload, open, onClose }) {
+  const { handleAddInTable } = useTableActions();
   const Sotrudnik = useSotrudnik()
   const Users = useUsers()  
   const [descrip, setDescrip] = useState('');
@@ -47,6 +45,11 @@ export default function DialogPriem({ payload, open, onClose }) {
     <Dialog fullWidth open={open} onClose={() => onClose()}>
       <DialogTitle>Редактирование данных:</DialogTitle>
       <DialogContent>
+        <Tooltip title='Открыть окно добавления сотрудника в программу, если его еще нет в ней.' arrow placement='top'>
+          <Button sx={{flex:1, display:'flex', width:'100%'}} onClick={()=>handleAddInTable(`Sotrudnik`, DialogAddSotrudnik)}
+            >добавить сотрудника в программу
+          </Button>
+        </Tooltip>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: `20px`, padding:`20px 0` }}>
             {/* Поле для ввода ФИО */}
             <Box sx={{display:`flex`,gap:1}}>
