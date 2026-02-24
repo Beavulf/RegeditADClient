@@ -34,16 +34,18 @@
 (по умолчанию есть в проекте)
 2. Пример содержимого:
    ```
-   PORT=3000
-   JWT_SECRET_KEY=your_jwt_secret_key
-   MONGO_URL=mongodb://localhost:27017
-   MONGO_DB_CONNECTION_URL=mongodb://localhost:27017/RegAD
-   CORS_DOMAINS=http://localhost:3000
-   # Для подключения к SQL Server (если используется)
-   SQL_USER=your_sql_user
-   SQL_PASSWORD=your_sql_password
-   SQL_SERVER=your_sql_server_address
-   SQL_DATABASE=your_sql_database_name
+   VITE_SERVER_ADDRESS = 'localhost'
+   VITE_SERVER_PORT = '3000'
+   VITE_DATE_UPDATE = '27.01.2026'
+
+   # параметры для работы с графкл
+   VITE_APP_URI_GRAPHQL='http://localhost:3001/graphql'
+
+   # логин и пароль админской учетки, для авторизации через LDAP
+   VITE_APP_ADMIN_LOGIN="admin"
+   VITE_APP_ADMIN_PASSWORD="password"
+
+   VITE_SPRAV_MRT = ``
    ```
 3. Сохраните файл.
 

@@ -114,7 +114,8 @@ export default function DialogContract({ payload, open, onClose,  }) {
   const [isLoading, setIsLoading] = useState(true);
 
   // Заполняем начальные данные при открытии окна
-  useEffect(() => {     
+  useEffect(() => {   
+    setIsLoading(false);
     if (payload) {          
       if (payload.addcontext) {  
           setSubject(payload.addcontext._id);
@@ -152,9 +153,9 @@ export default function DialogContract({ payload, open, onClose,  }) {
   }, [])
 
   //установка флага на изменение сертификата
-  const handleChangeEditCertif = useCallback((event) => {
-    setEditCertif(event.target.checked);
-  }, []);
+  // const handleChangeEditCertif = useCallback((event) => {
+  //   setEditCertif(event.target.checked);
+  // }, []);
 
   // данные о продлении отфильтрованные по контракту
   const filteredProdlenie = useMemo(() => 
@@ -171,7 +172,8 @@ export default function DialogContract({ payload, open, onClose,  }) {
       return;
     }
     enqueueSnackbar('Дубликата сертификата нет.', { variant: 'success' });
-  },[Contract, certif, dialogs])
+  },[Contract, certif, dialogs]);
+
   // кнопка проверки на дубликат сертификата
   const btnCheckCertifDuplicate = useMemo(() => (
     <Button 
@@ -183,7 +185,7 @@ export default function DialogContract({ payload, open, onClose,  }) {
     >
       проверить
     </Button>
-  ), [certif.length, checkCertifDuplicate]);
+  ), [certif, checkCertifDuplicate]);
 
   const handleChangeCompany = useCallback((newValue) => {
     setCompany(newValue ? newValue._id : '');
@@ -224,10 +226,11 @@ export default function DialogContract({ payload, open, onClose,  }) {
                       slotProps={{
                         input: {
                           endAdornment: payload?.prikaz ? 
-                          <>
-                            <Checkbox checked={editCertif} onChange={handleChangeEditCertif} size='large' title='Изменить только сертификат (используется при обновлении только сертификата)'/>
+                          <Box style={{display:'flex', alignItems:'center', width:'100%', justifyContent:'space-between'}}>
+                            <Typography variant='caption' sx={{color:`gray`, mr:5, fontSize:'16px'}}>{certif.replace(/(.{4})/g, '$1 ').trim()}</Typography>
+                            {/* <Checkbox checked={editCertif} onChange={handleChangeEditCertif} size='large' title='Изменить только сертификат (используется при обновлении только сертификата)'/> */}
                             {btnCheckCertifDuplicate}
-                          </> :
+                          </Box> :
                           btnCheckCertifDuplicate,
                         },
                       }}
@@ -337,6 +340,7 @@ export default function DialogContract({ payload, open, onClose,  }) {
                     tableData={filteredProdlenie}
                     collectionName={`Prodlenie`} 
                     actionDelete={handleDeleteRowBD}
+                    actionEdit={()=>enqueueSnackbar('Нельзя.', { variant: 'warning' })}
                     actionAdd={async ()=>{
                       await handleAddInTable(`Prodlenie`,DialogProdlenie,{_contr:payload._id}) &&
                       onClose();

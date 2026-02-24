@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import {
   Box,
   Button,
@@ -9,6 +10,7 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  IconButton,
   List,
   ListItem,
   Stack,
@@ -98,6 +100,23 @@ export default function DialogPravaFromOtdel({
 
   const title = otdelName ? `Права отдела ${otdelName}` : 'Права отдела';
 
+  const getPravaForCopy = (prava) => {
+    const issued = (prava || []).filter((p) => p?.status === 1 || p?.status === 2);
+    if (!issued.length) {
+      return 'Выданных прав нет';
+    }
+    return issued
+      .map((p) => {
+        const label = `#${p.id}${p.status === 2 ? '-S' : ''}`;
+        return `{label}${p.note ? ` — ${p.note}` : ''}`;
+      })
+      .join(', ');
+  };
+
+  const handleCopyToClipboard = (text) => {
+    if (navigator.clipboard) navigator.clipboard.writeText(text);
+  };
+
   return (
     <Dialog fullWidth maxWidth="md" open={open} onClose={() => onClose?.()} >
       <DialogTitle>{title}</DialogTitle>
@@ -140,9 +159,18 @@ export default function DialogPravaFromOtdel({
                 >
                   <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                        {getRowFio(row)}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                          {getRowFio(row)}
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          title="Копировать права"
+                          onClick={() => handleCopyToClipboard(getPravaForCopy(row?.prava))}
+                        >
+                          <ContentCopyIcon fontSize="inherit" />
+                        </IconButton>
+                      </Box>
                       <Typography variant="body2" color="text.secondary">
                         Приказ: {row?.prikaz || '—'} • Дата: {formatDate(row?.data_prikaza)}
                       </Typography>

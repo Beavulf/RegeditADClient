@@ -71,7 +71,7 @@ export default function DialogAddSotrudnik({ payload, open, onClose }) {
   const handleGetUserInfoFromLDAP = async () => {
       setSelectedLdapUser('');
       setFindeUserLdap([]);
-      setDisabled(true);
+      // setDisabled(true);
       try {
         if (cnOrSam.length < 4) {
           enqueueSnackbar('Введите CN или SAM (больше 3-х символов)', { variant: 'warning' });
