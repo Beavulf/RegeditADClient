@@ -19,7 +19,7 @@ const SERVER_PORT = import.meta.env.VITE_SERVER_PORT;
 const LOAD_COLLECTION = [
   'Users', 'Otdel', 'Doljnost', 'Sotrudnik', 'Pdoka', 'Priem',
   'SbrosAD', 'Subject', 'Company', 'Prodlenie', 'Contract', 'Access', 'Naznachenie', 'Perevod', 'VPerevod', 'Familia', 'Uvolnenie',
-  'Zapros', 'Svodka', 'Revizor', 'ChdTI', 'Aipsin', 'ADTool', 'Stajirovka', 'ZaprosSPrava', 'PravaOtdel', 'Clients'
+  'Zapros', 'Svodka', 'Revizor', 'ChdTI', 'Aipsin', 'ADTool', 'Stajirovka', 'ZaprosSPrava', 'PravaOtdel', 'Clients', 'APS2020'
 ];
 
 // Создаем контексты
@@ -187,3 +187,4 @@ export const useAdtool = () => useCollections().ADTool;
 export const useStajirovka = () => useCollections().Stajirovka;
 export const useZaprosSPrava = () => useCollections().ZaprosSPrava;
 export const usePravaOtdel = () => useCollections().PravaOtdel;
+export const useAPS2020 = () => useCollections().APS2020;

@@ -37,6 +37,7 @@ import Stajirovka from '../regestry/Stajirovka/Stajirovka.jsx';
 import SotrInfo from '../SotrInfo/SotrInfo.jsx'
 import ZaprosSPrava from '../regestry/ZaprosSPrava/ZaprosSPrava.jsx'
 import SessionTimer from './SessionTimer';
+import APS2020 from '../programms/Aps2020/APS2020.jsx';
 
 import { createNavigation } from './NAVIGATION.jsx'
 import { useReadyState, useLastMessage, useAccess } from '../../websocket/WebSocketContext.jsx'
@@ -222,6 +223,7 @@ const  MainLayout = ()=> {
     { path: '/stajirovka', element: <Stajirovka /> },
     { path: '/sotrinfo', element: <SotrInfo /> },
     { path: '/zaprsprava', element: <ZaprosSPrava /> },
+    { path: '/aps2020', element: <APS2020/> },
   ]
   
   const renderRoutes = useMemo(() => (

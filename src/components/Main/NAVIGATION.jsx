@@ -69,21 +69,11 @@ export const createNavigation = (AccessDB) => [
         title: 'Временный перевод',
         icon: <ListAltIcon />,
       },
-      // {
-      //   segment: 'obychenie', 
-      //   title: '-Обучение',
-      //   icon: <ListAltIcon />,
-      // },
       {
         segment: 'stajirovka', 
         title: 'Стажировка',
         icon: <ListAltIcon />,
       },
-      // {
-      //   segment: 'dekret', 
-      //   title: '-Декрет',
-      //   icon: <ListAltIcon />,
-      // },
       {
         segment: 'familia', 
         title: 'Фамилия',
@@ -126,6 +116,11 @@ export const createNavigation = (AccessDB) => [
       {
         segment: 'zaprsprava',
         title: 'Запрос права Сотр.',
+        icon: <DvrIcon />,
+      },
+      {
+        segment: 'aps2020',
+        title: 'АПС2020',
         icon: <DvrIcon />,
       },
       {
