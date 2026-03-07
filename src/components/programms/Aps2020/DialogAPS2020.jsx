@@ -87,7 +87,7 @@ export default function DialogAPS2020({ payload, open, onClose }) {
                 value={prava}
                 onChange={(event) => setPrava(event.target.value)}
                 multiline
-                rows={2}
+                rows={10}
             />
             </FormControl>
             <TextField
