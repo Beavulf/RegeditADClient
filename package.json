@@ -33,7 +33,8 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.1",
     "react-use-websocket": "^4.10.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",

@@ -534,9 +534,9 @@ export const colStajirovka =
     { field: 'descrip', headerName: 'Описание', width: 150, flex:0.3, },
 ]
 
-export const colADTool = 
+export const colADTool =
 [
-    { field: 'id_userA', headerName: 'ID',  flex:0.1, }, 
+    { field: 'login', headerName: 'Логин',  flex:0.3, },
     { field: 'date_s', headerName: 'Дата нач.',flex:0.3,
         type: 'date',
         valueGetter: (params) => {

@@ -128,7 +128,7 @@ export default function ADTool() {
 
     const columnsADTool = useMemo(()=>
         [
-            { field: 'id_userA', headerName: 'ID',  flex:0.1, }, 
+            { field: 'login', headerName: 'Логин', flex:0.3, },
             { field: 'fio', headerName: 'ФИО',flex:1},
             { field: 'date_s', headerName: 'Дата нач.',flex:0.2,
                 type: 'date',
@@ -197,7 +197,9 @@ export default function ADTool() {
 
     const infoBlock = (
         <Box>
-            <Typography sx={{color:'red'}}>СЕЙЧАС ЗДЕСЬ ИНФОРМАЦИЯ ИЗ СТАРОЙ ВЕРСИИ БАЗЫ ДАННЫХ, ДО СЛЕДУЮЩЕГО ОБНОВЛЕНИЯ.</Typography>
+            <Typography sx={{color:'gray', fontSize:'0.85rem'}}>
+                Данные синхронизируются из базы WEB AD Tools (архив расписаний блокировок AD). Обновление — по интервалу или кнопкой «загр.».
+            </Typography>
         </Box>
     )
 
