@@ -9,7 +9,7 @@ import 'dayjs/locale/ru'
 import { dateColumn } from '../../DataGrid/DataGridUtils/columnFactories.js';
 dayjs.locale('ru');
 
-export default function Priem() {
+export default function Familia() {
     // вызываем кастомный хук для даления строки из БД
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const Familia = useFamilia()

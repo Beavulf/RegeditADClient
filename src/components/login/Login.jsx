@@ -74,7 +74,7 @@ function Login({onLogin}) {
           enqueueSnackbar(`Ошибка при отправке запроса: ${error.response?.data?.error || error.message}`, { variant: 'error' });
         }
       } else {
-        alert(`Введите Логин (больше 2-с символов).`)
+        enqueueSnackbar(`Введите Логин (больше 2-х символов).`, { variant: 'warning' });
       }
     }
 

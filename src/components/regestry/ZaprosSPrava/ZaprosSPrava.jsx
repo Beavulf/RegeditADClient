@@ -26,7 +26,7 @@ import 'dayjs/locale/ru'
 import { dateColumn } from '../../DataGrid/DataGridUtils/columnFactories.js';
 dayjs.locale('ru');
 
-export default function ZaprosForm() {
+export default function ZaprosSPrava() {
     const { handleDeleteRowBD, handleAddInTable, handleEditRow } = useTableActions();
     const ZaprosSPrava = useZaprosSPrava();
     const Otdel = useOtdel();

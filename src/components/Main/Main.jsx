@@ -103,7 +103,7 @@ const  MainLayout = ()=> {
           enqueueSnackbar(`Удаление записи в БД. ${info}`, { variant: `info` });
           break;
         case `quit`:
-          alert('Вас отключил администратор')
+          enqueueSnackbar('Вас отключил администратор', { variant: 'error' });
           navigate('/logout');
           break;
         default:
@@ -114,7 +114,7 @@ const  MainLayout = ()=> {
       console.log(lastJsonMessage);
       enqueueSnackbar(`Ошибка при работе с БД: ${lastJsonMessage.error}`, { variant: `error` });
       if (lastJsonMessage.cmd === 'logout') {
-        alert(`Время вашей сессии истекло. Авторизуйтесь снова.`);
+        enqueueSnackbar(`Время вашей сессии истекло. Авторизуйтесь снова.`, { variant: 'warning' });
         navigate('/logout');
       }
     }
@@ -226,13 +226,12 @@ const  MainLayout = ()=> {
     { path: '/aps2020', element: <APS2020/> },
   ]
   
-  const renderRoutes = useMemo(() => (
-    <>
-      {routes.map(({ path, element }) =>
-        router.pathname.includes(path) ? <div key={path}>{element}</div> : null
-      )}
-    </>
-  ), [router.pathname]);
+  const renderRoutes = useMemo(() => {
+    // точное совпадение пути: includes монтировал лишние страницы
+    // (например, '/vperevod'.includes('/perevod') рендерил обе страницы перевода)
+    const current = routes.find(({ path }) => router.pathname === path);
+    return current ? <div key={current.path}>{current.element}</div> : null;
+  }, [router.pathname]);
 
   return (
     <AppProvider

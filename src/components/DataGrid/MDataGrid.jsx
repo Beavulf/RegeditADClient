@@ -185,8 +185,10 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
         },
     }), [blockID, storedRole, handleSetBlockedRow, handleClickEditRow, handleClickDeleteRow, collectionName]);
 
-    //добавление к передаваемым столбцам столбец с кнопками
-    const columnsExtands = useMemo(() => [...columns, actionsColumn], [columns, actionsColumn]);
+    //добавление к передаваемым столбцам столбца с кнопками (только если переданы экшены — read-only страницы без них)
+    const columnsExtands = useMemo(() => (
+        (actionEdit || actionDelete) ? [...columns, actionsColumn] : columns
+    ), [columns, actionsColumn, actionEdit, actionDelete]);
     const memoizedRows = useMemo(() => rows, [rows]);
     const initialState = useMemo(() => ({
         pagination: { paginationModel: { pageSize: customPageSize || 10 } },
@@ -206,13 +208,15 @@ const DynamicTable = (({ columns, collectionName, tableData, actionEdit, actionD
                 <Box sx={{display:`flex`, alignItems:`center`, height:'100%', flex:1}}>
                     {topSlot}
                 </Box>
-                <Button 
-                    title='Добавить в БД' 
-                    sx={{margin:'5px 0'}} 
-                    variant='contained'
-                    onClick={actionAdd}
-                    >добавить
-                </Button>
+                {actionAdd ? (
+                    <Button
+                        title='Добавить в БД'
+                        sx={{margin:'5px 0'}}
+                        variant='contained'
+                        onClick={actionAdd}
+                        >добавить
+                    </Button>
+                ) : null}
             </Box>
             <DataGrid 
                 {...conf}
