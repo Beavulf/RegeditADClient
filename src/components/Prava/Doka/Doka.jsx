@@ -1,4 +1,5 @@
 import { usePdoka } from '../../../websocket/WebSocketContext.jsx'
+import { dateColumn } from '../../DataGrid/DataGridUtils/columnFactories.js';
 import { Typography, Box, IconButton, Badge, Button, Checkbox, Select, MenuItem } from '@mui/material'
 import React, { useState, useMemo, useEffect, memo, useCallback } from 'react';
 import MDataGrid from '../../DataGrid/MDataGrid.jsx';
@@ -96,29 +97,8 @@ const Doka = React.memo(function Doka() {
             { field: 'type', headerName: 'Действие', flex:0.3 },
             { field: 'lnp', headerName: 'ЛНП', flex:0.2,},
             { field: 'obosnovanie', headerName: 'Обоснование', width: 150, flex:0.3, },
-            { field: 'data_prikaza', headerName: 'Д.Приказа', width: 150, flex:0.25, 
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY');
-                    }
-                    return null;
-                  },
-            },
-            { field: 'data_dob', headerName: 'Добавлено', width: 150, flex:0.3,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                },
-                renderCell: (params) => {
-                    return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-                } 
-            },
+            dateColumn('data_prikaza', 'Д.Приказа', 0.25),
+            dateColumn('data_dob', 'Добавлено', 0.3, 'DD.MM.YYYY HH:mm'),
             { field: '_who', headerName: 'Кто доб.', width: 150, flex:0.2,
                 valueGetter: (params) => params?.name || ''
             },

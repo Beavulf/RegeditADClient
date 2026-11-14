@@ -1,4 +1,5 @@
 import { useSubject, useContract } from '../../websocket/WebSocketContext.jsx'
+import { dateColumn } from '../DataGrid/DataGridUtils/columnFactories.js';
 import {
     Button, 
     Typography, 
@@ -81,77 +82,26 @@ const Subject = memo(function Subject() {
             { field: '_subj', headerName: 'ФИО', flex:1,
                 valueGetter: (params) => params?.name || ''
             },
-            { field: 'data_cert', headerName: 'Дата серт.',width:`95`, maxWidth:'96',
-                type: 'date',
-                valueGetter: (params) => {
-                    if (!params) return null;
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                },
+            {...dateColumn('data_cert', 'Дата серт.', 95), maxWidth: '96'},
+            {...dateColumn('data_contr', 'Дата контр.', 95), maxWidth: '96',
                 renderCell: (params) => {
                     if (params.value) {
-                        return dayjs(params.value).format('DD.MM.YYYY');
+                        return dayjs(params.value).format('YYYY') === '2999' ? 'Бессрочный' : dayjs(params.value).format('DD.MM.YYYY');
                     }
                     return null;
                 },
             },
-            { field: 'data_contr', headerName: 'Дата контр.',width:`95`,maxWidth:'96',
-                type: 'date',
-                valueGetter: (params) => {
-                    if (!params) return null;
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
+            {...dateColumn('data_dover', 'Дата довер.', 95), maxWidth: '96',
+                renderCell: (params) => {
                     if (params.value) {
-                      return dayjs(params.value).format('YYYY') === '2999' ? 'Бессрочный' :dayjs(params.value).format('DD.MM.YYYY');
+                        return dayjs(params.value).format('YYYY') === '2999' ? 'Бессрочный' : dayjs(params.value).format('DD.MM.YYYY');
                     }
                     return null;
-                  },
+                },
             },
-            { field: 'data_dover', headerName: 'Дата довер.',width:`95`, maxWidth:'96',
-                type: 'date',
-                valueGetter: (params) => {
-                    if (!params) return null;
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('YYYY') === '2999' ? 'Бессрочный' :dayjs(params.value).format('DD.MM.YYYY');
-                    }
-                    return null;
-                  },
-            },
-            { field: 'data_zakl', headerName: 'Дата рег.',width:`95`, maxWidth:'96',
-                type: 'date',
-                valueGetter: (params) => {
-                    if (!params) return null;
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY');
-                    }
-                    return null;
-                  },
-            },
+            {...dateColumn('data_zakl', 'Дата рег.', 95), maxWidth: '96'},
             { field: 'prikaz', headerName: 'Приказ',width:`80`},
-            { field: 'time_edit', headerName: 'Пос. изм.',width:`140`, 
-                type: 'date',
-                valueGetter: (params) => {
-                    if (!params) return null;
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-                    }
-                    return null;
-                  },
-            }, 
+            dateColumn('time_edit', 'Пос. изм.', 140, 'DD.MM.YYYY HH:mm'),
             { field: '_who', headerName: 'Кто доб.',  width:`80`,
                 valueGetter: (params) => params?.name || ''
             }, 

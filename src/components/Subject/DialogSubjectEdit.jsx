@@ -9,6 +9,7 @@ import PropTypes from 'prop-types';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
+import { dateColumn } from '../DataGrid/DataGridUtils/columnFactories.js';
 dayjs.locale('ru');
 
 export default function DialogSubjectEdit({ open, onClose }) {
@@ -18,19 +19,7 @@ export default function DialogSubjectEdit({ open, onClose }) {
     const columnsSubject = useMemo(()=>
         [
             { field: 'name', headerName: 'ФИО',flex:0.5},
-            { field: 'data_dob', headerName: 'Дата доб.',flex:0.25,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                },
-                renderCell: (params) => {
-                    if (params.value) {
-                    return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-                    }
-                    return null;
-                },
-            }, 
+            dateColumn('data_dob', 'Дата доб.', 0.25, 'DD.MM.YYYY HH:mm'), 
             { field: '_who', headerName: 'Кто доб.',  flex:0.2,
                 valueGetter: (params) => params?.name || ''
             }, 

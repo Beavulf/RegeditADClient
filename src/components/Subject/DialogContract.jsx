@@ -21,63 +21,16 @@ import CircularProgress from '@mui/material/CircularProgress';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
 import { enqueueSnackbar } from 'notistack';
+import { dateColumn } from '../DataGrid/DataGridUtils/columnFactories.js';
 dayjs.locale('ru');
 
 const columnsProdlenie =
   [
-      { field: 'ndata_contr', headerName: 'Дата контр.',flex:0.25,
-          type: 'date',
-          valueGetter: (params) => {
-              const date = dayjs(params);
-              return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-              if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-              }
-              return null;
-            },
-      }, 
-      { field: 'ndata_dov', headerName: 'Дата дов.',flex:0.25,
-          type: 'date',
-          valueGetter: (params) => {
-              const date = dayjs(params);
-              return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-              if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-              }
-              return null;
-            },
-      }, 
+      dateColumn('ndata_contr', 'Дата контр.', 0.25), 
+      dateColumn('ndata_dov', 'Дата дов.', 0.25), 
       { field: 'prikaz', headerName: 'Приказ',  flex:0.2}, 
-      { field: 'data_prikaza', headerName: 'Дата прик.',flex:0.25,
-          type: 'date',
-          valueGetter: (params) => {
-              const date = dayjs(params);
-              return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-              if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-              }
-              return null;
-            },
-      }, 
-      { field: 'data_dob', headerName: 'Дата доб.',flex:0.25,
-          type: 'date',
-          valueGetter: (params) => {
-              const date = dayjs(params);
-              return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-              if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-              }
-              return null;
-            },
-      }, 
+      dateColumn('data_prikaza', 'Дата прик.', 0.25), 
+      dateColumn('data_dob', 'Дата доб.', 0.25, 'DD.MM.YYYY HH:mm'), 
       { field: '_who', headerName: 'Кто доб.',  width:`100`,
           valueGetter: (params) => params?.name || ''
       }, 

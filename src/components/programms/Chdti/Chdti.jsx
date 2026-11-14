@@ -6,6 +6,7 @@ import { useChdti } from '../../../websocket/WebSocketContext.jsx'
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
+import { dateColumn } from '../../DataGrid/DataGridUtils/columnFactories.js';
 dayjs.locale('ru');
 
 export default function Chdti() {
@@ -21,19 +22,7 @@ export default function Chdti() {
             { field: 'deistvie', headerName: 'Действие',flex:0.5},
             { field: 'obosnovanie', headerName: 'Обоснование',  flex:0.4,},
             { field: 'prava', headerName: 'Права',  flex:0.3,},
-            { field: 'data_dob', headerName: 'Дата доб.',flex:0.3,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-                    }
-                    return null;
-                  },
-            }, 
+            dateColumn('data_dob', 'Дата доб.', 0.3, 'DD.MM.YYYY HH:mm'), 
             { field: '_who', headerName: 'Кто доб.',  flex:0.3,
               valueGetter: (params) => params?.name || ''
             }, 

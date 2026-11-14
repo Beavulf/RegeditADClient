@@ -20,6 +20,7 @@ import api from '../../../apiAxios/Api.jsx';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
+import { dateColumn } from '../../DataGrid/DataGridUtils/columnFactories.js';
 dayjs.locale('ru');
 
 const SERVER_ADDRESS = import.meta.env.VITE_SERVER_ADDRESS
@@ -130,47 +131,11 @@ export default function ADTool() {
         [
             { field: 'login', headerName: 'Логин', flex:0.3, },
             { field: 'fio', headerName: 'ФИО',flex:1},
-            { field: 'date_s', headerName: 'Дата нач.',flex:0.2,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY');
-                    }
-                    return null;
-                  },
-            },
-            { field: 'date_p', headerName: 'Дата конц.',flex:0.2,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY');
-                    }
-                    return null;
-                  },
-            },
+            dateColumn('date_s', 'Дата нач.', 0.2),
+            dateColumn('date_p', 'Дата конц.', 0.2),
             { field: 'prikaz', headerName: 'Приказ', flex:0.2, }, 
             { field: 'who', headerName: 'Кто',  flex:0.3, }, 
-            { field: 'date_z', headerName: 'Дата доб.',flex:0.2,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY');
-                    }
-                    return null;
-                  },
-            },
+            dateColumn('date_z', 'Дата доб.', 0.2),
             { field: 'descriptions', headerName: 'Тип',  flex:0.25, }, 
         ],[]
     ) 

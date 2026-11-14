@@ -6,6 +6,7 @@ import { useStajirovka } from '../../../websocket/WebSocketContext.jsx'
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
+import { dateColumn } from '../../DataGrid/DataGridUtils/columnFactories.js';
 dayjs.locale('ru');
 
 export default function Stajirovka() {
@@ -23,64 +24,16 @@ export default function Stajirovka() {
                 valueGetter: (params) => params?.fio || ''
             }, 
             { field: 'prikaz', headerName: 'Приказ',flex:0.3},
-            { field: 'data_prikaza', headerName: 'Дата приказа',flex:0.3,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY');
-                    }
-                    return null;
-                  },
-            },
-            { field: 'data_n', headerName: 'Дата начала',flex:0.3,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY');
-                    }
-                    return null;
-                  },
-            },
-            { field: 'data_k', headerName: 'Дата окончания',flex:0.3,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY');
-                    }
-                    return null;
-                  },
-            },
+            dateColumn('data_prikaza', 'Дата приказа', 0.3),
+            dateColumn('data_n', 'Дата начала', 0.3),
+            dateColumn('data_k', 'Дата окончания', 0.3),
             { field: '_otkyda', headerName: 'Откуда',  flex:0.3,
                 valueGetter: (params) => params?.name || ''
             }, 
             { field: '_kyda', headerName: 'Куда',  flex:0.3,
                 valueGetter: (params) => params?.name || ''
             },
-            { field: 'data_dob', headerName: 'Дата доб.',flex:0.4,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-                    }
-                    return null;
-                  },
-            }, 
+            dateColumn('data_dob', 'Дата доб.', 0.4, 'DD.MM.YYYY HH:mm'), 
             { field: '_who', headerName: 'Кто доб.',  flex:0.3,
               valueGetter: (params) => params?.name || ''
             }, 

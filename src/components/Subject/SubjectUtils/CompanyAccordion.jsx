@@ -16,20 +16,7 @@ const columnsCompany =
     [
         { field: 'name', headerName: 'Наименование',flex:0.7},
         { field: 'unp', headerName: 'УНП',flex:0.2},
-        { field: 'data_dob', headerName: 'Дата доб.',flex:0.25,
-            type: 'date',
-            valueGetter: (params) => {
-                if (!params) return null;
-                const date = dayjs(params);
-                return date.isValid() ? date.toDate() : null;
-              },
-              renderCell: (params) => {
-                if (params.value) {
-                  return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-                }
-                return null;
-              },
-        }, 
+        dateColumn('data_dob', 'Дата доб.', 0.25, 'DD.MM.YYYY HH:mm'),
         { field: '_who', headerName: 'Кто доб.',  flex:0.2,
             valueGetter: (params) => params?.name || ''
         }, 

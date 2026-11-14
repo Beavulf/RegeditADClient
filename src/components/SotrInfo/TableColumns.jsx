@@ -2,55 +2,20 @@ import { useMemo } from 'react';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
+import { dateColumn } from '../DataGrid/DataGridUtils/columnFactories.js';
 dayjs.locale('ru');
 
 export const colNaznachenie = [
     { field: 'prikaz', headerName: 'Приказ',flex:0.3},
-    { field: 'data_prikaza', headerName: 'Дата приказа',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
-    { field: 'data_nazn', headerName: 'Дата назнач.',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
+    dateColumn('data_prikaza', 'Дата приказа', 0.3),
+    dateColumn('data_nazn', 'Дата назнач.', 0.3),
     { field: '_pred_znach', headerName: 'Пред.',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
     { field: '_new_znach', headerName: 'Новое',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     },
-    { field: 'data_dob', headerName: 'Дата доб.',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-            }
-            return null;
-            },
-    }, 
+    dateColumn('data_dob', 'Дата доб.', 0.3, 'DD.MM.YYYY HH:mm'), 
     { field: '_who', headerName: 'Кто доб.',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -60,45 +25,9 @@ export const colNaznachenie = [
 export const colPriem =
 [
     { field: 'prikaz', headerName: 'Приказ',flex:0.3},
-    { field: 'data_priema', headerName: 'Дата приема',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
-    { field: 'data_prikaza', headerName: 'Дата приказа',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
-    { field: 'data_dob', headerName: 'Дата доб.',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-            }
-            return null;
-            },
-    }, 
+    dateColumn('data_priema', 'Дата приема', 0.3),
+    dateColumn('data_prikaza', 'Дата приказа', 0.3),
+    dateColumn('data_dob', 'Дата доб.', 0.3, 'DD.MM.YYYY HH:mm'), 
     { field: '_who', headerName: 'Кто доб.',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -108,45 +37,9 @@ export const colPriem =
 export const colUvolnenie =
 [
     { field: 'prikaz', headerName: 'Приказ',flex:0.3},
-    { field: 'data_prikaza', headerName: 'Дата приказа',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
-    { field: 'data_uvol', headerName: 'Дата увольнения',flex:0.4,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
-    { field: 'data_dob', headerName: 'Дата доб.',flex:0.4,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-            }
-            return null;
-            },
-    },
+    dateColumn('data_prikaza', 'Дата приказа', 0.3),
+    dateColumn('data_uvol', 'Дата увольнения', 0.4),
+    dateColumn('data_dob', 'Дата доб.', 0.4, 'DD.MM.YYYY HH:mm'),
     { field: '_who', headerName: 'Кто доб.',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -156,35 +49,11 @@ export const colUvolnenie =
 export const colSbrosAD =
 [
     { field: 'action', headerName: 'Приказ',flex:0.3},
-    { field: 'data', headerName: 'Дата вып.',flex:0.2,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
+    dateColumn('data', 'Дата вып.', 0.2),
     { field: '_who_do', headerName: 'Кто вып.',  flex:0.2,
         valueGetter: (params) => params?.name || ''
     }, 
-    { field: 'data_dob', headerName: 'Дата доб.',flex:0.25,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-            }
-            return null;
-            },
-    }, 
+    dateColumn('data_dob', 'Дата доб.', 0.25, 'DD.MM.YYYY HH:mm'), 
     { field: '_who', headerName: 'Кто доб.',  flex:0.2,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -194,51 +63,15 @@ export const colSbrosAD =
 export const colPerevod =
 [
     { field: 'prikaz', headerName: 'Приказ',flex:0.3},
-    { field: 'data_prikaza', headerName: 'Дата приказа',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
-    { field: 'data_per', headerName: 'Дата перевода',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
+    dateColumn('data_prikaza', 'Дата приказа', 0.3),
+    dateColumn('data_per', 'Дата перевода', 0.3),
     { field: '_otkyda', headerName: 'Откуда',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
     { field: '_kyda', headerName: 'Куда',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     },
-    { field: 'data_dob', headerName: 'Дата доб.',flex:0.4,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-            }
-            return null;
-            },
-    }, 
+    dateColumn('data_dob', 'Дата доб.', 0.4, 'DD.MM.YYYY HH:mm'), 
     { field: '_who', headerName: 'Кто доб.',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -248,45 +81,9 @@ export const colPerevod =
 export const colVPerevod =
 [
     { field: 'prikaz', headerName: 'Приказ',flex:0.3},
-    { field: 'data_prikaza', headerName: 'Дата приказа',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
-    { field: 'data_n', headerName: 'Дата С',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
-    { field: 'data_k', headerName: 'Дата ПО',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
+    dateColumn('data_prikaza', 'Дата приказа', 0.3),
+    dateColumn('data_n', 'Дата С', 0.3),
+    dateColumn('data_k', 'Дата ПО', 0.3),
     { field: '_otkyda', headerName: 'Откуда',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -294,19 +91,7 @@ export const colVPerevod =
         valueGetter: (params) => params?.name || ''
     },
     { field: 'type', headerName: 'Тип перев.', width: 150, flex:0.3, },
-    { field: 'data_dob', headerName: 'Дата доб.',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-            }
-            return null;
-            },
-    }, 
+    dateColumn('data_dob', 'Дата доб.', 0.3, 'DD.MM.YYYY HH:mm'), 
     { field: '_who', headerName: 'Кто доб.',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -316,34 +101,10 @@ export const colVPerevod =
 export const colFamilia =
 [
     { field: 'prikaz', headerName: 'Приказ',flex:0.3},
-    { field: 'data_prikaza', headerName: 'Дата приказа',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
+    dateColumn('data_prikaza', 'Дата приказа', 0.3),
     { field: 'pred_znach', headerName: 'Старая', flex:0.3, },
     { field: 'new_znach', headerName: 'Новая',flex:0.3,}, 
-    { field: 'data_dob', headerName: 'Дата доб.',flex:0.4,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-            }
-            return null;
-            },
-    },
+    dateColumn('data_dob', 'Дата доб.', 0.4, 'DD.MM.YYYY HH:mm'),
     { field: '_who', headerName: 'Кто доб.',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -355,19 +116,7 @@ export const colZapros =
     { field: 'deistvie', headerName: 'Действие',flex:0.5},
     { field: 'obosnovanie', headerName: 'Обоснование',  flex:0.4,},
     { field: 'prava', headerName: 'Права',  flex:0.3,},
-    { field: 'data_dob', headerName: 'Дата доб.',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-            }
-            return null;
-            },
-    }, 
+    dateColumn('data_dob', 'Дата доб.', 0.3, 'DD.MM.YYYY HH:mm'), 
     { field: '_who', headerName: 'Кто доб.',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -378,19 +127,7 @@ export const colSvodka =
 [
     { field: 'deistvie', headerName: 'Действие',flex:0.5},
     { field: 'obosnovanie', headerName: 'Обоснование',  flex:0.4,},
-    { field: 'data_dob', headerName: 'Дата доб.',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-            }
-            return null;
-            },
-    }, 
+    dateColumn('data_dob', 'Дата доб.', 0.3, 'DD.MM.YYYY HH:mm'), 
     { field: '_who', headerName: 'Кто доб.',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -401,19 +138,7 @@ export const colRevizor =
 [
     { field: 'deistvie', headerName: 'Действие',flex:0.5},
     { field: 'obosnovanie', headerName: 'Обоснование',  flex:0.4,},
-    { field: 'data_dob', headerName: 'Дата доб.',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-            }
-            return null;
-            },
-    }, 
+    dateColumn('data_dob', 'Дата доб.', 0.3, 'DD.MM.YYYY HH:mm'), 
     { field: '_who', headerName: 'Кто доб.',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -425,19 +150,7 @@ export const colChdti =
     { field: 'deistvie', headerName: 'Действие',flex:0.5},
     { field: 'obosnovanie', headerName: 'Обоснование',  flex:0.4,},
     { field: 'prava', headerName: 'Права',  flex:0.3,},
-    { field: 'data_dob', headerName: 'Дата доб.',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-            }
-            return null;
-            },
-    }, 
+    dateColumn('data_dob', 'Дата доб.', 0.3, 'DD.MM.YYYY HH:mm'), 
     { field: '_who', headerName: 'Кто доб.',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -448,19 +161,7 @@ export const colAipsin =
 [
     { field: 'deistvie', headerName: 'Действие',flex:0.4},
     { field: 'obosnovanie', headerName: 'Обоснование',  flex:0.4,},
-    { field: 'data_dob', headerName: 'Дата доб.',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-            }
-            return null;
-            },
-    }, 
+    dateColumn('data_dob', 'Дата доб.', 0.3, 'DD.MM.YYYY HH:mm'), 
     { field: '_who', headerName: 'Кто доб.',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -470,64 +171,16 @@ export const colAipsin =
 export const colStajirovka =
 [
     { field: 'prikaz', headerName: 'Приказ',flex:0.3},
-    { field: 'data_prikaza', headerName: 'Дата приказа',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
-    { field: 'data_n', headerName: 'Дата начала',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
-    { field: 'data_k', headerName: 'Дата окончания',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
+    dateColumn('data_prikaza', 'Дата приказа', 0.3),
+    dateColumn('data_n', 'Дата начала', 0.3),
+    dateColumn('data_k', 'Дата окончания', 0.3),
     { field: '_otkyda', headerName: 'Откуда',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
     { field: '_kyda', headerName: 'Куда',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     },
-    { field: 'data_dob', headerName: 'Дата доб.',flex:0.4,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-            }
-            return null;
-            },
-    }, 
+    dateColumn('data_dob', 'Дата доб.', 0.4, 'DD.MM.YYYY HH:mm'), 
     { field: '_who', headerName: 'Кто доб.',  flex:0.3,
         valueGetter: (params) => params?.name || ''
     }, 
@@ -537,47 +190,11 @@ export const colStajirovka =
 export const colADTool =
 [
     { field: 'login', headerName: 'Логин',  flex:0.3, },
-    { field: 'date_s', headerName: 'Дата нач.',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
-    { field: 'date_p', headerName: 'Дата конц.',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
+    dateColumn('date_s', 'Дата нач.', 0.3),
+    dateColumn('date_p', 'Дата конц.', 0.3),
     { field: 'prikaz', headerName: 'Приказ',  flex:0.3, }, 
     { field: 'who', headerName: 'Кто',  flex:0.3, }, 
-    { field: 'date_z', headerName: 'Дата доб.',flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-            if (params.value) {
-                return dayjs(params.value).format('DD.MM.YYYY');
-            }
-            return null;
-            },
-    },
+    dateColumn('date_z', 'Дата доб.', 0.3),
     { field: 'descriptions', headerName: 'Тип',  flex:0.3, }, 
 ]
 
@@ -586,29 +203,8 @@ export const colPdoka =
     { field: 'type', headerName: 'Действие', flex:0.3 },
     { field: 'lnp', headerName: 'ЛНП', flex:0.2,},
     { field: 'obosnovanie', headerName: 'Обоснование', width: 150, flex:0.3, },
-    { field: 'data_prikaza', headerName: 'Д.Приказа', width: 150, flex:0.25, 
-        type: 'date',
-        valueGetter: (params) => {
-                const date = dayjs(params);
-                return date.isValid() ? date.toDate() : null;
-            },
-            renderCell: (params) => {
-                if (params.value) {
-                    return dayjs(params.value).format('DD.MM.YYYY');
-                }
-                return null;
-            },
-    },
-    { field: 'data_dob', headerName: 'Добавлено', width: 150, flex:0.3,
-        type: 'date',
-        valueGetter: (params) => {
-            const date = dayjs(params);
-            return date.isValid() ? date.toDate() : null;
-        },
-        renderCell: (params) => {
-            return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-        } 
-    },
+    dateColumn('data_prikaza', 'Д.Приказа', 0.25),
+    dateColumn('data_dob', 'Добавлено', 0.3, 'DD.MM.YYYY HH:mm'),
     { field: '_who', headerName: 'Кто доб.', width: 150, flex:0.2,
         valueGetter: (params) => params?.name || ''
     },

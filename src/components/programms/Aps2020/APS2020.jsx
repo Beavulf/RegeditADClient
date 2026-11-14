@@ -10,6 +10,7 @@ import 'dayjs/locale/ru'
 import { useSnackbar } from 'notistack';
 import ExcelJS from 'exceljs';
 import getWhoId from '../../users/GetWhoID.jsx';
+import { dateColumn } from '../../DataGrid/DataGridUtils/columnFactories.js';
 dayjs.locale('ru');
 export default function APS2020() {
     // вызываем кастомный хук для даления строки из БД
@@ -27,33 +28,9 @@ export default function APS2020() {
                 valueGetter: (params) => params?.fio || ''
             }, 
             { field: 'prikaz', headerName: 'Приказ(ДЗ)', flex:0.3},
-            { field: 'data_prikaza', headerName: 'Дата приказа(ДЗ)',flex:0.3,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                },
-                renderCell: (params) => {
-                    if (params.value) {
-                        return dayjs(params.value).format('DD.MM.YYYY');
-                    }
-                    return null;
-                },
-            },
+            dateColumn('data_prikaza', 'Дата приказа(ДЗ)', 0.3),
             { field: 'prava', headerName: 'Права доступа', flex:0.5},
-            { field: 'data_dob', headerName: 'Дата доб.',flex:0.3,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                },
-                renderCell: (params) => {
-                    if (params.value) {
-                        return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-                    }
-                    return null;
-                },
-            },  
+            dateColumn('data_dob', 'Дата доб.', 0.3, 'DD.MM.YYYY HH:mm'),  
             { field: '_who', headerName: 'Кто доб.',  flex:0.3,
               valueGetter: (params) => params?.name || ''
             }, 

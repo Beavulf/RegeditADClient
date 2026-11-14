@@ -5,6 +5,7 @@ import { useTableActions } from '../../../websocket/LayoutMessage.jsx';
 import { useSbrosAD } from '../../../websocket/WebSocketContext.jsx'
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru'
+import { dateColumn } from '../../DataGrid/DataGridUtils/columnFactories.js';
 dayjs.locale('ru');
 
 export default function SbrosAD() { 
@@ -21,35 +22,11 @@ export default function SbrosAD() {
                 valueGetter: (params) => params?.fio || ''
             }, 
             { field: 'action', headerName: 'Приказ',flex:0.3},
-            { field: 'data', headerName: 'Дата вып.',flex:0.2,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY');
-                    }
-                    return null;
-                  },
-            },
+            dateColumn('data', 'Дата вып.', 0.2),
             { field: '_who_do', headerName: 'Кто вып.',  flex:0.2,
                 valueGetter: (params) => params?.name || ''
             }, 
-            { field: 'data_dob', headerName: 'Дата доб.',flex:0.25,
-                type: 'date',
-                valueGetter: (params) => {
-                    const date = dayjs(params);
-                    return date.isValid() ? date.toDate() : null;
-                  },
-                  renderCell: (params) => {
-                    if (params.value) {
-                      return dayjs(params.value).format('DD.MM.YYYY HH:mm');
-                    }
-                    return null;
-                  },
-            }, 
+            dateColumn('data_dob', 'Дата доб.', 0.25, 'DD.MM.YYYY HH:mm'), 
             { field: '_who', headerName: 'Кто доб.',  flex:0.2,
                 valueGetter: (params) => params?.name || ''
             }, 
